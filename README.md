@@ -8,6 +8,25 @@ Secure multithreaded packet sniffer.
 sniffglue --help
 ```
 
+## Installation
+
+Make sure you have libpcap installed:
+
+Debian/Ubuntu:
+```
+apt-get install libpcap-dev
+```
+
+Archlinux:
+```
+pacman -S libpcap
+```
+
+Install:
+```
+cargo install sniffglue
+```
+
 ## Decoders
 
 - [X] ethernet
