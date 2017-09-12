@@ -1,0 +1,24 @@
+[package]
+name = "sniffglue"
+version = "0.1.0"
+description = "Secure multithreaded packet sniffer"
+authors = ["kpcyrd <git@rxv.cc>"]
+license = "GPL-3.0"
+repository = "https://github.com/kpcyrd/sniffglue"
+categories = ["command-line-utilities"]
+readme = "README.md"
+
+[badges]
+travis-ci = { repository = "kpcyrd/sniffglue" }
+
+[dependencies]
+clap = "2"
+threadpool = "1.7"
+num_cpus = "1.6"
+pcap = "0.7.0"
+pktparse = "0.2.0"
+nom = "2.2"
+dns-parser = "0.7"
+tls-parser = "0.3"
+dhcp4r = "0.1.0"
+ansi_term = "0.9"
