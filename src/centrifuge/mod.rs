@@ -7,6 +7,7 @@ use structs::prelude::*;
 use structs::CentrifugeError;
 use structs::raw;
 
+pub mod arp;
 pub mod tcp;
 pub mod udp;
 
@@ -41,8 +42,8 @@ pub fn parse(data: &[u8]) -> Result<raw::Raw, CentrifugeError> {
                 Err(CentrifugeError::UnknownProtocol)
             },
             EtherType::ARP => {
-                // TODO
-                Err(CentrifugeError::UnknownProtocol)
+                let arp_pkt = arp::extract(remaining)?;
+                Ok(Ether(eth_frame, Arp(arp_pkt)))
             },
             _ => Err(CentrifugeError::UnknownProtocol),
         }
