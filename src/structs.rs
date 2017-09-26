@@ -125,7 +125,7 @@ pub mod udp {
 pub mod tls {
     #[derive(Debug)]
     pub struct ClientHello {
-        hostname: Option<String>,
+        pub hostname: Option<String>,
     }
 
     impl ClientHello {
@@ -264,7 +264,7 @@ pub mod dns {
 
     #[derive(Debug)]
     pub struct Request {
-        questions: Vec<(QueryType, String)>,
+        pub questions: Vec<(QueryType, String)>,
     }
 
     impl Request {
@@ -281,7 +281,7 @@ pub mod dns {
 
     #[derive(Debug)]
     pub struct Response {
-        answers: Vec<(String, Record)>,
+        pub answers: Vec<(String, Record)>,
     }
 
     impl Response {
