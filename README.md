@@ -1,4 +1,4 @@
-# sniffglue [![Build Status](https://travis-ci.org/kpcyrd/sniffglue-rs.svg?branch=master)](https://travis-ci.org/kpcyrd/sniffglue-rs) [![Crates.io](https://img.shields.io/crates/v/sniffglue.svg)](https://crates.io/crates/sniffglue)
+# sniffglue [![Build Status](https://travis-ci.org/kpcyrd/sniffglue.svg?branch=master)](https://travis-ci.org/kpcyrd/sniffglue) [![Crates.io](https://img.shields.io/crates/v/sniffglue.svg)](https://crates.io/crates/sniffglue)
 
 Secure multithreaded packet sniffer.
 
