@@ -90,6 +90,7 @@ pub mod tcp {
         pub fn is_noise(&self) -> bool {
             use self::TCP::*;
             match *self {
+                Text(ref text) => text.len() < 5,
                 Binary(_) => true,
                 _ => false,
             }
