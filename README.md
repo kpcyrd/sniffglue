@@ -1,4 +1,4 @@
-# sniffglue
+# sniffglue [![Build Status](https://travis-ci.org/kpcyrd/sniffglue-rs.svg?branch=master)](https://travis-ci.org/kpcyrd/sniffglue-rs) [![Crates.io](https://img.shields.io/crates/v/sniffglue.svg)](https://crates.io/crates/sniffglue)
 
 Secure multithreaded packet sniffer.
 
@@ -43,6 +43,7 @@ cargo install sniffglue
 - [ ] imap
 - [X] dns
 - [X] dhcp
+- [ ] 802.11
 
 ## Fuzzing
 

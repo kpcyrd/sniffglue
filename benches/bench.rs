@@ -1,16 +1,15 @@
-#[macro_use] extern crate nom;
-extern crate pktparse;
-extern crate dhcp4r;
-extern crate dns_parser;
-extern crate tls_parser;
+#![feature(test)]
+extern crate test;
 
-pub mod centrifuge;
-mod nom_http;
-pub mod structs;
+extern crate sniffglue;
+extern crate pktparse;
+
+pub use sniffglue::*;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     const HTML: [u8; 390] = [
         32, 32, 32, 32, 32, 32, 32, 112, 97, 100, 100, 105, 110, 103, 58, 32, 49, 101, 109, 59,
@@ -101,5 +100,30 @@ mod tests {
 
         let x = centrifuge::parse(&pkt);
         assert_eq!(expected, x);
+    }
+
+    #[bench]
+    fn bench_empty(b: &mut Bencher) {
+        b.iter(|| {
+            centrifuge::parse(&[]).ok();
+        });
+    }
+
+    #[bench]
+    fn bench(b: &mut Bencher) {
+        let mut pkt = Vec::new();
+        pkt.extend([
+            0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
+            0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+            8, 0, 69, 0, 1, 186, 78, 105, 64, 0, 55, 6, 251, 115,
+            93, 184, 216, 34,
+            192, 168, 44, 55,
+            0, 80, 142, 158, 133, 72, 141, 7, 64, 115, 177, 1, 128, 24, 1, 27, 200, 121, 0, 0, 1, 1, 8, 10, 59, 135, 198, 7, 93, 127, 194, 19,
+        ].iter());
+        pkt.extend(HTML.iter());
+
+        b.iter(|| {
+            centrifuge::parse(&pkt).ok();
+        });
     }
 }
