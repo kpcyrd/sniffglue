@@ -44,6 +44,16 @@ cargo install sniffglue
 - [X] dns
 - [X] dhcp
 
+## Fuzzing
+
+sniffglue supports cargo-fuzz. To start fuzzing, make sure [cargo-fuzz] is installed and run
+
+```
+cargo fuzz run read_packet
+```
+
+[cargo-fuzz]: https://github.com/rust-fuzz/cargo-fuzz
+
 ## License
 
 GPLv3+

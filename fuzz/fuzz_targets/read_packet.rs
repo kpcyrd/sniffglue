@@ -3,6 +3,5 @@
 extern crate sniffglue;
 
 fuzz_target!(|data: &[u8]| {
-    let packet = sniffglue::centrifuge::parse(&data);
-    println!("Packet: {:?}", packet);
+    let _ = sniffglue::centrifuge::parse(&data);
 });
