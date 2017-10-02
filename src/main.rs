@@ -62,7 +62,7 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 fn main() {
     let matches = App::new("sniffglue")
-        .version("0.1.0")
+        .version("0.2.0")
         .arg(Arg::with_name("promisc")
             .short("p")
             .long("promisc")
