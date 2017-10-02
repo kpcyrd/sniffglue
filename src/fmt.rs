@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pktparse;
 use reduce::Reduce;
-use ansi_term::Colour::{Yellow, Blue, Green, Red};
+use ansi_term::Colour::{self, Yellow, Blue, Green, Red};
 
 use structs::raw::Raw;
 use structs::prelude::*;
@@ -15,9 +15,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(layout: Layout, log_noise: bool) -> Config {
+    pub fn new(layout: Layout, log_noise: bool, colors: bool) -> Config {
         Config {
-            fmt: Format::new(layout),
+            fmt: Format::new(layout, colors),
             filter: Arc::new(Filter::new(log_noise)),
         }
     }
@@ -38,12 +38,14 @@ pub enum Layout {
 
 pub struct Format {
     layout: Layout,
+    colors: bool,
 }
 
 impl Format {
-    pub fn new(layout: Layout) -> Format {
+    pub fn new(layout: Layout, colors: bool) -> Format {
         Format {
             layout,
+            colors,
         }
     }
 
@@ -52,6 +54,15 @@ impl Format {
         match self.layout {
             Layout::Compact => self.print_compact(packet),
             Layout::Detailed => self.print_detailed(packet),
+        }
+    }
+
+    #[inline]
+    fn colorify(&self, color: Colour, out: String) -> String {
+        if self.colors {
+            color.normal().paint(out).to_string()
+        } else {
+            out
         }
     }
 
@@ -198,7 +209,7 @@ impl Format {
         };
 
         println!("{}", match color {
-            Some(color) => color.normal().paint(out).to_string(),
+            Some(color) => self.colorify(color, out),
             None => out,
         });
     }
@@ -215,40 +226,40 @@ impl Format {
                         println!("\t\ttcp: {:?}", tcp_hdr);
 
                         use structs::tcp::TCP::*;
-                        match tcp {
+                        println!("\t\t\t{}", match tcp {
                             HTTP(http) => {
-                                println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
+                                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http))
                             },
                             TLS(client_hello) => {
-                                println!("{}", Green.normal().paint(format!("\t\t\ttls: {:?}", client_hello)));
+                                self.colorify(Green, format!("tls: {:?}", client_hello))
                             },
                             Text(text) => {
-                                println!("{}", Blue.normal().paint(format!("\t\t\tremaining: {:?}", text)));
+                                self.colorify(Blue, format!("remaining: {:?}", text))
                             },
                             Binary(x) => {
-                                println!("{}", Yellow.normal().paint(format!("\t\t\tremaining: {:?}", x)));
+                                self.colorify(Yellow, format!("remaining: {:?}", x))
                             },
-                        }
+                        });
                     },
                     IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
                         println!("\tipv4: {:?}", ip_hdr);
                         println!("\t\tudp: {:?}", udp_hdr);
 
                         use structs::udp::UDP::*;
-                        match udp {
+                        println!("\t\t\t{}", match udp {
                             DHCP(dhcp) => {
-                                println!("{}", Green.normal().paint(format!("\t\t\tdhcp: {:?}", dhcp)));
+                                self.colorify(Green, format!("dhcp: {:?}", dhcp))
                             },
                             DNS(dns) => {
-                                println!("{}", Green.normal().paint(format!("\t\t\tdns: {:?}", dns)));
+                                self.colorify(Green, format!("dns: {:?}", dns))
                             },
                             Text(text) => {
-                                println!("{}", Blue.normal().paint(format!("\t\t\tremaining: {:?}", text)));
+                                self.colorify(Blue, format!("remaining: {:?}", text))
                             },
                             Binary(x) => {
-                                println!("{}", Yellow.normal().paint(format!("\t\t\tremaining: {:?}", x)));
+                                self.colorify(Yellow, format!("remaining: {:?}", x))
                             },
-                        }
+                        });
                     },
                 }
             },
