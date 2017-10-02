@@ -31,6 +31,34 @@ type Sender = mpsc::Sender<Message>;
 type Receiver = mpsc::Receiver<Message>;
 
 
+// XXX: workaround, remove if possible
+enum CapWrap {
+    Active(Capture<pcap::Active>),
+    Offline(Capture<pcap::Offline>),
+}
+
+impl CapWrap {
+    fn activate(self) -> Capture<pcap::Activated> {
+        match self {
+            CapWrap::Active(cap) => cap.into(),
+            CapWrap::Offline(cap) => cap.into(),
+        }
+    }
+}
+
+impl From<Capture<pcap::Active>> for CapWrap {
+    fn from(cap: Capture<pcap::Active>) -> CapWrap {
+        CapWrap::Active(cap)
+    }
+}
+
+impl From<Capture<pcap::Offline>> for CapWrap {
+    fn from(cap: Capture<pcap::Offline>) -> CapWrap {
+        CapWrap::Offline(cap)
+    }
+}
+
+
 fn main() {
     let matches = App::new("sniffglue")
         .version("0.1.0")
@@ -48,6 +76,11 @@ fn main() {
             .short("x")
             .long("noisy")
             .help("Log noisy packets")
+        )
+        .arg(Arg::with_name("read")
+            .short("r")
+            .long("read")
+            .help("Open dev as pcap file")
         )
         .arg(Arg::with_name("dev")
             .help("Device for sniffing")
@@ -68,10 +101,19 @@ fn main() {
 
     let config = fmt::Config::new(layout, log_noise);
 
-    eprintln!("Listening on device: {:?}", dev);
-    let mut cap = Capture::from_device(dev.as_str()).unwrap()
-                    .promisc(promisc)
-                    .open().unwrap();
+    let cap: CapWrap = match matches.occurrences_of("read") {
+        0 => {
+            eprintln!("Listening on device: {:?}", dev);
+            Capture::from_device(dev.as_str()).unwrap()
+                .promisc(promisc)
+                .open().expect("failed to open interface").into()
+        },
+        _ => {
+            eprintln!("Reading from file: {:?}", dev);
+            Capture::from_file(dev.as_str()).expect("failed to open pcap file").into()
+        },
+    };
+
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
@@ -80,6 +122,7 @@ fn main() {
         let cpus = num_cpus::get();
         let pool = ThreadPool::new(cpus);
 
+        let mut cap = cap.activate();
         while let Ok(packet) = cap.next() {
             // let ts = packet.header.ts;
             // let len = packet.header.len;
