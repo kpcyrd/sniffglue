@@ -9,6 +9,7 @@ extern crate threadpool;
 extern crate num_cpus;
 extern crate reduce;
 extern crate clap;
+extern crate atty;
 
 use pcap::Device;
 use pcap::Capture;
@@ -99,7 +100,8 @@ fn main() {
         _ => fmt::Layout::Detailed,
     };
 
-    let config = fmt::Config::new(layout, log_noise);
+    let colors = atty::is(atty::Stream::Stdout);
+    let config = fmt::Config::new(layout, log_noise, colors);
 
     let cap: CapWrap = match matches.occurrences_of("read") {
         0 => {
