@@ -93,13 +93,13 @@ fn main() {
         .arg(Arg::with_name("read")
             .short("r")
             .long("read")
-            .help("Open dev as pcap file")
+            .help("Open device as pcap file")
         )
         .arg(Arg::with_name("danger-disable-seccomp")
             .long("danger-disable-seccomp")
             .help("Only use this if you know what you're doing")
         )
-        .arg(Arg::with_name("dev")
+        .arg(Arg::with_name("device")
             .help("Device for sniffing")
         )
         .get_matches();
@@ -107,8 +107,8 @@ fn main() {
     let danger_disable_seccomp = matches.occurrences_of("danger-disable-seccomp") > 0;
     sandbox::activate_stage1(&danger_disable_seccomp).expect("init sandbox stage1");
 
-    let dev = match matches.value_of("dev") {
-        Some(dev) => dev.to_owned(),
+    let device = match matches.value_of("device") {
+        Some(device) => device.to_owned(),
         None => Device::lookup().unwrap().name,
     };
     let log_noise = matches.occurrences_of("noisy") > 0;
@@ -124,14 +124,14 @@ fn main() {
 
     let cap: CapWrap = match matches.occurrences_of("read") {
         0 => {
-            eprintln!("Listening on device: {:?}", dev);
-            Capture::from_device(dev.as_str()).unwrap()
+            eprintln!("Listening on device: {:?}", device);
+            Capture::from_device(device.as_str()).unwrap()
                 .promisc(promisc)
                 .open().expect("failed to open interface").into()
         },
         _ => {
-            eprintln!("Reading from file: {:?}", dev);
-            Capture::from_file(dev.as_str()).expect("failed to open pcap file").into()
+            eprintln!("Reading from file: {:?}", device);
+            Capture::from_file(device.as_str()).expect("failed to open pcap file").into()
         },
     };
 
