@@ -4,28 +4,13 @@ Secure multithreaded packet sniffer.
 
 ## Usage
 
-```
-sniffglue --help
-```
+    sniffglue enp0s25
 
 ## Installation
 
-Make sure you have libpcap and libseccomp installed:
+Make sure you have libpcap and libseccomp installed, Debian/Ubuntu: `libpcap-dev libseccomp-dev`, Archlinux: `libpcap libseccomp`.
 
-Debian/Ubuntu:
-```
-apt-get install libpcap-dev libseccomp-dev
-```
-
-Archlinux:
-```
-pacman -S libpcap libseccomp
-```
-
-Install:
-```
-cargo install sniffglue
-```
+    cargo install sniffglue
 
 ## Decoders
 
