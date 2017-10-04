@@ -10,6 +10,7 @@ extern crate num_cpus;
 extern crate reduce;
 extern crate clap;
 extern crate atty;
+extern crate seccomp_sys;
 
 use pcap::Device;
 use pcap::Capture;
@@ -21,6 +22,7 @@ use std::sync::mpsc;
 
 mod centrifuge;
 mod fmt;
+mod sandbox;
 mod structs;
 mod nom_http;
 
@@ -61,6 +63,8 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 
 fn main() {
+    sandbox::activate().unwrap();
+
     let matches = App::new("sniffglue")
         .version("0.2.0")
         .arg(Arg::with_name("promisc")
