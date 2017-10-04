@@ -10,16 +10,16 @@ sniffglue --help
 
 ## Installation
 
-Make sure you have libpcap installed:
+Make sure you have libpcap and libseccomp installed:
 
 Debian/Ubuntu:
 ```
-apt-get install libpcap-dev
+apt-get install libpcap-dev libseccomp-dev
 ```
 
 Archlinux:
 ```
-pacman -S libpcap
+pacman -S libpcap libseccomp
 ```
 
 Install:

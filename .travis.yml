@@ -2,7 +2,7 @@ language: rust
 rust: stable
 before_script:
 - sudo apt-get -qq update
-- sudo apt-get install -y libpcap-dev
+- sudo apt-get install -y libpcap-dev libseccomp-dev
 script:
 - cargo build --verbose
 - cargo test --verbose
