@@ -59,101 +59,122 @@ impl Drop for Context {
             seccomp_release(self.ctx)
         };
     }
-
 }
 
-pub fn activate_stage1() -> Result<(), ()> {
-    let mut ctx = Context::init()?;
+pub fn activate_stage1(danger_disable_seccomp: &bool) -> Result<(), ()> {
+    let voided = *danger_disable_seccomp;
 
-    ctx.allow_syscall(SYSCALL::futex)?;
-    ctx.allow_syscall(SYSCALL::read)?;
-    ctx.allow_syscall(SYSCALL::write)?;
-    ctx.allow_syscall(SYSCALL::open)?;
-    ctx.allow_syscall(SYSCALL::close)?;
-    ctx.allow_syscall(SYSCALL::stat)?;
-    ctx.allow_syscall(SYSCALL::fstat)?;
-    ctx.allow_syscall(SYSCALL::lstat)?;
-    ctx.allow_syscall(SYSCALL::poll)?;
-    ctx.allow_syscall(SYSCALL::mmap)?;
-    ctx.allow_syscall(SYSCALL::mprotect)?;
-    ctx.allow_syscall(SYSCALL::munmap)?;
-    ctx.allow_syscall(SYSCALL::ioctl)?;
-    ctx.allow_syscall(SYSCALL::socket)?;
-    ctx.allow_syscall(SYSCALL::connect)?;
-    ctx.allow_syscall(SYSCALL::sendto)?;
-    ctx.allow_syscall(SYSCALL::recvfrom)?;
-    ctx.allow_syscall(SYSCALL::sendmsg)?;
-    ctx.allow_syscall(SYSCALL::recvmsg)?;
-    ctx.allow_syscall(SYSCALL::bind)?;
-    ctx.allow_syscall(SYSCALL::getsockname)?;
-    ctx.allow_syscall(SYSCALL::setsockopt)?;
-    ctx.allow_syscall(SYSCALL::getsockopt)?;
-    ctx.allow_syscall(SYSCALL::clone)?;
-    ctx.allow_syscall(SYSCALL::uname)?;
-    ctx.allow_syscall(SYSCALL::fcntl)?;
-    ctx.allow_syscall(SYSCALL::getdents)?;
-    ctx.allow_syscall(SYSCALL::geteuid)?;
-    ctx.allow_syscall(SYSCALL::getresuid)?;
-    ctx.allow_syscall(SYSCALL::getresgid)?;
-    ctx.allow_syscall(SYSCALL::sigaltstack)?;
-    ctx.allow_syscall(SYSCALL::prctl)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-    ctx.allow_syscall(SYSCALL::clock_getres)?;
-    ctx.allow_syscall(SYSCALL::exit_group)?;
-    ctx.allow_syscall(SYSCALL::set_robust_list)?;
-    ctx.allow_syscall(SYSCALL::openat)?;
-    ctx.allow_syscall(SYSCALL::seccomp)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getrandom)?;
+    if !danger_disable_seccomp {
+        let mut ctx = Context::init()?;
 
-    ctx.load()?;
-    info!("stage 1/2 is active");
+        ctx.allow_syscall(SYSCALL::futex)?;
+        ctx.allow_syscall(SYSCALL::read)?;
+        ctx.allow_syscall(SYSCALL::write)?;
+        ctx.allow_syscall(SYSCALL::open)?;
+        ctx.allow_syscall(SYSCALL::close)?;
+        ctx.allow_syscall(SYSCALL::stat)?;
+        ctx.allow_syscall(SYSCALL::fstat)?;
+        ctx.allow_syscall(SYSCALL::lstat)?;
+        ctx.allow_syscall(SYSCALL::poll)?;
+        ctx.allow_syscall(SYSCALL::mmap)?;
+        ctx.allow_syscall(SYSCALL::mprotect)?;
+        ctx.allow_syscall(SYSCALL::munmap)?;
+        ctx.allow_syscall(SYSCALL::ioctl)?;
+        ctx.allow_syscall(SYSCALL::socket)?;
+        ctx.allow_syscall(SYSCALL::connect)?;
+        ctx.allow_syscall(SYSCALL::sendto)?;
+        ctx.allow_syscall(SYSCALL::recvfrom)?;
+        ctx.allow_syscall(SYSCALL::sendmsg)?;
+        ctx.allow_syscall(SYSCALL::recvmsg)?;
+        ctx.allow_syscall(SYSCALL::bind)?;
+        ctx.allow_syscall(SYSCALL::getsockname)?;
+        ctx.allow_syscall(SYSCALL::setsockopt)?;
+        ctx.allow_syscall(SYSCALL::getsockopt)?;
+        ctx.allow_syscall(SYSCALL::clone)?;
+        ctx.allow_syscall(SYSCALL::uname)?;
+        ctx.allow_syscall(SYSCALL::fcntl)?;
+        ctx.allow_syscall(SYSCALL::getdents)?;
+        ctx.allow_syscall(SYSCALL::geteuid)?;
+        ctx.allow_syscall(SYSCALL::getresuid)?;
+        ctx.allow_syscall(SYSCALL::getresgid)?;
+        ctx.allow_syscall(SYSCALL::sigaltstack)?;
+        ctx.allow_syscall(SYSCALL::prctl)?; // needed for stage2
+        ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
+        ctx.allow_syscall(SYSCALL::clock_getres)?;
+        ctx.allow_syscall(SYSCALL::exit_group)?;
+        ctx.allow_syscall(SYSCALL::set_robust_list)?;
+        ctx.allow_syscall(SYSCALL::openat)?;
+        ctx.allow_syscall(SYSCALL::seccomp)?; // needed for stage2
+        ctx.allow_syscall(SYSCALL::getrandom)?;
+
+        ctx.load()?;
+    } else {
+        warn!("stage 1/2: seccomp has been disabled!");
+    }
+
+    if voided {
+        warn!("stage 1/2 is active, but some things have been disabled!");
+    } else {
+        info!("stage 1/2 is active");
+    }
 
     Ok(())
 }
 
-pub fn activate_stage2() -> Result<(), ()> {
-    let mut ctx = Context::init()?;
+pub fn activate_stage2(danger_disable_seccomp: &bool) -> Result<(), ()> {
+    let voided = *danger_disable_seccomp;
 
-    ctx.allow_syscall(SYSCALL::futex)?;
-    ctx.allow_syscall(SYSCALL::read)?;
-    ctx.allow_syscall(SYSCALL::write)?;
-    // ctx.allow_syscall(SYSCALL::open)?;
-    ctx.allow_syscall(SYSCALL::close)?;
-    // ctx.allow_syscall(SYSCALL::stat)?;
-    // ctx.allow_syscall(SYSCALL::fstat)?;
-    // ctx.allow_syscall(SYSCALL::lstat)?;
-    ctx.allow_syscall(SYSCALL::poll)?;
-    ctx.allow_syscall(SYSCALL::mmap)?;
-    ctx.allow_syscall(SYSCALL::mprotect)?;
-    ctx.allow_syscall(SYSCALL::munmap)?;
-    // ctx.allow_syscall(SYSCALL::ioctl)?;
-    // ctx.allow_syscall(SYSCALL::socket)?;
-    // ctx.allow_syscall(SYSCALL::connect)?;
-    // ctx.allow_syscall(SYSCALL::sendto)?;
-    // ctx.allow_syscall(SYSCALL::recvfrom)?;
-    // ctx.allow_syscall(SYSCALL::sendmsg)?;
-    // ctx.allow_syscall(SYSCALL::recvmsg)?;
-    // ctx.allow_syscall(SYSCALL::bind)?;
-    // ctx.allow_syscall(SYSCALL::getsockname)?;
-    // ctx.allow_syscall(SYSCALL::setsockopt)?;
-    // ctx.allow_syscall(SYSCALL::getsockopt)?;
-    ctx.allow_syscall(SYSCALL::clone)?;
-    // ctx.allow_syscall(SYSCALL::uname)?;
-    // ctx.allow_syscall(SYSCALL::fcntl)?;
-    // ctx.allow_syscall(SYSCALL::getdents)?;
-    // ctx.allow_syscall(SYSCALL::geteuid)?;
-    // ctx.allow_syscall(SYSCALL::getresuid)?;
-    // ctx.allow_syscall(SYSCALL::getresgid)?;
-    ctx.allow_syscall(SYSCALL::sigaltstack)?;
-    ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-    // ctx.allow_syscall(SYSCALL::clock_getres)?;
-    ctx.allow_syscall(SYSCALL::exit_group)?;
-    ctx.allow_syscall(SYSCALL::set_robust_list)?;
-    // ctx.allow_syscall(SYSCALL::openat)?;
-    // ctx.allow_syscall(SYSCALL::getrandom)?;
+    if !danger_disable_seccomp {
+        let mut ctx = Context::init()?;
 
-    ctx.load()?;
-    info!("stage 2/2 is active");
+        ctx.allow_syscall(SYSCALL::futex)?;
+        ctx.allow_syscall(SYSCALL::read)?;
+        ctx.allow_syscall(SYSCALL::write)?;
+        // ctx.allow_syscall(SYSCALL::open)?;
+        ctx.allow_syscall(SYSCALL::close)?;
+        // ctx.allow_syscall(SYSCALL::stat)?;
+        // ctx.allow_syscall(SYSCALL::fstat)?;
+        // ctx.allow_syscall(SYSCALL::lstat)?;
+        ctx.allow_syscall(SYSCALL::poll)?;
+        ctx.allow_syscall(SYSCALL::mmap)?;
+        ctx.allow_syscall(SYSCALL::mprotect)?;
+        ctx.allow_syscall(SYSCALL::munmap)?;
+        // ctx.allow_syscall(SYSCALL::ioctl)?;
+        // ctx.allow_syscall(SYSCALL::socket)?;
+        // ctx.allow_syscall(SYSCALL::connect)?;
+        // ctx.allow_syscall(SYSCALL::sendto)?;
+        // ctx.allow_syscall(SYSCALL::recvfrom)?;
+        // ctx.allow_syscall(SYSCALL::sendmsg)?;
+        // ctx.allow_syscall(SYSCALL::recvmsg)?;
+        // ctx.allow_syscall(SYSCALL::bind)?;
+        // ctx.allow_syscall(SYSCALL::getsockname)?;
+        // ctx.allow_syscall(SYSCALL::setsockopt)?;
+        // ctx.allow_syscall(SYSCALL::getsockopt)?;
+        ctx.allow_syscall(SYSCALL::clone)?;
+        // ctx.allow_syscall(SYSCALL::uname)?;
+        // ctx.allow_syscall(SYSCALL::fcntl)?;
+        // ctx.allow_syscall(SYSCALL::getdents)?;
+        // ctx.allow_syscall(SYSCALL::geteuid)?;
+        // ctx.allow_syscall(SYSCALL::getresuid)?;
+        // ctx.allow_syscall(SYSCALL::getresgid)?;
+        ctx.allow_syscall(SYSCALL::sigaltstack)?;
+        ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
+        // ctx.allow_syscall(SYSCALL::clock_getres)?;
+        ctx.allow_syscall(SYSCALL::exit_group)?;
+        ctx.allow_syscall(SYSCALL::set_robust_list)?;
+        // ctx.allow_syscall(SYSCALL::openat)?;
+        // ctx.allow_syscall(SYSCALL::getrandom)?;
+
+        ctx.load()?;
+    } else {
+        warn!("stage 2/2: seccomp has been disabled!");
+    }
+
+    if voided {
+        warn!("stage 2/2 is active, but some things have been disabled");
+    } else {
+        info!("stage 2/2 is active");
+    }
 
     Ok(())
 }
