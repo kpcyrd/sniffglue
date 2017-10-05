@@ -45,6 +45,10 @@ cargo install sniffglue
 - [X] dhcp
 - [ ] 802.11
 
+## Security
+
+sniffglue uses seccomp to restrict the syscalls that can be used after the process started. This is done in two stages, first at the very beginning (directly after env\_logger initialized) and once after the sniffer has been setup, but before packets are read from the network.
+
 ## Fuzzing
 
 sniffglue supports cargo-fuzz. To start fuzzing, make sure [cargo-fuzz] is installed and run
