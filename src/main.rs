@@ -11,6 +11,8 @@ extern crate reduce;
 extern crate clap;
 extern crate atty;
 extern crate seccomp_sys;
+extern crate env_logger;
+#[macro_use] extern crate log;
 
 use pcap::Device;
 use pcap::Capture;
@@ -63,6 +65,7 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 
 fn main() {
+    env_logger::init().unwrap(); // this goes before the sandbox so logging is available
     sandbox::activate_stage1().expect("init sandbox stage1");
 
     let matches = App::new("sniffglue")

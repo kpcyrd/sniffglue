@@ -1,4 +1,5 @@
 #[allow(non_camel_case_types)]
+#[derive(Debug)]
 pub enum SYSCALL {
     read                = 0,
     write               = 1,

@@ -31,6 +31,7 @@ impl Context {
     }
 
     fn allow_syscall(&mut self, syscall: SYSCALL) -> Result<(), ()> {
+        debug!("seccomp: allowing syscall={:?}", syscall);
         let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.as_i32(), 0) };
 
         if ret != 0 {
@@ -105,6 +106,7 @@ pub fn activate_stage1() -> Result<(), ()> {
     ctx.allow_syscall(SYSCALL::getrandom)?;
 
     ctx.load()?;
+    info!("stage 1/2 is active");
 
     Ok(())
 }
@@ -151,6 +153,7 @@ pub fn activate_stage2() -> Result<(), ()> {
     // ctx.allow_syscall(SYSCALL::getrandom)?;
 
     ctx.load()?;
+    info!("stage 2/2 is active");
 
     Ok(())
 }
