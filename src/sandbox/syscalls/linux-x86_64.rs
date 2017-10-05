@@ -30,11 +30,13 @@ pub enum SYSCALL {
     getresuid           = 118,
     getresgid           = 120,
     sigaltstack         = 131,
+    prctl               = 157,
     futex               = 202,
     sched_getaffinity   = 204,
     clock_getres        = 229,
     exit_group          = 231,
     set_robust_list     = 273,
     openat              = 257,
+    seccomp             = 317,
     getrandom           = 318,
 }

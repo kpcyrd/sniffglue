@@ -63,7 +63,7 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 
 fn main() {
-    sandbox::activate().unwrap();
+    sandbox::activate_stage1().expect("init sandbox stage1");
 
     let matches = App::new("sniffglue")
         .version("0.2.0")
@@ -123,6 +123,8 @@ fn main() {
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
+
+    sandbox::activate_stage2().expect("init sandbox stage2");
 
     let join = thread::spawn(move || {
         let cpus = num_cpus::get();
