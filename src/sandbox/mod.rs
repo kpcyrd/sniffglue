@@ -1,5 +1,7 @@
+use std::fs;
 use std::env;
 use std::ffi::CString;
+use std::os::unix::fs::MetadataExt;
 
 use users;
 use libc::{self, uid_t, gid_t};
@@ -138,6 +140,26 @@ pub fn activate_stage1(danger_disable_seccomp: &bool) -> Result<(), ()> {
 }
 
 pub fn chroot(path: &str) -> Result<(), ()> {
+    let metadata = match fs::metadata(path) {
+        Ok(meta) => meta,
+        Err(_) => return Err(()),
+    };
+
+    if ! metadata.is_dir() {
+        error!("chroot target is no directory");
+        return Err(());
+    }
+
+    if metadata.uid() != 0 {
+        error!("chroot target isn't owned by root");
+        return Err(());
+    }
+
+    if metadata.mode() & 0o22 != 0 {
+        error!("chroot is writable by group or world");
+        return Err(());
+    }
+
     let path = CString::new(path).unwrap();
     let ret = unsafe { libc::chroot(path.as_ptr()) };
 
