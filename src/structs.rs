@@ -33,11 +33,13 @@ pub mod raw {
 }
 
 pub mod ether {
+    use structs::arp;
     use structs::ipv4;
     use pktparse;
 
     #[derive(Debug, PartialEq)]
     pub enum Ether {
+        Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
     }
 
@@ -45,9 +47,20 @@ pub mod ether {
         pub fn is_noise(&self) -> bool {
             use self::Ether::*;
             match *self {
+                Arp(_) => true,
                 IPv4(_, ref ipv4) => ipv4.is_noise(),
             }
         }
+    }
+}
+
+pub mod arp {
+    use pktparse;
+
+    #[derive(Debug, PartialEq)]
+    pub enum ARP {
+        Request(pktparse::arp::ArpPacket),
+        Reply(pktparse::arp::ArpPacket),
     }
 }
 

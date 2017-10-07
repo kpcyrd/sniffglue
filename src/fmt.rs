@@ -77,6 +77,25 @@ impl Format {
                                 display_macaddr(&eth_frame.dest_mac));
 
                 match eth {
+                    Arp(arp_pkt) => {
+                        use structs::arp::ARP;
+                        match arp_pkt {
+                            ARP::Request(arp_pkt) => {
+                                out += &format!(", [arp/request] who has {:15}? (tell {}, {})",
+                                    format!("{}", arp_pkt.dest_addr),
+                                    format!("{}", arp_pkt.src_addr),
+                                    display_macaddr(&arp_pkt.src_mac));
+                            },
+                            ARP::Reply(arp_pkt) => {
+                                out += &format!(", [arp/reply] {:15} => {} (fyi {}, {})",
+                                    format!("{}", arp_pkt.src_addr),
+                                    display_macaddr(&arp_pkt.src_mac),
+                                    format!("{}", arp_pkt.dest_addr),
+                                    display_macaddr(&arp_pkt.dest_mac));
+                            },
+                        }
+                        Some(Blue)
+                    },
                     IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
                         out += &format!(", [tcp] {:22} -> {:22} ",
                                         format!("{}:{}", ip_hdr.source_addr, tcp_hdr.source_port),
@@ -221,6 +240,9 @@ impl Format {
                 println!("eth: {:?}", eth_frame);
 
                 match eth {
+                    Arp(arp_pkt) => {
+                        self.colorify(Blue, format!("\tarp: {:?}", arp_pkt));
+                    },
                     IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
                         println!("\tipv4: {:?}", ip_hdr);
                         println!("\t\ttcp: {:?}", tcp_hdr);
