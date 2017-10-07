@@ -51,8 +51,35 @@ Read a dump from \fIsniff.pcap\fR and display all packets in detailed mode:
 .fi
 .RE
 
+.SH PROTOCOLS
+.BR ethernet,
+.BR ipv4,
+.BR arp,
+.BR tcp,
+.BR udp,
+.BR http,
+.BR tls,
+.BR dns,
+.BR dhcp
+
 .SH SECURITY
 To report a security issue please contact kpcyrd on ircs://irc.hackint.org.
+
+.SS SECCOMP
+.LP
+To ensure a compromised process doesn't compromise the system, sniffglue uses
+seccomp to restrict the syscalls that can be used after the process started.
+This is done in two stages, first at the very beginning (directly after
+env\_logger initialized) and once after the sniffer has been setup, but before
+packets are read from the network.
+
+.SS HARDENING
+.LP
+During the second stage, there's also some general hardening that is applied
+before all unneeded syscalls are finally disabled. Those are system specific,
+so a configuration file is read from \fB/etc/sniffglue.conf\fR. This config
+file specifies an empty directory for \fBchroot\fR and an unprivileged account
+in \fBuser\fR that is used to drop root privileges.
 
 .SS FUZZING
 .LP
@@ -62,7 +89,8 @@ distributed along with its source code. Please note that this program links
 to \fIlibpcap\fR which is not included in the current fuzzing configuration.
 
 .SH "SEE ALSO"
-pcap(3PCAP)
+.BR pcap(3PCAP),
+.BR seccomp(2)
 
 .SH AUTHORS
 This program was originally written and is currently maintained by kpcyrd.
