@@ -10,6 +10,13 @@ extern crate num_cpus;
 extern crate reduce;
 extern crate clap;
 extern crate atty;
+extern crate seccomp_sys;
+extern crate env_logger;
+#[macro_use] extern crate log;
+extern crate libc;
+extern crate toml;
+#[macro_use] extern crate serde_derive;
+extern crate users;
 
 use pcap::Device;
 use pcap::Capture;
@@ -21,6 +28,7 @@ use std::sync::mpsc;
 
 mod centrifuge;
 mod fmt;
+mod sandbox;
 mod structs;
 mod nom_http;
 
@@ -61,6 +69,10 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 
 fn main() {
+    // this goes before the sandbox so logging is available
+    env_logger::init().unwrap();
+
+    // this goes before the sandbox so we know if `--danger-disable-seccomp` has been set
     let matches = App::new("sniffglue")
         .version("0.2.0")
         .arg(Arg::with_name("promisc")
@@ -83,10 +95,17 @@ fn main() {
             .long("read")
             .help("Open dev as pcap file")
         )
+        .arg(Arg::with_name("danger-disable-seccomp")
+            .long("danger-disable-seccomp")
+            .help("Only use this if you know what you're doing")
+        )
         .arg(Arg::with_name("dev")
             .help("Device for sniffing")
         )
         .get_matches();
+
+    let danger_disable_seccomp = matches.occurrences_of("danger-disable-seccomp") > 0;
+    sandbox::activate_stage1(&danger_disable_seccomp).expect("init sandbox stage1");
 
     let dev = match matches.value_of("dev") {
         Some(dev) => dev.to_owned(),
@@ -119,6 +138,8 @@ fn main() {
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
+
+    sandbox::activate_stage2(&danger_disable_seccomp).expect("init sandbox stage2");
 
     let join = thread::spawn(move || {
         let cpus = num_cpus::get();
