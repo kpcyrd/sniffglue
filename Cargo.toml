@@ -7,6 +7,10 @@ license = "GPL-3.0"
 repository = "https://github.com/kpcyrd/sniffglue"
 categories = ["command-line-utilities"]
 readme = "README.md"
+exclude = ["pcaps/**/*", "**/*.pcap"]
+
+[lib]
+doc = false
 
 [badges]
 travis-ci = { repository = "kpcyrd/sniffglue" }
