@@ -13,6 +13,10 @@ extern crate atty;
 extern crate seccomp_sys;
 extern crate env_logger;
 #[macro_use] extern crate log;
+extern crate libc;
+extern crate toml;
+#[macro_use] extern crate serde_derive;
+extern crate users;
 
 use pcap::Device;
 use pcap::Capture;
