@@ -1,0 +1,101 @@
+.TH SNIFFGLUE "1" "October 2017" "sniffglue 0.2.0" "User Commands"
+.SH NAME
+sniffglue \- secure multithreaded packet sniffer
+
+.SH SYNOPSIS
+.B sniffglue
+[\fB\-dxrpVh\fR]
+.IR device
+
+.SH DESCRIPTION
+.B sniffglue
+is a network sniffer written in rust. Network packets are parsed concurrently
+using a thread pool to utilize all cpu cores. Project goals are that you can
+run \fBsniffglue\fR securely on untrusted networks and that it must not crash
+when processing packets. The output should be as useful as possible by default.
+
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-detailed\fR
+Detailed output
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints help information
+.TP
+\fB\-x\fR, \fB\-\-noisy\fR
+Log noisy packets
+.TP
+\fB\-p\fR, \fB\-\-promisc\fR
+Set \fIdevice\fR to promisc
+.TP
+\fB\-r\fR, \fB\-\-read\fR
+Open \fIdevice\fR as pcap file
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Prints version information. If \fB\-r\fR was specified, open as pcap file
+instead
+
+.SH EXAMPLES
+.LP
+Sniff and print interesting packets in compact mode from \fIenp0s25\fR:
+.RS
+.nf
+\fBsniffglue enp0s25\fP
+.fi
+.RE
+.LP
+Read a dump from \fIsniff.pcap\fR and display all packets in detailed mode:
+.RS
+.nf
+\fBsniffglue -dxr sniff.pcap\fP
+.fi
+.RE
+
+.SH PROTOCOLS
+.BR ethernet,
+.BR ipv4,
+.BR arp,
+.BR tcp,
+.BR udp,
+.BR http,
+.BR tls,
+.BR dns,
+.BR dhcp
+
+.SH SECURITY
+To report a security issue please contact kpcyrd on ircs://irc.hackint.org.
+
+.SS SECCOMP
+.LP
+To ensure a compromised process doesn't compromise the system, sniffglue uses
+seccomp to restrict the syscalls that can be used after the process started.
+This is done in two stages, first at the very beginning (directly after
+env\_logger initialized) and once after the sniffer has been setup, but before
+packets are read from the network.
+
+.SS HARDENING
+.LP
+During the second stage, there's also some general hardening that is applied
+before all unneeded syscalls are finally disabled. Those are system specific,
+so a configuration file is read from \fB/etc/sniffglue.conf\fR. This config
+file specifies an empty directory for \fBchroot\fR and an unprivileged account
+in \fBuser\fR that is used to drop root privileges.
+
+.SS FUZZING
+.LP
+The packet processing of \fBsniffglue\fR can be fuzzed using \fIcargo-fuzz\fR.
+Everything you should need is provided in the \fIfuzz/\fR directory that is
+distributed along with its source code. Please note that this program links
+to \fIlibpcap\fR which is not included in the current fuzzing configuration.
+
+.SH "SEE ALSO"
+.BR pcap(3PCAP),
+.BR seccomp(2)
+
+.SH AUTHORS
+This program was originally written and is currently maintained by kpcyrd.
+Bugs and patches are welcome on github:
+.LP
+.RS
+.I https://github.com/kpcyrd/sniffglue
+.RE
