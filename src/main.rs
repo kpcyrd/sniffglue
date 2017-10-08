@@ -17,6 +17,7 @@ extern crate libc;
 extern crate toml;
 #[macro_use] extern crate serde_derive;
 extern crate users;
+#[macro_use] extern crate cfg_if;
 
 use pcap::Device;
 use pcap::Capture;
