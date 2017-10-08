@@ -10,8 +10,7 @@ matrix:
     env: TARGET=i686-unknown-linux-gnu
 
 before_install:
-- sudo apt-get -qq update
-- sudo apt-get install -y libpcap-dev libseccomp-dev gcc-multilib
+- sudo ci/install_libs.sh "$TARGET"
 install:
 - rustup install "$TRAVIS_RUST_VERSION-$TARGET"
 - rustup target add "$TARGET" || true
