@@ -10,6 +10,8 @@ using a thread pool to utilize all cpu cores. Project goals are that you can
 run sniffglue securely on untrusted networks and that it must not crash
 when processing packets. The output should be as useful as possible by default.
 
+![screenshot](docs/screenshot.png)
+
 ## Usage
 
     sniffglue enp0s25
