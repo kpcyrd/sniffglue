@@ -1,8 +1,23 @@
 language: rust
-rust: stable
-before_script:
+
+matrix:
+  include:
+  - os: linux
+    rust: stable
+    env: TARGET=x86_64-unknown-linux-gnu
+  - os: linux
+    rust: stable
+    env: TARGET=i686-unknown-linux-gnu
+
+before_install:
 - sudo apt-get -qq update
-- sudo apt-get install -y libpcap-dev libseccomp-dev
+- sudo apt-get install -y libpcap-dev libseccomp-dev gcc-multilib
+install:
+- rustup install "$TRAVIS_RUST_VERSION-$TARGET"
+- rustup target add "$TARGET" || true
 script:
-- cargo build --verbose
-- cargo test --verbose
+- cargo build --verbose --target="$TARGET"
+- cargo test --verbose --target="$TARGET"
+- cargo build --verbose --release --target="$TARGET"
+- ls -lah "target/$TARGET/release/sniffglue"
+- file "target/$TARGET/release/sniffglue"
