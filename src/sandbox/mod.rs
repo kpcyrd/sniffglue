@@ -7,6 +7,9 @@ use users;
 use libc::{self, uid_t, gid_t};
 
 pub mod config;
+mod error;
+
+pub use self::error::Error;
 
 cfg_if! {
     if #[cfg(all(target_os="linux", any(target_arch="x86_64")))] {
@@ -17,7 +20,7 @@ cfg_if! {
     }
 }
 
-pub fn activate_stage1() -> Result<(), ()> {
+pub fn activate_stage1() -> Result<(), Error> {
     if cfg!(target_os="linux") {
         seccomp::activate_stage1()?;
     }
@@ -27,65 +30,65 @@ pub fn activate_stage1() -> Result<(), ()> {
     Ok(())
 }
 
-pub fn chroot(path: &str) -> Result<(), ()> {
+pub fn chroot(path: &str) -> Result<(), Error> {
     let metadata = match fs::metadata(path) {
         Ok(meta) => meta,
-        Err(_) => return Err(()),
+        Err(_) => return Err(Error::Chroot),
     };
 
     if ! metadata.is_dir() {
         error!("chroot target is no directory");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     if metadata.uid() != 0 {
         error!("chroot target isn't owned by root");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     if metadata.mode() & 0o22 != 0 {
         error!("chroot is writable by group or world");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     let path = CString::new(path).unwrap();
     let ret = unsafe { libc::chroot(path.as_ptr()) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::Chroot)
     } else {
         match env::set_current_dir("/") {
             Ok(_) => Ok(()),
-            Err(_) => Err(()),
+            Err(_) => Err(Error::Chroot),
         }
     }
 }
 
-pub fn setreuid(uid: uid_t) -> Result<(), ()> {
+pub fn setreuid(uid: uid_t) -> Result<(), Error> {
     let ret = unsafe { libc::setreuid(uid, uid) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
 }
 
-pub fn setregid(gid: gid_t) -> Result<(), ()> {
+pub fn setregid(gid: gid_t) -> Result<(), Error> {
     let ret = unsafe { libc::setregid(gid, gid) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
 }
 
-pub fn setgroups(groups: Vec<gid_t>) -> Result<(), ()> {
+pub fn setgroups(groups: Vec<gid_t>) -> Result<(), Error> {
     let ret = unsafe { libc::setgroups(groups.len(), groups.as_ptr()) };
 
     if ret < 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
@@ -123,44 +126,48 @@ pub fn id() -> String {
         groups)
 }
 
-pub fn activate_stage2() -> Result<(), ()> {
+fn apply_config(config: config::Config) -> Result<(), Error> {
+    debug!("got config: {:?}", config);
+
+    let user = match config.sandbox.user {
+        Some(user) => {
+            let user = match users::get_user_by_name(&user) {
+                Some(user) => user,
+                None => return Err(Error::InvalidUser),
+            };
+            Some((user.uid(), user.primary_group_id()))
+        },
+        _ => None,
+    };
+
+    match config.sandbox.chroot {
+        Some(path) => {
+            info!("starting chroot: {:?}", path);
+            chroot(&path)?;
+            info!("successfully chrooted");
+        },
+        _ => (),
+    };
+
+    match user {
+        Some((uid, gid)) => {
+            info!("id: {}", id());
+            info!("setting uid to {:?}", uid);
+            setgroups(Vec::new())?;
+            setregid(gid)?;
+            setreuid(uid)?;
+            info!("id: {}", id());
+        },
+        None => (),
+    };
+
+    Ok(())
+}
+
+pub fn activate_stage2() -> Result<(), Error> {
     match config::find() {
         Some(config_path) => match config::load(&config_path) {
-            Ok(config) => {
-                debug!("got config: {:?}", config);
-
-                let user = match config.sandbox.user {
-                    Some(user) => {
-                        let user = match users::get_user_by_name(&user) {
-                            Some(user) => user,
-                            None => return Err(()),
-                        };
-                        Some((user.uid(), user.primary_group_id()))
-                    },
-                    _ => None,
-                };
-
-                match config.sandbox.chroot {
-                    Some(path) => {
-                        info!("starting chroot: {:?}", path);
-                        chroot(&path)?;
-                        info!("successfully chrooted");
-                    },
-                    _ => (),
-                };
-
-                match user {
-                    Some((uid, gid)) => {
-                        info!("id: {}", id());
-                        info!("setting uid to {:?}", uid);
-                        setgroups(Vec::new())?;
-                        setregid(gid)?;
-                        setreuid(uid)?;
-                        info!("id: {}", id());
-                    },
-                    None => (),
-                };
-            },
+            Ok(config) => apply_config(config)?,
             Err(err) => {
                 warn!("couldn't load config: {:?}", err);
             },

@@ -5,6 +5,7 @@ use seccomp_sys::*;
 mod syscalls;
 
 use self::syscalls::SYSCALL;
+use sandbox::error::SeccompError;
 
 impl SYSCALL {
     #[inline]
@@ -18,11 +19,11 @@ pub struct Context {
 }
 
 impl Context {
-    fn init() -> Result<Context, ()> {
+    fn init() -> Result<Context, SeccompError> {
         let ctx = unsafe { seccomp_init(SCMP_ACT_KILL) };
 
         if ctx.is_null() {
-            return Err(());
+            return Err(SeccompError::FFI);
         }
 
         Ok(Context {
@@ -30,22 +31,22 @@ impl Context {
         })
     }
 
-    fn allow_syscall(&mut self, syscall: SYSCALL) -> Result<(), ()> {
+    fn allow_syscall(&mut self, syscall: SYSCALL) -> Result<(), SeccompError> {
         debug!("seccomp: allowing syscall={:?}", syscall);
         let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.as_i32(), 0) };
 
         if ret != 0 {
-            Err(())
+            Err(SeccompError::FFI)
         } else {
             Ok(())
         }
     }
 
-    fn load(&self) -> Result<(), ()> {
+    fn load(&self) -> Result<(), SeccompError> {
         let ret = unsafe { seccomp_load(self.ctx) };
 
         if ret != 0 {
-            Err(())
+            Err(SeccompError::FFI)
         } else {
             Ok(())
         }
@@ -60,7 +61,7 @@ impl Drop for Context {
     }
 }
 
-pub fn activate_stage1() -> Result<(), ()> {
+pub fn activate_stage1() -> Result<(), SeccompError> {
     let mut ctx = Context::init()?;
 
     ctx.allow_syscall(SYSCALL::futex)?;
@@ -120,7 +121,7 @@ pub fn activate_stage1() -> Result<(), ()> {
     Ok(())
 }
 
-pub fn activate_stage2() -> Result<(), ()> {
+pub fn activate_stage2() -> Result<(), SeccompError> {
     let mut ctx = Context::init()?;
 
     ctx.allow_syscall(SYSCALL::futex)?;
