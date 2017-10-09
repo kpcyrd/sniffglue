@@ -17,9 +17,9 @@ cfg_if! {
     }
 }
 
-pub fn activate_stage1(danger_disable_seccomp: &bool) -> Result<(), ()> {
+pub fn activate_stage1() -> Result<(), ()> {
     if cfg!(target_os="linux") {
-        seccomp::activate_stage1(danger_disable_seccomp)?;
+        seccomp::activate_stage1()?;
     }
 
     info!("stage 1/2 is active");
@@ -123,7 +123,7 @@ pub fn id() -> String {
         groups)
 }
 
-pub fn activate_stage2(danger_disable_seccomp: &bool) -> Result<(), ()> {
+pub fn activate_stage2() -> Result<(), ()> {
     match config::find() {
         Some(config_path) => match config::load(&config_path) {
             Ok(config) => {
@@ -173,7 +173,7 @@ pub fn activate_stage2(danger_disable_seccomp: &bool) -> Result<(), ()> {
     }
 
     if cfg!(target_os="linux") {
-        seccomp::activate_stage2(danger_disable_seccomp)?;
+        seccomp::activate_stage2()?;
     }
 
     info!("stage 2/2 is active");

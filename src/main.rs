@@ -73,7 +73,8 @@ fn main() {
     // this goes before the sandbox so logging is available
     env_logger::init().unwrap();
 
-    // this goes before the sandbox so we know if `--danger-disable-seccomp` has been set
+    sandbox::activate_stage1().expect("init sandbox stage1");
+
     let matches = App::new("sniffglue")
         .version("0.2.0")
         .setting(AppSettings::ColoredHelp)
@@ -97,17 +98,10 @@ fn main() {
             .long("read")
             .help("Open device as pcap file")
         )
-        .arg(Arg::with_name("danger-disable-seccomp")
-            .long("danger-disable-seccomp")
-            .help("Only use this if you know what you're doing")
-        )
         .arg(Arg::with_name("device")
             .help("Device for sniffing")
         )
         .get_matches();
-
-    let danger_disable_seccomp = matches.occurrences_of("danger-disable-seccomp") > 0;
-    sandbox::activate_stage1(&danger_disable_seccomp).expect("init sandbox stage1");
 
     let device = match matches.value_of("device") {
         Some(device) => device.to_owned(),
@@ -141,7 +135,7 @@ fn main() {
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
 
-    sandbox::activate_stage2(&danger_disable_seccomp).expect("init sandbox stage2");
+    sandbox::activate_stage2().expect("init sandbox stage2");
 
     let join = thread::spawn(move || {
         let cpus = num_cpus::get();
