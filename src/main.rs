@@ -33,7 +33,7 @@ mod sandbox;
 mod structs;
 mod nom_http;
 
-use clap::{App, Arg};
+use clap::{App, Arg, AppSettings};
 
 
 type Message = structs::raw::Raw;
@@ -76,6 +76,7 @@ fn main() {
     // this goes before the sandbox so we know if `--danger-disable-seccomp` has been set
     let matches = App::new("sniffglue")
         .version("0.2.0")
+        .setting(AppSettings::ColoredHelp)
         .arg(Arg::with_name("promisc")
             .short("p")
             .long("promisc")
