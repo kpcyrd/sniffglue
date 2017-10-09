@@ -1,5 +1,6 @@
 #!/bin/sh
-set -x
+set -ex
+
 apt-get -qq update
 case "$1" in
     x86_64-unknown-linux-gnu)

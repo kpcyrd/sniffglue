@@ -1,5 +1,5 @@
 #!/bin/sh
-set -x
+set -ex
 
 case "$BUILD_MODE" in
     release)
