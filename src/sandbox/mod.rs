@@ -126,6 +126,11 @@ pub fn id() -> String {
         groups)
 }
 
+#[inline]
+fn is_root() -> bool {
+    users::get_current_uid() == 0
+}
+
 fn apply_config(config: config::Config) -> Result<(), Error> {
     debug!("got config: {:?}", config);
 
@@ -140,8 +145,8 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
         _ => None,
     };
 
-    match config.sandbox.chroot {
-        Some(path) => {
+    match (is_root(), config.sandbox.chroot) {
+        (true, Some(path)) => {
             info!("starting chroot: {:?}", path);
             chroot(&path)?;
             info!("successfully chrooted");
@@ -149,8 +154,8 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
         _ => (),
     };
 
-    match user {
-        Some((uid, gid)) => {
+    match (is_root(), user) {
+        (true, Some((uid, gid))) => {
             info!("id: {}", id());
             info!("setting uid to {:?}", uid);
             setgroups(Vec::new())?;
@@ -158,26 +163,26 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
             setreuid(uid)?;
             info!("id: {}", id());
         },
-        None => (),
+        (true, None) => {
+            warn!("executing as root!");
+        },
+        (false, _) => {
+            info!("can't drop privileges, executing as {}", id());
+        },
     };
 
     Ok(())
 }
 
 pub fn activate_stage2() -> Result<(), Error> {
-    match config::find() {
-        Some(config_path) => match config::load(&config_path) {
-            Ok(config) => apply_config(config)?,
-            Err(err) => {
-                warn!("couldn't load config: {:?}", err);
-            },
-        },
-        None => (),
-    };
+    let config = config::find().map_or_else(|| {
+        warn!("couldn't find config");
+        Ok(config::Config::default())
+    }, |config_path| {
+        config::load(&config_path)
+    })?;
 
-    if users::get_current_uid() == 0 {
-        warn!("current user is root!");
-    }
+    apply_config(config)?;
 
     if cfg!(target_os="linux") {
         seccomp::activate_stage2()?;

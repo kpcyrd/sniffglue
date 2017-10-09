@@ -4,12 +4,12 @@ use std::fs::File;
 use std::path::Path;
 use toml;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, PartialEq)]
 pub struct Config {
     pub sandbox: SandboxConfig,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, PartialEq)]
 pub struct SandboxConfig {
     pub user: Option<String>,
     pub chroot: Option<String>,
