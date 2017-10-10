@@ -5,199 +5,90 @@ use std::os::unix::fs::MetadataExt;
 
 use users;
 use libc::{self, uid_t, gid_t};
-use seccomp_sys::*;
 
 pub mod config;
+mod error;
 
-#[cfg(all(target_os="linux", target_arch="x86_64"))]
-#[path="syscalls/linux-x86_64.rs"]
-mod syscalls;
+pub use self::error::Error;
 
-use self::syscalls::SYSCALL;
-
-impl SYSCALL {
-    #[inline]
-    pub fn as_i32(self) -> i32 {
-        self as i32
+cfg_if! {
+    if #[cfg(all(target_os="linux", any(target_arch="x86_64")))] {
+        pub mod seccomp;
+    } else if #[cfg(target_os="linux")] {
+        #[path="seccomp_unsupported.rs"]
+        pub mod seccomp;
     }
 }
 
-pub struct Context {
-    ctx: *mut scmp_filter_ctx,
-}
-
-impl Context {
-    fn init() -> Result<Context, ()> {
-        let ctx = unsafe { seccomp_init(SCMP_ACT_KILL) };
-
-        if ctx.is_null() {
-            return Err(());
-        }
-
-        Ok(Context {
-            ctx,
-        })
+pub fn activate_stage1() -> Result<(), Error> {
+    if cfg!(target_os="linux") {
+        seccomp::activate_stage1()?;
     }
 
-    fn allow_syscall(&mut self, syscall: SYSCALL) -> Result<(), ()> {
-        debug!("seccomp: allowing syscall={:?}", syscall);
-        let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.as_i32(), 0) };
-
-        if ret != 0 {
-            Err(())
-        } else {
-            Ok(())
-        }
-    }
-
-    fn load(&self) -> Result<(), ()> {
-        let ret = unsafe { seccomp_load(self.ctx) };
-
-        if ret != 0 {
-            Err(())
-        } else {
-            Ok(())
-        }
-    }
-}
-
-impl Drop for Context {
-    fn drop(&mut self) {
-        unsafe {
-            seccomp_release(self.ctx)
-        };
-    }
-}
-
-pub fn activate_stage1(danger_disable_seccomp: &bool) -> Result<(), ()> {
-    let voided = *danger_disable_seccomp;
-
-    if !danger_disable_seccomp {
-        let mut ctx = Context::init()?;
-
-        ctx.allow_syscall(SYSCALL::futex)?;
-        ctx.allow_syscall(SYSCALL::read)?;
-        ctx.allow_syscall(SYSCALL::write)?;
-        ctx.allow_syscall(SYSCALL::open)?;
-        ctx.allow_syscall(SYSCALL::close)?;
-        ctx.allow_syscall(SYSCALL::stat)?;
-        ctx.allow_syscall(SYSCALL::fstat)?;
-        ctx.allow_syscall(SYSCALL::lstat)?;
-        ctx.allow_syscall(SYSCALL::poll)?;
-        ctx.allow_syscall(SYSCALL::lseek)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::mmap)?;
-        ctx.allow_syscall(SYSCALL::mprotect)?;
-        ctx.allow_syscall(SYSCALL::munmap)?;
-        ctx.allow_syscall(SYSCALL::ioctl)?;
-        ctx.allow_syscall(SYSCALL::socket)?;
-        ctx.allow_syscall(SYSCALL::connect)?;
-        ctx.allow_syscall(SYSCALL::sendto)?;
-        ctx.allow_syscall(SYSCALL::recvfrom)?;
-        ctx.allow_syscall(SYSCALL::sendmsg)?;
-        ctx.allow_syscall(SYSCALL::recvmsg)?;
-        ctx.allow_syscall(SYSCALL::bind)?;
-        ctx.allow_syscall(SYSCALL::getsockname)?;
-        ctx.allow_syscall(SYSCALL::setsockopt)?;
-        ctx.allow_syscall(SYSCALL::getsockopt)?;
-        ctx.allow_syscall(SYSCALL::clone)?;
-        ctx.allow_syscall(SYSCALL::uname)?;
-        ctx.allow_syscall(SYSCALL::fcntl)?;
-        ctx.allow_syscall(SYSCALL::getdents)?;
-        ctx.allow_syscall(SYSCALL::chdir)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::getuid)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::getgid)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::geteuid)?;
-        ctx.allow_syscall(SYSCALL::getegid)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::setresuid)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::setresgid)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::getgroups)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::setgroups)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::getresuid)?;
-        ctx.allow_syscall(SYSCALL::getresgid)?;
-        ctx.allow_syscall(SYSCALL::sigaltstack)?;
-        ctx.allow_syscall(SYSCALL::prctl)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::chroot)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-        ctx.allow_syscall(SYSCALL::clock_getres)?;
-        ctx.allow_syscall(SYSCALL::exit_group)?;
-        ctx.allow_syscall(SYSCALL::set_robust_list)?;
-        ctx.allow_syscall(SYSCALL::openat)?;
-        ctx.allow_syscall(SYSCALL::seccomp)?; // needed for stage2
-        ctx.allow_syscall(SYSCALL::getrandom)?;
-
-        ctx.load()?;
-    } else {
-        warn!("stage 1/2: seccomp has been disabled!");
-    }
-
-    if voided {
-        warn!("stage 1/2 is active, but some things have been disabled!");
-    } else {
-        info!("stage 1/2 is active");
-    }
+    info!("stage 1/2 is active");
 
     Ok(())
 }
 
-pub fn chroot(path: &str) -> Result<(), ()> {
+pub fn chroot(path: &str) -> Result<(), Error> {
     let metadata = match fs::metadata(path) {
         Ok(meta) => meta,
-        Err(_) => return Err(()),
+        Err(_) => return Err(Error::Chroot),
     };
 
     if ! metadata.is_dir() {
         error!("chroot target is no directory");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     if metadata.uid() != 0 {
         error!("chroot target isn't owned by root");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     if metadata.mode() & 0o22 != 0 {
         error!("chroot is writable by group or world");
-        return Err(());
+        return Err(Error::Chroot);
     }
 
     let path = CString::new(path).unwrap();
     let ret = unsafe { libc::chroot(path.as_ptr()) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::Chroot)
     } else {
         match env::set_current_dir("/") {
             Ok(_) => Ok(()),
-            Err(_) => Err(()),
+            Err(_) => Err(Error::Chroot),
         }
     }
 }
 
-pub fn setreuid(uid: uid_t) -> Result<(), ()> {
+pub fn setreuid(uid: uid_t) -> Result<(), Error> {
     let ret = unsafe { libc::setreuid(uid, uid) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
 }
 
-pub fn setregid(gid: gid_t) -> Result<(), ()> {
+pub fn setregid(gid: gid_t) -> Result<(), Error> {
     let ret = unsafe { libc::setregid(gid, gid) };
 
     if ret != 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
 }
 
-pub fn setgroups(groups: Vec<gid_t>) -> Result<(), ()> {
+pub fn setgroups(groups: Vec<gid_t>) -> Result<(), Error> {
     let ret = unsafe { libc::setgroups(groups.len(), groups.as_ptr()) };
 
     if ret < 0 {
-        Err(())
+        Err(Error::FFI)
     } else {
         Ok(())
     }
@@ -235,108 +126,69 @@ pub fn id() -> String {
         groups)
 }
 
-pub fn activate_stage2(danger_disable_seccomp: &bool) -> Result<(), ()> {
-    let voided = *danger_disable_seccomp;
+#[inline]
+fn is_root() -> bool {
+    users::get_current_uid() == 0
+}
 
-    match config::find() {
-        Some(config_path) => match config::load(&config_path) {
-            Ok(config) => {
-                debug!("got config: {:?}", config);
+fn apply_config(config: config::Config) -> Result<(), Error> {
+    debug!("got config: {:?}", config);
 
-                let user = match config.sandbox.user {
-                    Some(user) => {
-                        let user = match users::get_user_by_name(&user) {
-                            Some(user) => user,
-                            None => return Err(()),
-                        };
-                        Some((user.uid(), user.primary_group_id()))
-                    },
-                    _ => None,
-                };
-
-                match config.sandbox.chroot {
-                    Some(path) => {
-                        info!("starting chroot: {:?}", path);
-                        chroot(&path)?;
-                        info!("successfully chrooted");
-                    },
-                    _ => (),
-                };
-
-                match user {
-                    Some((uid, gid)) => {
-                        info!("id: {}", id());
-                        info!("setting uid to {:?}", uid);
-                        setgroups(Vec::new())?;
-                        setregid(gid)?;
-                        setreuid(uid)?;
-                        info!("id: {}", id());
-                    },
-                    None => (),
-                };
-            },
-            Err(err) => {
-                warn!("couldn't load config: {:?}", err);
-            },
+    let user = match config.sandbox.user {
+        Some(user) => {
+            let user = match users::get_user_by_name(&user) {
+                Some(user) => user,
+                None => return Err(Error::InvalidUser),
+            };
+            Some((user.uid(), user.primary_group_id()))
         },
-        None => (),
+        _ => None,
     };
 
-    if users::get_current_uid() == 0 {
-        warn!("current user is root!");
+    match (is_root(), config.sandbox.chroot) {
+        (true, Some(path)) => {
+            info!("starting chroot: {:?}", path);
+            chroot(&path)?;
+            info!("successfully chrooted");
+        },
+        _ => (),
+    };
+
+    match (is_root(), user) {
+        (true, Some((uid, gid))) => {
+            info!("id: {}", id());
+            info!("setting uid to {:?}", uid);
+            setgroups(Vec::new())?;
+            setregid(gid)?;
+            setreuid(uid)?;
+            info!("id: {}", id());
+        },
+        (true, None) => {
+            warn!("executing as root!");
+        },
+        (false, _) => {
+            info!("can't drop privileges, executing as {}", id());
+        },
+    };
+
+    Ok(())
+}
+
+pub fn activate_stage2() -> Result<(), Error> {
+    let config = config::find().map_or_else(|| {
+        warn!("couldn't find config");
+        Ok(config::Config::default())
+    }, |config_path| {
+        config::load(&config_path)
+    })?;
+
+    apply_config(config)?;
+
+    if cfg!(target_os="linux") {
+        seccomp::activate_stage2()?;
     }
 
-    if !danger_disable_seccomp {
-        let mut ctx = Context::init()?;
-
-        ctx.allow_syscall(SYSCALL::futex)?;
-        ctx.allow_syscall(SYSCALL::read)?;
-        ctx.allow_syscall(SYSCALL::write)?;
-        // ctx.allow_syscall(SYSCALL::open)?;
-        ctx.allow_syscall(SYSCALL::close)?;
-        // ctx.allow_syscall(SYSCALL::stat)?;
-        // ctx.allow_syscall(SYSCALL::fstat)?;
-        // ctx.allow_syscall(SYSCALL::lstat)?;
-        ctx.allow_syscall(SYSCALL::poll)?;
-        ctx.allow_syscall(SYSCALL::mmap)?;
-        ctx.allow_syscall(SYSCALL::mprotect)?;
-        ctx.allow_syscall(SYSCALL::munmap)?;
-        // ctx.allow_syscall(SYSCALL::ioctl)?;
-        // ctx.allow_syscall(SYSCALL::socket)?;
-        // ctx.allow_syscall(SYSCALL::connect)?;
-        // ctx.allow_syscall(SYSCALL::sendto)?;
-        // ctx.allow_syscall(SYSCALL::recvfrom)?;
-        // ctx.allow_syscall(SYSCALL::sendmsg)?;
-        // ctx.allow_syscall(SYSCALL::recvmsg)?;
-        // ctx.allow_syscall(SYSCALL::bind)?;
-        // ctx.allow_syscall(SYSCALL::getsockname)?;
-        // ctx.allow_syscall(SYSCALL::setsockopt)?;
-        // ctx.allow_syscall(SYSCALL::getsockopt)?;
-        ctx.allow_syscall(SYSCALL::clone)?;
-        // ctx.allow_syscall(SYSCALL::uname)?;
-        // ctx.allow_syscall(SYSCALL::fcntl)?;
-        // ctx.allow_syscall(SYSCALL::getdents)?;
-        // ctx.allow_syscall(SYSCALL::geteuid)?;
-        // ctx.allow_syscall(SYSCALL::getresuid)?;
-        // ctx.allow_syscall(SYSCALL::getresgid)?;
-        ctx.allow_syscall(SYSCALL::sigaltstack)?;
-        ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-        // ctx.allow_syscall(SYSCALL::clock_getres)?;
-        ctx.allow_syscall(SYSCALL::exit_group)?;
-        ctx.allow_syscall(SYSCALL::set_robust_list)?;
-        // ctx.allow_syscall(SYSCALL::openat)?;
-        // ctx.allow_syscall(SYSCALL::getrandom)?;
-
-        ctx.load()?;
-    } else {
-        warn!("stage 2/2: seccomp has been disabled!");
-    }
-
-    if voided {
-        warn!("stage 2/2 is active, but some things have been disabled");
-    } else {
-        info!("stage 2/2 is active");
-    }
+    info!("stage 2/2 is active");
 
     Ok(())
 }
