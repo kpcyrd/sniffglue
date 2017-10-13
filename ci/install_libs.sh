@@ -2,6 +2,10 @@
 set -ex
 
 apt-get -qq update
+
+# update docker
+apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+
 case "$1" in
     x86_64-unknown-linux-gnu)
         apt-get install -qy \
