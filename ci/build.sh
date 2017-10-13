@@ -7,6 +7,10 @@ case "$BUILD_MODE" in
         ls -lah "target/$TARGET/release/sniffglue"
         file "target/$TARGET/release/sniffglue"
         ;;
+    docker)
+        docker build -t sniffglue .
+        docker images sniffglue
+        ;;
     *)
         cargo build --verbose --target="$TARGET"
         ;;

@@ -42,6 +42,14 @@ Archlinux: `libpcap libseccomp`.
 - [X] dhcp
 - [ ] 802.11
 
+## Docker
+
+You can build sniffglue as a docker image to debug container setups. The image
+is currently about 11.1MB. It is recommended to push it to your own registry.
+
+    docker build -t sniffglue .
+    docker run -it --init --rm --net=host sniffglue eth0
+
 ## Security
 
 To report a security issue please contact kpcyrd on ircs://irc.hackint.org.
