@@ -1,3 +1,4 @@
+#![cfg_attr(rustfmt, rustfmt_skip)]
 // NOTE: vendored from here until this is uploaded to crates.io:
 // https://github.com/Geal/nom_benchmarks/blob/master/http/nom-http/src/main.rs
 // All credits belong to @Geal

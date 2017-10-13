@@ -10,7 +10,10 @@ fn parse_dhcp_option(option: &dhcp4r::options::Option) -> Result<DhcpOption, ::s
     use dhcp4r::options::*;
     let value = match option.code {
 
-        REQUESTED_IP_ADDRESS | ROUTER | DOMAIN_NAME_SERVER => DhcpOption::IPv4(nbytes2ipv4(option.data).unwrap()),
+        REQUESTED_IP_ADDRESS |
+        ROUTER |
+        DOMAIN_NAME_SERVER => DhcpOption::IPv4(nbytes2ipv4(option.data).unwrap()),
+
         HOST_NAME => DhcpOption::String(String::from_utf8(option.data.to_vec())?),
 
         _ => DhcpOption::Bytes(option.data.to_vec()),

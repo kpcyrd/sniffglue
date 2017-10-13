@@ -21,7 +21,7 @@ impl From<SeccompError> for Error {
 }
 
 impl From<config::Error> for Error {
-    fn from(err:config::Error) -> Error {
+    fn from(err: config::Error) -> Error {
         Error::Config(err)
     }
 }

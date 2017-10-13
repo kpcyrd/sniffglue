@@ -21,7 +21,7 @@ cfg_if! {
 }
 
 pub fn activate_stage1() -> Result<(), Error> {
-    if cfg!(target_os="linux") {
+    if cfg!(target_os = "linux") {
         seccomp::activate_stage1()?;
     }
 
@@ -36,7 +36,7 @@ pub fn chroot(path: &str) -> Result<(), Error> {
         Err(_) => return Err(Error::Chroot),
     };
 
-    if ! metadata.is_dir() {
+    if !metadata.is_dir() {
         error!("chroot target is no directory");
         return Err(Error::Chroot);
     }
@@ -104,9 +104,8 @@ pub fn getgroups() -> Result<Vec<gid_t>, ()> {
         Err(())
     } else {
         let groups = (0..ret)
-            .map(|i| {
-                unsafe { gids.get_unchecked(i as usize) }.to_owned()
-            }).collect();
+            .map(|i| unsafe { gids.get_unchecked(i as usize) }.to_owned())
+            .collect();
         Ok(groups)
     }
 }
@@ -118,12 +117,14 @@ pub fn id() -> String {
     let egid = users::get_effective_gid();
     let groups = getgroups().unwrap();
 
-    format!("uid={:?} euid={:?} gid={:?} egid={:?} groups={:?}",
+    format!(
+        "uid={:?} euid={:?} gid={:?} egid={:?} groups={:?}",
         uid,
         euid,
         gid,
         egid,
-        groups)
+        groups
+    )
 }
 
 #[inline]
@@ -175,16 +176,19 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
 }
 
 pub fn activate_stage2() -> Result<(), Error> {
-    let config = config::find().map_or_else(|| {
-        warn!("couldn't find config");
-        Ok(config::Config::default())
-    }, |config_path| {
-        config::load(&config_path)
-    })?;
+    let config = config::find().map_or_else(
+        || {
+            warn!("couldn't find config");
+            Ok(config::Config::default())
+        },
+        |config_path| {
+            config::load(&config_path)
+        },
+    )?;
 
     apply_config(config)?;
 
-    if cfg!(target_os="linux") {
+    if cfg!(target_os = "linux") {
         seccomp::activate_stage2()?;
     }
 

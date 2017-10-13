@@ -34,13 +34,10 @@ pub fn extract(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeErro
         } else {
             match from_utf8(remaining) {
                 Ok(remaining) => Ok((tcp_hdr, TCP::Text(remaining.to_owned()))),
-                Err(_) => {
-                    Ok((tcp_hdr, TCP::Binary(remaining.to_vec())))
-                },
+                Err(_) => Ok((tcp_hdr, TCP::Binary(remaining.to_vec()))),
             }
         }
     } else {
         Err(CentrifugeError::InvalidPacket)
     }
 }
-

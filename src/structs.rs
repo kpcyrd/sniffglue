@@ -145,7 +145,7 @@ pub mod tls {
     impl ClientHello {
         pub fn new(hostname: Option<String>) -> ClientHello {
             ClientHello {
-                hostname
+                hostname,
             }
         }
     }
@@ -165,13 +165,15 @@ pub mod http {
         pub agent: Option<String>,
         pub referer: Option<String>,
         pub auth: Option<String>,
-        pub cookies: Option<String>
+        pub cookies: Option<String>,
     }
 
     fn mkheader(x: Vec<&[u8]>) -> Option<String> {
-        match String::from_utf8(x.into_iter()
-                    .flat_map(|x| x.to_owned())
-                    .collect()) {
+        match String::from_utf8(
+            x.into_iter()
+             .flat_map(|x| x.to_owned())
+             .collect(),
+        ) {
             Ok(x) => Some(x),
             Err(_) => None,
         }
@@ -260,7 +262,7 @@ pub mod dhcp {
                 hostname: None,
                 requested_ip_address: None,
                 router: None,
-                domain_name_server: None
+                domain_name_server: None,
             }
         }
     }

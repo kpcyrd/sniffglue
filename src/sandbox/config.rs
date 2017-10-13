@@ -75,16 +75,22 @@ mod tests {
 
     #[test]
     fn parse_config() {
-        let config: Config = toml::from_str(r#"
+        let config: Config = toml::from_str(
+            r#"
             [sandbox]
             user = "foo"
             chroot = "/var/empty"
-        "#).unwrap();
-        assert_eq!(Config {
-            sandbox: SandboxConfig {
-                user: Some(String::from("foo")),
-                chroot: Some(String::from("/var/empty")),
-            }
-        }, config);
+            "#,
+        ).unwrap();
+
+        assert_eq!(
+            Config {
+                sandbox: SandboxConfig {
+                    user: Some(String::from("foo")),
+                    chroot: Some(String::from("/var/empty")),
+                },
+            },
+            config
+        );
     }
 }

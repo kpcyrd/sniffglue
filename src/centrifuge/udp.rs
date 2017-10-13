@@ -19,15 +19,15 @@ pub fn extract(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeErro
         if udp_hdr.dest_port == 53 || udp_hdr.source_port == 53 {
             let dns = dns::extract(remaining)?;
             Ok((udp_hdr, UDP::DNS(dns)))
-        } else if (udp_hdr.dest_port == 67 && udp_hdr.source_port == 68) || (udp_hdr.dest_port == 68 && udp_hdr.source_port == 67) {
+        } else if (udp_hdr.dest_port == 67 && udp_hdr.source_port == 68) ||
+                   (udp_hdr.dest_port == 68 && udp_hdr.source_port == 67)
+        {
             let dhcp = dhcp::extract(remaining)?;
             Ok((udp_hdr, UDP::DHCP(dhcp)))
         } else {
             match from_utf8(remaining) {
                 Ok(remaining) => Ok((udp_hdr, UDP::Text(remaining.to_owned()))),
-                Err(_) => {
-                    Ok((udp_hdr, UDP::Binary(remaining.to_vec())))
-                },
+                Err(_) => Ok((udp_hdr, UDP::Binary(remaining.to_vec()))),
             }
         }
     } else {
