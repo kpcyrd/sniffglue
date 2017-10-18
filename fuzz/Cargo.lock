@@ -3,7 +3,7 @@ name = "sniffglue-fuzz"
 version = "0.0.1"
 dependencies = [
  "libfuzzer-sys 0.1.0 (git+https://github.com/rust-fuzz/libfuzzer-sys.git)",
- "sniffglue 0.2.0",
+ "sniffglue 0.3.0",
 ]
 
 [[package]]
@@ -58,6 +58,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "byteorder"
 version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "cc"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -137,11 +142,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gcc"
-version = "0.3.54"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
 name = "kernel32-sys"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -163,10 +163,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libfuzzer-sys"
 version = "0.1.0"
-source = "git+https://github.com/rust-fuzz/libfuzzer-sys.git#67f73995f183099b2c8a736bc95b07d8b5903afe"
+source = "git+https://github.com/rust-fuzz/libfuzzer-sys.git#737524f7de1e85342b8b6cd1c01edc71018183ba"
 dependencies = [
  "arbitrary 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cc 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -360,7 +360,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "sniffglue"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ansi_term 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -547,6 +547,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
 "checksum bitflags 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4efd02e230a02e18f92fc2735f44597385ed02ad8f831e7c1c1156ee5e1ab3a5"
 "checksum byteorder 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "96c8b41881888cc08af32d47ac4edd52bc7fa27fef774be47a92443756451304"
+"checksum cc 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2c674f0870e3dbd4105184ea035acb1c32c8ae69939c9e228d2b11bbfe29efad"
 "checksum cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
 "checksum clap 2.26.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3451e409013178663435d6f15fdb212f14ee4424a3d74f979d081d0a66b6f1f2"
 "checksum cookie-factory 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3f4b504d3887e69bdfc41233a0fde2518b9dad6f6228c342d7334ebc32833f1e"
@@ -556,7 +557,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum env_logger 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3ddf21e73e016298f5cb37d6ef8e8da8e39f91f9ec8b0df44b7deb16a9f8cd5b"
 "checksum fuchsia-zircon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f6c0581a4e363262e52b87f59ee2afe3415361c6ec35e665924eb08afe8ff159"
 "checksum fuchsia-zircon-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "43f3795b4bae048dc6123a6b972cadde2e676f9ded08aef6bb77f5f157684a82"
-"checksum gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)" = "5e33ec290da0d127825013597dbdfc28bee4964690c7ce1166cbc2a7bd08b1bb"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)" = "c9e5e58fa1a4c3b915a561a78a22ee0cac6ab97dca2504428bc1cb074375f8d5"
 "checksum libc 0.2.32 (registry+https://github.com/rust-lang/crates.io-index)" = "56cce3130fd040c28df6f495c8492e5ec5808fb4c9093c310df02b0c8f030148"
