@@ -14,6 +14,12 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=i686-unknown-linux-gnu
+  # no seccomp support yet
+  #- os: linux
+  #  rust: stable
+  #  env: TARGET=arm-unknown-linux-gnueabihf
+  #              arm-unknown-linux-gnueabi
+  #              armv7-unknown-linux-gnueabihf
 
 before_install:
 - sudo ci/install_libs.sh "$TARGET"
