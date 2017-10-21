@@ -1,18 +1,7 @@
 use seccomp_sys::*;
 
-#[cfg(all(target_os="linux", target_arch="x86_64"))]
-#[path="syscalls/linux-x86_64.rs"]
-mod syscalls;
-
-use self::syscalls::SYSCALL;
+use sandbox::syscalls::Syscall;
 use sandbox::error::SeccompError;
-
-impl SYSCALL {
-    #[inline]
-    pub fn as_i32(self) -> i32 {
-        self as i32
-    }
-}
 
 pub struct Context {
     ctx: *mut scmp_filter_ctx,
@@ -31,7 +20,7 @@ impl Context {
         })
     }
 
-    fn allow_syscall(&mut self, syscall: SYSCALL) -> Result<(), SeccompError> {
+    fn allow_syscall(&mut self, syscall: Syscall) -> Result<(), SeccompError> {
         debug!("seccomp: allowing syscall={:?}", syscall);
         let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.as_i32(), 0) };
 
@@ -64,55 +53,55 @@ impl Drop for Context {
 pub fn activate_stage1() -> Result<(), SeccompError> {
     let mut ctx = Context::init()?;
 
-    ctx.allow_syscall(SYSCALL::futex)?;
-    ctx.allow_syscall(SYSCALL::read)?;
-    ctx.allow_syscall(SYSCALL::write)?;
-    ctx.allow_syscall(SYSCALL::open)?;
-    ctx.allow_syscall(SYSCALL::close)?;
-    ctx.allow_syscall(SYSCALL::stat)?;
-    ctx.allow_syscall(SYSCALL::fstat)?;
-    ctx.allow_syscall(SYSCALL::lstat)?;
-    ctx.allow_syscall(SYSCALL::poll)?;
-    ctx.allow_syscall(SYSCALL::lseek)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::mmap)?;
-    ctx.allow_syscall(SYSCALL::mprotect)?;
-    ctx.allow_syscall(SYSCALL::munmap)?;
-    ctx.allow_syscall(SYSCALL::ioctl)?;
-    ctx.allow_syscall(SYSCALL::socket)?;
-    ctx.allow_syscall(SYSCALL::connect)?;
-    ctx.allow_syscall(SYSCALL::sendto)?;
-    ctx.allow_syscall(SYSCALL::recvfrom)?;
-    ctx.allow_syscall(SYSCALL::sendmsg)?;
-    ctx.allow_syscall(SYSCALL::recvmsg)?;
-    ctx.allow_syscall(SYSCALL::bind)?;
-    ctx.allow_syscall(SYSCALL::getsockname)?;
-    ctx.allow_syscall(SYSCALL::setsockopt)?;
-    ctx.allow_syscall(SYSCALL::getsockopt)?;
-    ctx.allow_syscall(SYSCALL::clone)?;
-    ctx.allow_syscall(SYSCALL::uname)?;
-    ctx.allow_syscall(SYSCALL::fcntl)?;
-    ctx.allow_syscall(SYSCALL::getdents)?;
-    ctx.allow_syscall(SYSCALL::chdir)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getuid)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getgid)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::geteuid)?;
-    ctx.allow_syscall(SYSCALL::getegid)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::setresuid)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::setresgid)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getgroups)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::setgroups)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getresuid)?;
-    ctx.allow_syscall(SYSCALL::getresgid)?;
-    ctx.allow_syscall(SYSCALL::sigaltstack)?;
-    ctx.allow_syscall(SYSCALL::prctl)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::chroot)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-    ctx.allow_syscall(SYSCALL::clock_getres)?;
-    ctx.allow_syscall(SYSCALL::exit_group)?;
-    ctx.allow_syscall(SYSCALL::set_robust_list)?;
-    ctx.allow_syscall(SYSCALL::openat)?;
-    ctx.allow_syscall(SYSCALL::seccomp)?; // needed for stage2
-    ctx.allow_syscall(SYSCALL::getrandom)?;
+    ctx.allow_syscall(Syscall::futex)?;
+    ctx.allow_syscall(Syscall::read)?;
+    ctx.allow_syscall(Syscall::write)?;
+    ctx.allow_syscall(Syscall::open)?;
+    ctx.allow_syscall(Syscall::close)?;
+    ctx.allow_syscall(Syscall::stat)?;
+    ctx.allow_syscall(Syscall::fstat)?;
+    ctx.allow_syscall(Syscall::lstat)?;
+    ctx.allow_syscall(Syscall::poll)?;
+    ctx.allow_syscall(Syscall::lseek)?; // needed for stage2
+    ctx.allow_syscall(Syscall::mmap)?;
+    ctx.allow_syscall(Syscall::mprotect)?;
+    ctx.allow_syscall(Syscall::munmap)?;
+    ctx.allow_syscall(Syscall::ioctl)?;
+    ctx.allow_syscall(Syscall::socket)?;
+    ctx.allow_syscall(Syscall::connect)?;
+    ctx.allow_syscall(Syscall::sendto)?;
+    ctx.allow_syscall(Syscall::recvfrom)?;
+    ctx.allow_syscall(Syscall::sendmsg)?;
+    ctx.allow_syscall(Syscall::recvmsg)?;
+    ctx.allow_syscall(Syscall::bind)?;
+    ctx.allow_syscall(Syscall::getsockname)?;
+    ctx.allow_syscall(Syscall::setsockopt)?;
+    ctx.allow_syscall(Syscall::getsockopt)?;
+    ctx.allow_syscall(Syscall::clone)?;
+    ctx.allow_syscall(Syscall::uname)?;
+    ctx.allow_syscall(Syscall::fcntl)?;
+    ctx.allow_syscall(Syscall::getdents)?;
+    ctx.allow_syscall(Syscall::chdir)?; // needed for stage2
+    ctx.allow_syscall(Syscall::getuid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::getgid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::geteuid)?;
+    ctx.allow_syscall(Syscall::getegid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::setresuid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::setresgid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::getgroups)?; // needed for stage2
+    ctx.allow_syscall(Syscall::setgroups)?; // needed for stage2
+    ctx.allow_syscall(Syscall::getresuid)?;
+    ctx.allow_syscall(Syscall::getresgid)?;
+    ctx.allow_syscall(Syscall::sigaltstack)?;
+    ctx.allow_syscall(Syscall::prctl)?; // needed for stage2
+    ctx.allow_syscall(Syscall::chroot)?; // needed for stage2
+    ctx.allow_syscall(Syscall::sched_getaffinity)?;
+    ctx.allow_syscall(Syscall::clock_getres)?;
+    ctx.allow_syscall(Syscall::exit_group)?;
+    ctx.allow_syscall(Syscall::set_robust_list)?;
+    ctx.allow_syscall(Syscall::openat)?;
+    ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
+    ctx.allow_syscall(Syscall::getrandom)?;
 
     ctx.load()?;
 
@@ -124,43 +113,43 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
 pub fn activate_stage2() -> Result<(), SeccompError> {
     let mut ctx = Context::init()?;
 
-    ctx.allow_syscall(SYSCALL::futex)?;
-    ctx.allow_syscall(SYSCALL::read)?;
-    ctx.allow_syscall(SYSCALL::write)?;
-    // ctx.allow_syscall(SYSCALL::open)?;
-    ctx.allow_syscall(SYSCALL::close)?;
-    // ctx.allow_syscall(SYSCALL::stat)?;
-    // ctx.allow_syscall(SYSCALL::fstat)?;
-    // ctx.allow_syscall(SYSCALL::lstat)?;
-    ctx.allow_syscall(SYSCALL::poll)?;
-    ctx.allow_syscall(SYSCALL::mmap)?;
-    ctx.allow_syscall(SYSCALL::mprotect)?;
-    ctx.allow_syscall(SYSCALL::munmap)?;
-    // ctx.allow_syscall(SYSCALL::ioctl)?;
-    // ctx.allow_syscall(SYSCALL::socket)?;
-    // ctx.allow_syscall(SYSCALL::connect)?;
-    // ctx.allow_syscall(SYSCALL::sendto)?;
-    // ctx.allow_syscall(SYSCALL::recvfrom)?;
-    // ctx.allow_syscall(SYSCALL::sendmsg)?;
-    // ctx.allow_syscall(SYSCALL::recvmsg)?;
-    // ctx.allow_syscall(SYSCALL::bind)?;
-    // ctx.allow_syscall(SYSCALL::getsockname)?;
-    // ctx.allow_syscall(SYSCALL::setsockopt)?;
-    // ctx.allow_syscall(SYSCALL::getsockopt)?;
-    ctx.allow_syscall(SYSCALL::clone)?;
-    // ctx.allow_syscall(SYSCALL::uname)?;
-    // ctx.allow_syscall(SYSCALL::fcntl)?;
-    // ctx.allow_syscall(SYSCALL::getdents)?;
-    // ctx.allow_syscall(SYSCALL::geteuid)?;
-    // ctx.allow_syscall(SYSCALL::getresuid)?;
-    // ctx.allow_syscall(SYSCALL::getresgid)?;
-    ctx.allow_syscall(SYSCALL::sigaltstack)?;
-    ctx.allow_syscall(SYSCALL::sched_getaffinity)?;
-    // ctx.allow_syscall(SYSCALL::clock_getres)?;
-    ctx.allow_syscall(SYSCALL::exit_group)?;
-    ctx.allow_syscall(SYSCALL::set_robust_list)?;
-    // ctx.allow_syscall(SYSCALL::openat)?;
-    // ctx.allow_syscall(SYSCALL::getrandom)?;
+    ctx.allow_syscall(Syscall::futex)?;
+    ctx.allow_syscall(Syscall::read)?;
+    ctx.allow_syscall(Syscall::write)?;
+    // ctx.allow_syscall(Syscall::open)?;
+    ctx.allow_syscall(Syscall::close)?;
+    // ctx.allow_syscall(Syscall::stat)?;
+    // ctx.allow_syscall(Syscall::fstat)?;
+    // ctx.allow_syscall(Syscall::lstat)?;
+    ctx.allow_syscall(Syscall::poll)?;
+    ctx.allow_syscall(Syscall::mmap)?;
+    ctx.allow_syscall(Syscall::mprotect)?;
+    ctx.allow_syscall(Syscall::munmap)?;
+    // ctx.allow_syscall(Syscall::ioctl)?;
+    // ctx.allow_syscall(Syscall::socket)?;
+    // ctx.allow_syscall(Syscall::connect)?;
+    // ctx.allow_syscall(Syscall::sendto)?;
+    // ctx.allow_syscall(Syscall::recvfrom)?;
+    // ctx.allow_syscall(Syscall::sendmsg)?;
+    // ctx.allow_syscall(Syscall::recvmsg)?;
+    // ctx.allow_syscall(Syscall::bind)?;
+    // ctx.allow_syscall(Syscall::getsockname)?;
+    // ctx.allow_syscall(Syscall::setsockopt)?;
+    // ctx.allow_syscall(Syscall::getsockopt)?;
+    ctx.allow_syscall(Syscall::clone)?;
+    // ctx.allow_syscall(Syscall::uname)?;
+    // ctx.allow_syscall(Syscall::fcntl)?;
+    // ctx.allow_syscall(Syscall::getdents)?;
+    // ctx.allow_syscall(Syscall::geteuid)?;
+    // ctx.allow_syscall(Syscall::getresuid)?;
+    // ctx.allow_syscall(Syscall::getresgid)?;
+    ctx.allow_syscall(Syscall::sigaltstack)?;
+    ctx.allow_syscall(Syscall::sched_getaffinity)?;
+    // ctx.allow_syscall(Syscall::clock_getres)?;
+    ctx.allow_syscall(Syscall::exit_group)?;
+    ctx.allow_syscall(Syscall::set_robust_list)?;
+    // ctx.allow_syscall(Syscall::openat)?;
+    // ctx.allow_syscall(Syscall::getrandom)?;
 
     ctx.load()?;
 
