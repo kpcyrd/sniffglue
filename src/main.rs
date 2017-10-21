@@ -10,6 +10,7 @@ extern crate num_cpus;
 extern crate reduce;
 extern crate clap;
 extern crate atty;
+#[cfg(target_os="linux")]
 extern crate seccomp_sys;
 extern crate env_logger;
 #[macro_use] extern crate log;
