@@ -8,22 +8,16 @@ use libc::{self, uid_t, gid_t};
 
 pub mod config;
 mod error;
+pub mod seccomp;
+#[cfg(target_os="linux")]
+mod syscalls;
 
 pub use self::error::Error;
 
-cfg_if! {
-    if #[cfg(all(target_os="linux", any(target_arch="x86_64")))] {
-        pub mod seccomp;
-    } else if #[cfg(target_os="linux")] {
-        #[path="seccomp_unsupported.rs"]
-        pub mod seccomp;
-    }
-}
 
 pub fn activate_stage1() -> Result<(), Error> {
-    if cfg!(target_os = "linux") {
-        seccomp::activate_stage1()?;
-    }
+    #[cfg(target_os="linux")]
+    seccomp::activate_stage1()?;
 
     info!("stage 1/2 is active");
 
@@ -188,9 +182,8 @@ pub fn activate_stage2() -> Result<(), Error> {
 
     apply_config(config)?;
 
-    if cfg!(target_os = "linux") {
-        seccomp::activate_stage2()?;
-    }
+    #[cfg(target_os="linux")]
+    seccomp::activate_stage2()?;
 
     info!("stage 2/2 is active");
 
