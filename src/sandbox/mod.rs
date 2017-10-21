@@ -21,9 +21,8 @@ cfg_if! {
 }
 
 pub fn activate_stage1() -> Result<(), Error> {
-    if cfg!(target_os = "linux") {
-        seccomp::activate_stage1()?;
-    }
+    #[cfg(target_os="linux")]
+    seccomp::activate_stage1()?;
 
     info!("stage 1/2 is active");
 
@@ -188,9 +187,8 @@ pub fn activate_stage2() -> Result<(), Error> {
 
     apply_config(config)?;
 
-    if cfg!(target_os = "linux") {
-        seccomp::activate_stage2()?;
-    }
+    #[cfg(target_os="linux")]
+    seccomp::activate_stage2()?;
 
     info!("stage 2/2 is active");
 
