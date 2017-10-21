@@ -1,7 +1,7 @@
-target       
-Dockerfile   
+target
+Dockerfile
 .dockerignore
-.git         
-.gitignore   
-*.sw[op]     
-*.pcap       
+.git
+.gitignore
+*.sw[op]
+*.pcap
