@@ -3,9 +3,17 @@ extern crate pktparse;
 extern crate dhcp4r;
 extern crate dns_parser;
 extern crate tls_parser;
+#[cfg(target_os="linux")]
+extern crate seccomp_sys;
+#[macro_use] extern crate log;
+extern crate libc;
+extern crate toml;
+#[macro_use] extern crate serde_derive;
+extern crate users;
 
 pub mod centrifuge;
 mod nom_http;
+pub mod sandbox;
 pub mod structs;
 
 #[cfg(test)]

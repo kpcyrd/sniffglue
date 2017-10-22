@@ -41,3 +41,4 @@ seccomp-sys = "0.1.2"
 
 [dev-dependencies]
 base64 = "0.7"
+boxxy = "0.2"
