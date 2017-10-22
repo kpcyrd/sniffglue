@@ -58,8 +58,8 @@ pub fn chroot(path: &str) -> Result<(), Error> {
     }
 }
 
-pub fn setreuid(uid: uid_t) -> Result<(), Error> {
-    let ret = unsafe { libc::setreuid(uid, uid) };
+pub fn setresuid(uid: uid_t) -> Result<(), Error> {
+    let ret = unsafe { libc::setresuid(uid, uid, uid) };
 
     if ret != 0 {
         Err(Error::FFI)
@@ -68,8 +68,8 @@ pub fn setreuid(uid: uid_t) -> Result<(), Error> {
     }
 }
 
-pub fn setregid(gid: gid_t) -> Result<(), Error> {
-    let ret = unsafe { libc::setregid(gid, gid) };
+pub fn setresgid(gid: gid_t) -> Result<(), Error> {
+    let ret = unsafe { libc::setresgid(gid, gid, gid) };
 
     if ret != 0 {
         Err(Error::FFI)
@@ -154,8 +154,8 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
             info!("id: {}", id());
             info!("setting uid to {:?}", uid);
             setgroups(Vec::new())?;
-            setregid(gid)?;
-            setreuid(uid)?;
+            setresgid(gid)?;
+            setresuid(uid)?;
             info!("id: {}", id());
         },
         (true, None) => {
