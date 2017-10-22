@@ -8,6 +8,7 @@ use libc::{self, uid_t, gid_t};
 
 pub mod config;
 mod error;
+#[cfg(target_os="linux")]
 pub mod seccomp;
 #[cfg(target_os="linux")]
 mod syscalls;
