@@ -12,4 +12,5 @@ COPY --from=0 /lib/x86_64-linux-gnu/libseccomp.so.2 \
     /lib/x86_64-linux-gnu/librt.so.1 \
     /lib/x86_64-linux-gnu/libgcc_s.so.1 \
     /lib/x86_64-linux-gnu/
+COPY docs/sniffglue.busybox.conf /etc/sniffglue.conf
 ENTRYPOINT ["sniffglue"]
