@@ -1,0 +1,3 @@
+stage1
+stage2
+cat README.md

@@ -11,6 +11,9 @@ case "$BUILD_MODE" in
         docker build -t sniffglue .
         docker images sniffglue
         ;;
+    boxxy)
+        cargo build --verbose --examples
+        ;;
     *)
         cargo build --verbose --target="$TARGET"
         ;;

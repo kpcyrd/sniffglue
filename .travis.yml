@@ -13,6 +13,9 @@ matrix:
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=docker
   - os: linux
     rust: stable
+    env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=boxxy
+  - os: linux
+    rust: stable
     env: TARGET=i686-unknown-linux-gnu
 
 before_install:
