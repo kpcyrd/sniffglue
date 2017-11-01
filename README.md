@@ -70,6 +70,13 @@ so a configuration file is read from `/etc/sniffglue.conf`. This config
 file specifies an empty directory for `chroot` and an unprivileged account
 in `user` that is used to drop root privileges.
 
+## boxxy-rs
+
+This project includes a small [boxxy-rs] based shell that can be used to
+explore the sandbox at various stages during and after initialization.
+
+    cargo run --example boxxy
+
 ## Fuzzing
 
 The packet processing of sniffglue can be fuzzed using [cargo-fuzz].
