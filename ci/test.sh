@@ -24,6 +24,9 @@ case "$BUILD_MODE" in
             exit 1
         fi
         ;;
+    reprotest)
+        docker run --privileged reprotest-sniffglue ci/reprotest.sh
+        ;;
     *)
         cargo test --verbose --target="$TARGET"
         ;;
