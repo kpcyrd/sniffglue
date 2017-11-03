@@ -70,14 +70,30 @@ so a configuration file is read from `/etc/sniffglue.conf`. This config
 file specifies an empty directory for `chroot` and an unprivileged account
 in `user` that is used to drop root privileges.
 
-## boxxy-rs
+### boxxy-rs
 
 This project includes a small [boxxy-rs] based shell that can be used to
 explore the sandbox at various stages during and after initialization.
 
     cargo run --example boxxy
 
-## Fuzzing
+[boxxy-rs]: https://github.com/kpcyrd/boxxy-rs
+
+### Reproducible builds
+
+This project is tested using reprotest. Currently the following variations are
+excluded:
+
+- `-fileordering` - my test environment doesn't have fuse
+- `-time` - needed because the crates.io cert expires in the future
+- `-home` - at the point of writing we need an existant home folder for rustup
+
+You need rustup to be installed and the nightly toolchain needs to be
+available. Don't forget to install the build dependencies.
+
+    ci/reprotest.sh
+
+### Fuzzing
 
 The packet processing of sniffglue can be fuzzed using [cargo-fuzz].
 Everything you should need is provided in the `fuzz/` directory that is
