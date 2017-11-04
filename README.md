@@ -84,7 +84,6 @@ explore the sandbox at various stages during and after initialization.
 This project is tested using reprotest. Currently the following variations are
 excluded:
 
-- `-fileordering` - my test environment doesn't have fuse
 - `-time` - needed because the crates.io cert expires in the future
 
 You need rustup to be installed and the nightly toolchain needs to be
