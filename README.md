@@ -86,7 +86,6 @@ excluded:
 
 - `-fileordering` - my test environment doesn't have fuse
 - `-time` - needed because the crates.io cert expires in the future
-- `-home` - at the point of writing we need an existant home folder for rustup
 
 You need rustup to be installed and the nightly toolchain needs to be
 available. Don't forget to install the build dependencies.
