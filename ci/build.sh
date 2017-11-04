@@ -14,6 +14,9 @@ case "$BUILD_MODE" in
     boxxy)
         cargo build --verbose --examples
         ;;
+    reprotest)
+        docker build -t reprotest-sniffglue -f ci/Dockerfile.reprotest .
+        ;;
     *)
         cargo build --verbose --target="$TARGET"
         ;;
