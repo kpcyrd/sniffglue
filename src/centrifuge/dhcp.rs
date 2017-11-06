@@ -49,7 +49,17 @@ fn wrap_packet(dhcp: dhcp4r::packet::Packet, packet: structs::dhcp::Packet) -> s
 
 
 pub fn extract(remaining: &[u8]) -> Result<structs::dhcp::DHCP, CentrifugeError> {
-    let dhcp = dhcp4r::packet::decode(remaining).unwrap();
+
+    // work around out-of-bounds access in dhcp4r
+    // https://github.com/kpcyrd/sniffglue/issues/16
+    if remaining.len() < 240 {
+        return Err(CentrifugeError::InvalidPacket);
+    }
+
+    let dhcp = match dhcp4r::packet::decode(remaining) {
+        Ok(dhcp) => dhcp,
+        Err(_err) => return Err(CentrifugeError::InvalidPacket),
+    };
 
     let ciaddr = bytes2ipv4(dhcp.ciaddr).unwrap();
     let yiaddr = bytes2ipv4(dhcp.yiaddr).unwrap();
