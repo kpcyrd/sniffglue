@@ -66,7 +66,9 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::mmap)?;
     ctx.allow_syscall(Syscall::mprotect)?;
     ctx.allow_syscall(Syscall::munmap)?;
+    ctx.allow_syscall(Syscall::rt_sigprocmask)?;
     ctx.allow_syscall(Syscall::ioctl)?;
+    ctx.allow_syscall(Syscall::readv)?;
     ctx.allow_syscall(Syscall::socket)?;
     ctx.allow_syscall(Syscall::connect)?;
     ctx.allow_syscall(Syscall::sendto)?;
@@ -96,14 +98,14 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::prctl)?; // needed for stage2
     ctx.allow_syscall(Syscall::chroot)?; // needed for stage2
     ctx.allow_syscall(Syscall::sched_getaffinity)?;
+    ctx.allow_syscall(Syscall::getdents64)?;
     ctx.allow_syscall(Syscall::clock_getres)?;
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
-    ctx.allow_syscall(Syscall::rt_sigprocmask)?; // used in libpcap
-    ctx.allow_syscall(Syscall::pipe)?;
+    ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
     ctx.allow_syscall(Syscall::wait4)?;
 
     ctx.load()?;
@@ -128,7 +130,9 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::mmap)?;
     ctx.allow_syscall(Syscall::mprotect)?;
     ctx.allow_syscall(Syscall::munmap)?;
+    ctx.allow_syscall(Syscall::rt_sigprocmask)?;
     // ctx.allow_syscall(Syscall::ioctl)?;
+    ctx.allow_syscall(Syscall::readv)?;
     // ctx.allow_syscall(Syscall::socket)?;
     // ctx.allow_syscall(Syscall::connect)?;
     // ctx.allow_syscall(Syscall::sendto)?;
