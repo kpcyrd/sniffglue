@@ -52,6 +52,9 @@ pub enum Syscall {
     openat              = libc::SYS_openat              as isize,
     seccomp             = libc::SYS_seccomp             as isize,
     getrandom           = libc::SYS_getrandom           as isize,
+    rt_sigprocmask      = libc::SYS_rt_sigprocmask      as isize,
+    pipe                = libc::SYS_pipe                as isize,
+    wait4               = libc::SYS_wait4               as isize,
 }
 
 impl Syscall {

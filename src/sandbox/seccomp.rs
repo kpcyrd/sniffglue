@@ -102,6 +102,9 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::openat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
+    ctx.allow_syscall(Syscall::rt_sigprocmask)?; // used in libpcap
+    ctx.allow_syscall(Syscall::pipe)?;
+    ctx.allow_syscall(Syscall::wait4)?;
 
     ctx.load()?;
 
