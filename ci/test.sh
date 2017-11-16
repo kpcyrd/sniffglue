@@ -27,6 +27,9 @@ case "$BUILD_MODE" in
     reprotest)
         docker run --privileged reprotest-sniffglue ci/reprotest.sh
         ;;
+    musl)
+        docker run -e RUST_LOG=sniffglue musl-sniffglue --help
+        ;;
     *)
         cargo test --verbose --target="$TARGET"
         ;;
