@@ -1,6 +1,12 @@
 #!/bin/sh
 set -ex
 
+case "$1" in
+    arm-unknown-linux-gnueabihf)
+        dpkg --add-architecture armhf
+        ;;
+esac
+
 apt-get -qq update
 
 # update docker
@@ -16,6 +22,11 @@ case "$1" in
         apt-get install -qy gcc-multilib \
             libpcap0.8-dev:i386 \
             libseccomp-dev:i386
+        ;;
+    arm-unknown-linux-gnueabihf)
+        apt-get install -qy gcc-multilib \
+            libpcap0.8-dev:armhf \
+            libseccomp-dev:armhf
         ;;
     *)
         echo "UNKNOWN TARGET: $TARGET"
