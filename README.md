@@ -85,9 +85,9 @@ This project is tested using reprotest. Currently the following variations are
 excluded:
 
 - `-time` - needed because the crates.io cert expires in the future
+- `-domain_host` - requires root for unshare(2) and has been excluded
 
-You need rustup to be installed and the nightly toolchain needs to be
-available. Don't forget to install the build dependencies.
+Don't forget to install the build dependencies.
 
     ci/reprotest.sh
 
