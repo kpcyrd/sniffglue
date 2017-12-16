@@ -1,6 +1,12 @@
 #!/bin/sh
 set -ex
 
+case "$1" in
+    aarch64-unknown-linux-gnu)
+        dpkg --add-architecture arm64
+        ;;
+esac
+
 apt-get -qq update
 
 # update docker
@@ -11,6 +17,11 @@ case "$1" in
         apt-get install -qy \
             libpcap-dev \
             libseccomp-dev
+        ;;
+    aarch64-unknown-linux-gnu)
+        apt-get install -qy gcc-multilib \
+            libpcap0.8-dev:arm64 \
+            libseccomp-dev:arm64
         ;;
     i686-unknown-linux-gnu)
         apt-get install -qy gcc-multilib \
