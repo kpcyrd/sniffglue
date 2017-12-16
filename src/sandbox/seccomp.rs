@@ -62,6 +62,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::fstat)?;
     ctx.allow_syscall(Syscall::lstat)?;
     ctx.allow_syscall(Syscall::poll)?;
+    ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::lseek)?; // needed for stage2
     ctx.allow_syscall(Syscall::mmap)?;
     ctx.allow_syscall(Syscall::mprotect)?;
@@ -103,6 +104,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
+    ctx.allow_syscall(Syscall::newfstatat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
     ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
@@ -127,6 +129,7 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     // ctx.allow_syscall(Syscall::fstat)?;
     // ctx.allow_syscall(Syscall::lstat)?;
     ctx.allow_syscall(Syscall::poll)?;
+    ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::mmap)?;
     ctx.allow_syscall(Syscall::mprotect)?;
     ctx.allow_syscall(Syscall::munmap)?;
