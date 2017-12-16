@@ -7,10 +7,12 @@ case "$1" in
         ;;
 esac
 
-apt-get -qq update
+apt-get -q update
 
-# update docker
-apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+if [ -n "$TRAVIS" ]; then
+    # update docker
+    apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+fi
 
 case "$1" in
     x86_64-unknown-linux-gnu)

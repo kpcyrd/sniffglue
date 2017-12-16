@@ -21,6 +21,11 @@ case "$BUILD_MODE" in
         docker build -t musl-sniffglue -f docs/Dockerfile.musl .
         docker images musl-sniffglue
         ;;
+    cross)
+        docker build --build-arg TARGET="$TARGET" -t "sniffglue-test-$TARGET" -f ci/Dockerfile .
+        # restart this script but inside the container and without BUILD_MODE=cross
+        docker run -e TARGET="$TARGET" "sniffglue-test-$TARGET" ci/build.sh
+        ;;
     *)
         cargo build --verbose --target="$TARGET"
         ;;

@@ -54,6 +54,7 @@ pub enum Syscall {
     exit_group          = libc::SYS_exit_group          as isize,
     set_robust_list     = libc::SYS_set_robust_list     as isize,
     openat              = libc::SYS_openat              as isize,
+    #[cfg(target_arch = "aarch64")]
     newfstatat          = libc::SYS_newfstatat          as isize,
     seccomp             = libc::SYS_seccomp             as isize,
     getrandom           = libc::SYS_getrandom           as isize,

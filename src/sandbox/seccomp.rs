@@ -104,6 +104,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
+    #[cfg(target_arch = "aarch64")]
     ctx.allow_syscall(Syscall::newfstatat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
