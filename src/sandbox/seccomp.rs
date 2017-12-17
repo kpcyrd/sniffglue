@@ -56,12 +56,17 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::futex)?;
     ctx.allow_syscall(Syscall::read)?;
     ctx.allow_syscall(Syscall::write)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::open)?;
     ctx.allow_syscall(Syscall::close)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::stat)?;
     ctx.allow_syscall(Syscall::fstat)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::lstat)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::poll)?;
+    #[cfg(target_arch = "aarch64")]
     ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::lseek)?; // needed for stage2
     ctx.allow_syscall(Syscall::mmap)?;
@@ -83,6 +88,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::clone)?;
     ctx.allow_syscall(Syscall::uname)?;
     ctx.allow_syscall(Syscall::fcntl)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::getdents)?;
     ctx.allow_syscall(Syscall::chdir)?; // needed for stage2
     ctx.allow_syscall(Syscall::getuid)?; // needed for stage2
@@ -108,6 +114,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::newfstatat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
     ctx.allow_syscall(Syscall::wait4)?;
 
@@ -129,7 +136,9 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     // ctx.allow_syscall(Syscall::stat)?;
     // ctx.allow_syscall(Syscall::fstat)?;
     // ctx.allow_syscall(Syscall::lstat)?;
+    #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::poll)?;
+    #[cfg(target_arch = "aarch64")]
     ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::mmap)?;
     ctx.allow_syscall(Syscall::mprotect)?;
