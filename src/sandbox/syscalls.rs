@@ -15,6 +15,7 @@ pub enum Syscall {
     lstat               = libc::SYS_lstat               as isize,
     #[cfg(not(target_arch = "aarch64"))]
     poll                = libc::SYS_poll                as isize,
+    #[cfg(target_arch = "aarch64")]
     ppoll               = libc::SYS_ppoll               as isize,
     lseek               = libc::SYS_lseek               as isize,
     mmap                = libc::SYS_mmap                as isize,
