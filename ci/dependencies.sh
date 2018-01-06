@@ -1,14 +1,16 @@
 #!/bin/sh
 set -ex
 
-case "$1" in
-    aarch64-unknown-linux-gnu)
-        dpkg --add-architecture arm64
-        ;;
-    i686-unknown-linux-gnu)
-        dpkg --add-architecture i386
-        ;;
-esac
+if [ -z "$TRAVIS" ]; then
+    case "$1" in
+        aarch64-unknown-linux-gnu)
+            dpkg --add-architecture arm64
+            ;;
+        i686-unknown-linux-gnu)
+            dpkg --add-architecture i386
+            ;;
+    esac
+fi
 
 apt-get -q update
 
@@ -24,9 +26,11 @@ case "$1" in
             libseccomp-dev
         ;;
     aarch64-unknown-linux-gnu)
-        apt-get install -qy gcc-multilib \
-            libpcap0.8-dev:arm64 \
-            libseccomp-dev:arm64
+        if [ -z "$TRAVIS" ]; then
+            apt-get install -qy gcc-multilib \
+                libpcap0.8-dev:arm64 \
+                libseccomp-dev:arm64
+        fi
         ;;
     i686-unknown-linux-gnu)
         apt-get install -qy gcc-multilib \
