@@ -1,6 +1,14 @@
 #!/bin/sh
 set -ex
 
+if [ -n "$TRAVIS" ]; then
+    apt-get -q update
+    # update docker
+    apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+    exit 0
+fi
+
+
 case "$1" in
     aarch64-unknown-linux-gnu)
         dpkg --add-architecture arm64
@@ -11,11 +19,6 @@ case "$1" in
 esac
 
 apt-get -q update
-
-if [ -n "$TRAVIS" ]; then
-    # update docker
-    apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
-fi
 
 case "$1" in
     x86_64-unknown-linux-gnu)
