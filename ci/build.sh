@@ -1,6 +1,12 @@
 #!/bin/sh
 set -ex
 
+case "$TARGET" in
+    aarch64-unknown-linux-gnu)
+        export RUSTFLAGS="-C linker=aarch64-linux-gnu-gcc-6"
+        ;;
+esac
+
 case "$BUILD_MODE" in
     release)
         cargo build --verbose --release --target="$TARGET"
