@@ -27,10 +27,9 @@ case "$1" in
         ;;
     aarch64-unknown-linux-gnu)
         if [ -z "$TRAVIS" ]; then
-            apt-get install -qy gcc-multilib \
+            apt-get install -qy gcc-6-aarch64-linux-gnu \
                 libpcap0.8-dev:arm64 \
-                libseccomp-dev:arm64 \
-                gcc-6-aarch64-linux-gnu
+                libseccomp-dev:arm64
         fi
         ;;
     i686-unknown-linux-gnu)
