@@ -14,9 +14,9 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=boxxy
-  - os: linux
-    rust: stable
-    env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
+  #- os: linux
+  #  rust: stable
+  #  env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=musl
