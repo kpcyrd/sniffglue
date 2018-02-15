@@ -71,7 +71,7 @@ impl From<Capture<pcap::Offline>> for CapWrap {
 
 fn main() {
     // this goes before the sandbox so logging is available
-    env_logger::init().unwrap();
+    env_logger::init();
 
     sandbox::activate_stage1().expect("init sandbox stage1");
 

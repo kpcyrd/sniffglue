@@ -117,6 +117,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
     ctx.allow_syscall(Syscall::wait4)?;
+    ctx.allow_syscall(Syscall::clock_gettime)?;
 
     ctx.load()?;
 
@@ -170,6 +171,7 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::set_robust_list)?;
     // ctx.allow_syscall(Syscall::openat)?;
     // ctx.allow_syscall(Syscall::getrandom)?;
+    ctx.allow_syscall(Syscall::clock_gettime)?;
 
     ctx.load()?;
 

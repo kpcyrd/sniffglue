@@ -67,6 +67,7 @@ pub enum Syscall {
     #[cfg(not(target_arch = "aarch64"))]
     pipe                = libc::SYS_pipe                as isize,
     wait4               = libc::SYS_wait4               as isize,
+    clock_gettime       = libc::SYS_clock_gettime       as isize,
 }
 
 impl Syscall {
