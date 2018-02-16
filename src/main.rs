@@ -76,7 +76,7 @@ fn main() {
     sandbox::activate_stage1().expect("init sandbox stage1");
 
     let matches = App::new("sniffglue")
-        .version("0.4.0")
+        .version("0.4.1")
         .setting(AppSettings::ColoredHelp)
         .arg(Arg::with_name("promisc")
             .short("p")
