@@ -1,6 +1,12 @@
 #!/bin/sh
 set -ex
 
+case "$TARGET" in
+    aarch64-unknown-linux-gnu)
+        export RUSTFLAGS="-C linker=aarch64-linux-gnu-gcc-6"
+        ;;
+esac
+
 case "$BUILD_MODE" in
     release)
         cargo build --verbose --release --target="$TARGET"
@@ -20,6 +26,11 @@ case "$BUILD_MODE" in
     musl)
         docker build -t musl-sniffglue -f docs/Dockerfile.musl .
         docker images musl-sniffglue
+        ;;
+    cross)
+        docker build --build-arg TARGET="$TARGET" -t "sniffglue-test-$TARGET" -f ci/Dockerfile .
+        # restart this script but inside the container and without BUILD_MODE=cross
+        docker run -e TARGET="$TARGET" "sniffglue-test-$TARGET" ci/build.sh
         ;;
     *)
         cargo build --verbose --target="$TARGET"

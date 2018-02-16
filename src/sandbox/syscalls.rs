@@ -5,12 +5,18 @@ use libc;
 pub enum Syscall {
     read                = libc::SYS_read                as isize,
     write               = libc::SYS_write               as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     open                = libc::SYS_open                as isize,
     close               = libc::SYS_close               as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     stat                = libc::SYS_stat                as isize,
     fstat               = libc::SYS_fstat               as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     lstat               = libc::SYS_lstat               as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     poll                = libc::SYS_poll                as isize,
+    #[cfg(target_arch = "aarch64")]
+    ppoll               = libc::SYS_ppoll               as isize,
     lseek               = libc::SYS_lseek               as isize,
     mmap                = libc::SYS_mmap                as isize,
     mprotect            = libc::SYS_mprotect            as isize,
@@ -31,6 +37,7 @@ pub enum Syscall {
     clone               = libc::SYS_clone               as isize,
     uname               = libc::SYS_uname               as isize,
     fcntl               = libc::SYS_fcntl               as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     getdents            = libc::SYS_getdents            as isize,
     chdir               = libc::SYS_chdir               as isize,
     getuid              = libc::SYS_getuid              as isize,
@@ -53,8 +60,11 @@ pub enum Syscall {
     exit_group          = libc::SYS_exit_group          as isize,
     set_robust_list     = libc::SYS_set_robust_list     as isize,
     openat              = libc::SYS_openat              as isize,
+    #[cfg(target_arch = "aarch64")]
+    newfstatat          = libc::SYS_newfstatat          as isize,
     seccomp             = libc::SYS_seccomp             as isize,
     getrandom           = libc::SYS_getrandom           as isize,
+    #[cfg(not(target_arch = "aarch64"))]
     pipe                = libc::SYS_pipe                as isize,
     wait4               = libc::SYS_wait4               as isize,
 }

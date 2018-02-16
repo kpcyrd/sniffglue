@@ -73,7 +73,8 @@ in `user` that is used to drop root privileges.
 ### boxxy-rs
 
 This project includes a small [boxxy-rs] based shell that can be used to
-explore the sandbox at various stages during and after initialization.
+explore the sandbox at various stages during and after initialization. This is
+also used by travis to ensure the sandbox actually blocks syscalls.
 
     cargo run --example boxxy
 

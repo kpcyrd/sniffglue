@@ -14,18 +14,21 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=boxxy
-  - os: linux
-    rust: stable
-    env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
+  #- os: linux
+  #  rust: stable
+  #  env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=musl
   - os: linux
     rust: stable
-    env: TARGET=i686-unknown-linux-gnu
+    env: TARGET=aarch64-unknown-linux-gnu BUILD_MODE=cross
+  - os: linux
+    rust: stable
+    env: TARGET=i686-unknown-linux-gnu BUILD_MODE=cross
 
 before_install:
-- sudo ci/install_libs.sh "$TARGET"
+- sudo ci/dependencies.sh "$TARGET"
 install:
 - rustup install "$TRAVIS_RUST_VERSION-$TARGET"
 - rustup target add "$TARGET" || true
