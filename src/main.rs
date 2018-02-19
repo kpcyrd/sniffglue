@@ -16,6 +16,7 @@ extern crate env_logger;
 #[macro_use] extern crate log;
 extern crate libc;
 extern crate toml;
+extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate users;
 
@@ -88,6 +89,11 @@ fn main() {
             .long("detailed")
             .help("Detailed output")
         )
+        .arg(Arg::with_name("json")
+            .short("j")
+            .long("json")
+            .help("Json output")
+        )
         .arg(Arg::with_name("noisy")
             .short("x")
             .long("noisy")
@@ -110,9 +116,12 @@ fn main() {
     let log_noise = matches.occurrences_of("noisy") > 0;
     let promisc = matches.occurrences_of("promisc") > 0;
 
-    let layout = match matches.occurrences_of("detailed") {
-        0 => fmt::Layout::Compact,
-        _ => fmt::Layout::Detailed,
+    let layout = match matches.occurrences_of("json") {
+        0 => match matches.occurrences_of("detailed") {
+            0 => fmt::Layout::Compact,
+            _ => fmt::Layout::Detailed,
+        },
+        _ => fmt::Layout::Json,
     };
 
     let colors = atty::is(atty::Stream::Stdout);
