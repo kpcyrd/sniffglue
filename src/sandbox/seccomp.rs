@@ -105,6 +105,7 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::prctl)?; // needed for stage2
     ctx.allow_syscall(Syscall::chroot)?; // needed for stage2
     ctx.allow_syscall(Syscall::sched_getaffinity)?;
+    ctx.allow_syscall(Syscall::sched_yield)?;
     ctx.allow_syscall(Syscall::getdents64)?;
     ctx.allow_syscall(Syscall::clock_getres)?;
     ctx.allow_syscall(Syscall::exit_group)?;
@@ -166,6 +167,7 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     // ctx.allow_syscall(Syscall::getresgid)?;
     ctx.allow_syscall(Syscall::sigaltstack)?;
     ctx.allow_syscall(Syscall::sched_getaffinity)?;
+    ctx.allow_syscall(Syscall::sched_yield)?;
     // ctx.allow_syscall(Syscall::clock_getres)?;
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;

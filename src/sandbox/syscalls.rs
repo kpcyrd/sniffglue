@@ -55,6 +55,7 @@ pub enum Syscall {
     chroot              = libc::SYS_chroot              as isize,
     futex               = libc::SYS_futex               as isize,
     sched_getaffinity   = libc::SYS_sched_getaffinity   as isize,
+    sched_yield         = libc::SYS_sched_yield         as isize,
     getdents64          = libc::SYS_getdents64          as isize,
     clock_getres        = libc::SYS_clock_getres        as isize,
     exit_group          = libc::SYS_exit_group          as isize,
