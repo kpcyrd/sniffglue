@@ -7,7 +7,7 @@ pub fn extract(remaining: &[u8]) -> Result<structs::dns::DNS, CentrifugeError> {
             // dns request
             let questions = dns.questions
                                .into_iter()
-                               .map(|q| (q.qtype, q.qname.to_string()))
+                               .map(|q| (q.qtype.into(), q.qname.to_string()))
                                .collect();
 
             Ok(structs::dns::Request::new(questions).wrap())

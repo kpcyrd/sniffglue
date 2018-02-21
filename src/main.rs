@@ -92,7 +92,7 @@ fn main() {
         .arg(Arg::with_name("json")
             .short("j")
             .long("json")
-            .help("Json output")
+            .help("Json output (unstable!)")
         )
         .arg(Arg::with_name("noisy")
             .short("x")

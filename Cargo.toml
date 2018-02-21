@@ -20,7 +20,7 @@ clap = "2"
 threadpool = "1.7"
 num_cpus = "1.6"
 pcap = "0.7.0"
-pktparse = "0.2.1"
+pktparse = { version = "0.2.2", features = ["derive"] }
 nom = "3.2"
 dns-parser = "0.7"
 tls-parser = "0.5"

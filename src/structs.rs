@@ -17,7 +17,7 @@ pub mod raw {
     use structs::ether;
     use pktparse;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum Raw {
         Ether(pktparse::ethernet::EthernetFrame, ether::Ether),
     }
@@ -37,7 +37,7 @@ pub mod ether {
     use structs::ipv4;
     use pktparse;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
@@ -57,7 +57,7 @@ pub mod ether {
 pub mod arp {
     use pktparse;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum ARP {
         Request(pktparse::arp::ArpPacket),
         Reply(pktparse::arp::ArpPacket),
@@ -69,7 +69,7 @@ pub mod ipv4 {
     use structs::udp;
     use pktparse;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum IPv4 {
         TCP(pktparse::tcp::TcpHeader, tcp::TCP),
         UDP(pktparse::udp::UdpHeader, udp::UDP),
@@ -90,7 +90,7 @@ pub mod tcp {
     use structs::tls;
     use structs::http;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum TCP {
         TLS(tls::ClientHello),
         HTTP(http::Request),
@@ -115,7 +115,7 @@ pub mod udp {
     use structs::dns;
     use structs::dhcp;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum UDP {
         DHCP(dhcp::DHCP),
         DNS(dns::DNS),
@@ -137,7 +137,7 @@ pub mod udp {
 }
 
 pub mod tls {
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct ClientHello {
         pub hostname: Option<String>,
     }
@@ -156,7 +156,7 @@ pub mod http {
     use std::string::FromUtf8Error;
     use nom_http;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Request {
         pub method: String,
         pub uri: String,
@@ -218,7 +218,7 @@ pub mod http {
 pub mod dhcp {
     use std::net::Ipv4Addr;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum DHCP {
         ACK(Packet),
         DECLINE(Packet),
@@ -231,14 +231,14 @@ pub mod dhcp {
         UNKNOWN(Packet),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum DhcpOption {
         String(String),
         IPv4(Ipv4Addr),
         Bytes(Vec<u8>),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Packet {
         pub ciaddr: Ipv4Addr,
         pub yiaddr: Ipv4Addr,
@@ -270,15 +270,71 @@ pub mod dhcp {
 
 pub mod dns {
     use std::net::{Ipv4Addr, Ipv6Addr};
-    use dns_parser::{self, QueryType};
+    use dns_parser;
 
-    #[derive(Debug, PartialEq)]
+    // https://github.com/tailhook/dns-parser/pull/34
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum QueryType {
+        A,
+        NS,
+        MF,
+        CNAME,
+        SOA,
+        MB,
+        MG,
+        MR,
+        NULL,
+        WKS,
+        PTR,
+        HINFO,
+        MINFO,
+        MX,
+        TXT,
+        AAAA,
+        SRV,
+        AXFR,
+        MAILB,
+        MAILA,
+        All,
+    }
+
+    impl From<dns_parser::QueryType> for QueryType {
+        #[inline]
+        fn from(qt: dns_parser::QueryType) -> QueryType {
+            use dns_parser::QueryType::*;
+            match qt {
+                A => QueryType::A,
+                NS => QueryType::NS,
+                MF => QueryType::MF,
+                CNAME => QueryType::CNAME,
+                SOA => QueryType::SOA,
+                MB => QueryType::MB,
+                MG => QueryType::MG,
+                MR => QueryType::MR,
+                NULL => QueryType::NULL,
+                WKS => QueryType::WKS,
+                PTR => QueryType::PTR,
+                HINFO => QueryType::HINFO,
+                MINFO => QueryType::MINFO,
+                MX => QueryType::MX,
+                TXT => QueryType::TXT,
+                AAAA => QueryType::AAAA,
+                SRV => QueryType::SRV,
+                AXFR => QueryType::AXFR,
+                MAILB => QueryType::MAILB,
+                MAILA => QueryType::MAILA,
+                All => QueryType::All,
+            }
+        }
+    }
+
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum DNS {
         Request(Request),
         Response(Response),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Request {
         pub questions: Vec<(QueryType, String)>,
     }
@@ -295,7 +351,7 @@ pub mod dns {
         }
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub struct Response {
         pub answers: Vec<(String, Record)>,
     }
@@ -312,7 +368,7 @@ pub mod dns {
         }
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize)]
     pub enum Record {
         A(Ipv4Addr),
         AAAA(Ipv6Addr),

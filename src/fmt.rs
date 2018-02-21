@@ -293,7 +293,7 @@ impl Format {
 
     #[inline]
     fn print_json(&self, packet: Raw) {
-        println!("{}", serde_json::to_string("TODO!").unwrap());
+        println!("{}", serde_json::to_string(&packet).unwrap());
     }
 }
 
