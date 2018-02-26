@@ -33,9 +33,11 @@ case "$1" in
         fi
         ;;
     i686-unknown-linux-gnu)
-        apt-get install -qy gcc-multilib \
-            libpcap0.8-dev:i386 \
-            libseccomp-dev:i386
+        if [ -z "$TRAVIS" ]; then
+            apt-get install -qy gcc-multilib \
+                libpcap0.8-dev:i386 \
+                libseccomp-dev:i386
+        fi
         ;;
     *)
         echo "UNKNOWN TARGET: $TARGET"
