@@ -3,6 +3,7 @@ use std::sync::Arc;
 use pktparse;
 use reduce::Reduce;
 use ansi_term::Colour::{self, Yellow, Blue, Green, Red};
+use serde_json;
 
 use structs::raw::Raw;
 use structs::prelude::*;
@@ -34,6 +35,7 @@ impl Config {
 pub enum Layout {
     Compact,
     Detailed,
+    Json,
 }
 
 pub struct Format {
@@ -54,6 +56,7 @@ impl Format {
         match self.layout {
             Layout::Compact => self.print_compact(packet),
             Layout::Detailed => self.print_detailed(packet),
+            Layout::Json => self.print_json(packet),
         }
     }
 
@@ -286,6 +289,11 @@ impl Format {
                 }
             },
         }
+    }
+
+    #[inline]
+    fn print_json(&self, packet: Raw) {
+        println!("{}", serde_json::to_string(&packet).unwrap());
     }
 }
 
