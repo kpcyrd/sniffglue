@@ -9,7 +9,7 @@ export TMPDIR="$HOME/tmp/repro-test"
 mkdir -p "$TMPDIR"
 
 reprotest -vv --vary=-time,-domain_host --source-pattern 'Cargo.* src/' '
-    RUSTC_BOOTSTRAP=1 CARGO_HOME="$PWD/.cargo" RUSTUP_HOME='"$HOME/.rustup"' \
-        RUSTFLAGS="-Zremap-path-prefix-from=$HOME -Zremap-path-prefix-to=/remap-home -Zremap-path-prefix-from=$PWD -Zremap-path-prefix-to=/remap-pwd" \
+    CARGO_HOME="$PWD/.cargo" RUSTUP_HOME='"$HOME/.rustup"' \
+        RUSTFLAGS="--remap-path-prefix=$HOME=/remap-home --remap-path-prefix=$PWD=/remap-pwd" \
         cargo build --release --verbose' \
     target/release/sniffglue
