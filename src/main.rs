@@ -1,3 +1,7 @@
+#![warn(unused_extern_crates)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate pcap;
 #[macro_use] extern crate nom;
 extern crate pktparse;
@@ -160,14 +164,11 @@ fn main() {
 
             let filter = filter.clone();
             pool.execute(move || {
-                match centrifuge::parse(&packet) {
-                    Ok(packet) => {
-                        if filter.matches(&packet) {
-                            tx.send(packet).unwrap()
-                        }
+                if let Ok(packet) = centrifuge::parse(&packet) {
+                    if filter.matches(&packet) {
+                        tx.send(packet).unwrap()
                     }
-                    Err(_) => (),
-                };
+                }
             });
         }
     });

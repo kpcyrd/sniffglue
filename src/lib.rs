@@ -1,3 +1,7 @@
+#![warn(unused_extern_crates)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 #[macro_use] extern crate nom;
 extern crate pktparse;
 extern crate dhcp4r;

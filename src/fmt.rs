@@ -56,7 +56,7 @@ impl Format {
         match self.layout {
             Layout::Compact => self.print_compact(packet),
             Layout::Detailed => self.print_detailed(packet),
-            Layout::Json => self.print_json(packet),
+            Layout::Json => self.print_json(&packet),
         }
     }
 
@@ -116,7 +116,8 @@ impl Format {
                                     ("hostname", client_hello.hostname),
                                 ]);
 
-                                out += &(format!("[tls] ClientHello") + &extra);
+                                out += "[tls] ClientHello";
+                                out += &extra;
                                 Some(Green)
                             },
                             Text(text) => {
@@ -253,7 +254,7 @@ impl Format {
                         use structs::tcp::TCP::*;
                         println!("\t\t\t{}", match tcp {
                             HTTP(http) => {
-                                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http))
+                                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
                             },
                             TLS(client_hello) => {
                                 self.colorify(Green, format!("tls: {:?}", client_hello))
@@ -292,8 +293,8 @@ impl Format {
     }
 
     #[inline]
-    fn print_json(&self, packet: Raw) {
-        println!("{}", serde_json::to_string(&packet).unwrap());
+    fn print_json(&self, packet: &Raw) {
+        println!("{}", serde_json::to_string(packet).unwrap());
     }
 }
 

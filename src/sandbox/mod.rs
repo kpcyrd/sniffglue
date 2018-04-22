@@ -79,7 +79,7 @@ pub fn setresgid(gid: gid_t) -> Result<(), Error> {
     }
 }
 
-pub fn setgroups(groups: Vec<gid_t>) -> Result<(), Error> {
+pub fn setgroups(groups: &[gid_t]) -> Result<(), Error> {
     let ret = unsafe { libc::setgroups(groups.len(), groups.as_ptr()) };
 
     if ret < 0 {
@@ -141,20 +141,17 @@ fn apply_config(config: config::Config) -> Result<(), Error> {
         _ => None,
     };
 
-    match (is_root(), config.sandbox.chroot) {
-        (true, Some(path)) => {
-            info!("starting chroot: {:?}", path);
-            chroot(&path)?;
-            info!("successfully chrooted");
-        },
-        _ => (),
-    };
+    if let (true, Some(path)) = (is_root(), config.sandbox.chroot) {
+        info!("starting chroot: {:?}", path);
+        chroot(&path)?;
+        info!("successfully chrooted");
+    }
 
     match (is_root(), user) {
         (true, Some((uid, gid))) => {
             info!("id: {}", id());
             info!("setting uid to {:?}", uid);
-            setgroups(Vec::new())?;
+            setgroups(&Vec::new())?;
             setresgid(gid)?;
             setresuid(uid)?;
             info!("id: {}", id());

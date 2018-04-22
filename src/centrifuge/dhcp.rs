@@ -22,12 +22,12 @@ fn parse_dhcp_option(option: &dhcp4r::options::Option) -> Result<DhcpOption, ::s
     Ok(value)
 }
 
-fn wrap_packet(dhcp: dhcp4r::packet::Packet, packet: structs::dhcp::Packet) -> structs::dhcp::DHCP {
+fn wrap_packet(dhcp: &dhcp4r::packet::Packet, packet: structs::dhcp::Packet) -> structs::dhcp::DHCP {
     use structs::dhcp::DHCP::*;
 
     match dhcp.option(dhcp4r::options::DHCP_MESSAGE_TYPE) {
         Some(msg_type) => {
-            if msg_type.len() > 0 {
+            if !msg_type.is_empty() {
                 match msg_type[0] {
                     dhcp4r::ACK => ACK(packet),
                     dhcp4r::DECLINE => DECLINE(packet),
@@ -67,7 +67,7 @@ pub fn extract(remaining: &[u8]) -> Result<structs::dhcp::DHCP, CentrifugeError>
 
     let mut packet = Packet::new(ciaddr, yiaddr, siaddr, dhcp.chaddr);
 
-    for option in dhcp.options.iter() {
+    for option in &dhcp.options {
         if let Ok(value) = parse_dhcp_option(&option) {
             use dhcp4r::options::*;
             match option.code {
@@ -80,7 +80,7 @@ pub fn extract(remaining: &[u8]) -> Result<structs::dhcp::DHCP, CentrifugeError>
         }
     }
 
-    Ok(wrap_packet(dhcp, packet))
+    Ok(wrap_packet(&dhcp, packet))
 }
 
 fn bytes2ipv4(bytes: [u8; 4]) -> Option<Ipv4Addr> {

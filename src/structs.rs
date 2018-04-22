@@ -180,7 +180,7 @@ pub mod http {
     }
 
     impl Request {
-        pub fn from_nom(req: nom_http::Request, headers: Vec<nom_http::Header>) -> Result<Request, FromUtf8Error> {
+        pub fn from_nom(req: &nom_http::Request, headers: Vec<nom_http::Header>) -> Result<Request, FromUtf8Error> {
             let mut host = None;
             let mut agent = None;
             let mut referer = None;
