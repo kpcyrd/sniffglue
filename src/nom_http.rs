@@ -10,7 +10,7 @@ use nom::IResult;
 // use std::env;
 // use std::fs::File;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Request<'a> {
     pub method:  &'a [u8],
     pub uri:     &'a [u8],
@@ -66,18 +66,18 @@ fn is_version(c: u8) -> bool {
 
 named!(line_ending, alt!(tag!("\r\n") | tag!("\n")));
 
-fn request_line<'a>(input: &'a [u8]) -> IResult<&'a[u8], Request<'a>> {
+fn request_line(input: &[u8]) -> IResult<&[u8], Request> {
   do_parse!(input,
     method: take_while1!(is_token)     >>
             take_while1!(is_space)     >>
-    url:    take_while1!(is_not_space) >>
+    uri:    take_while1!(is_not_space) >>
             take_while1!(is_space)     >>
     version: http_version              >>
     line_ending                        >>
     ( Request {
-        method: method,
-        uri:    url,
-        version: version,
+        method,
+        uri,
+        version,
     } )
   )
 }
@@ -93,20 +93,20 @@ named!(message_header_value, delimited!(
     line_ending
 ));
 
-fn message_header<'a>(input: &'a [u8]) -> IResult<&'a[u8], Header<'a>> {
+fn message_header(input: &[u8]) -> IResult<&[u8], Header> {
   do_parse!(input,
     name:   take_while1!(is_token)       >>
             char!(':')                   >>
-    values: many1!(message_header_value) >>
+    value: many1!(message_header_value)  >>
 
     ( Header {
-        name: name,
-        value: values,
+        name,
+        value,
     } )
   )
 }
 
-pub fn request<'a>(input: &'a [u8]) -> IResult<&'a[u8], (Request<'a>, Vec<Header<'a>>)> {
+pub fn request(input: &[u8]) -> IResult<&[u8], (Request, Vec<Header>)> {
   terminated!(input,
     pair!(request_line, many1!(message_header)),
     line_ending

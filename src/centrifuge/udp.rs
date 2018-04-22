@@ -12,7 +12,7 @@ use structs::udp::UDP;
 
 pub fn extract(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeError> {
     if let Done(remaining, udp_hdr) = udp::parse_udp_header(remaining) {
-        if remaining.len() == 0 {
+        if remaining.is_empty() {
             return Err(CentrifugeError::InvalidPacket);
         }
 

@@ -164,14 +164,11 @@ fn main() {
 
             let filter = filter.clone();
             pool.execute(move || {
-                match centrifuge::parse(&packet) {
-                    Ok(packet) => {
-                        if filter.matches(&packet) {
-                            tx.send(packet).unwrap()
-                        }
+                if let Ok(packet) = centrifuge::parse(&packet) {
+                    if filter.matches(&packet) {
+                        tx.send(packet).unwrap()
                     }
-                    Err(_) => (),
-                };
+                }
             });
         }
     });

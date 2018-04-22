@@ -38,19 +38,15 @@ pub fn find() -> Option<String> {
 
     // paths.push(String::from("sniffglue.conf"));
 
-    match env::home_dir() {
-        Some(home) => {
-            let path = home.join(Path::new(".config/sniffglue.conf"));
+    if let Some(home) = env::home_dir() {
+        let path = home.join(Path::new(".config/sniffglue.conf"));
 
-            match path.to_str() {
-                Some(path) => paths.push(path.into()),
-                None => (),
-            };
-        },
-        None => (),
+        if let Some(path) = path.to_str() {
+            paths.push(path.into());
+        }
     };
 
-    for config_path in paths.into_iter() {
+    for config_path in paths {
         if Path::new(&config_path).exists() {
             return Some(config_path);
         }

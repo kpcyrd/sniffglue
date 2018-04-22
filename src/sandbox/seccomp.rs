@@ -22,7 +22,7 @@ impl Context {
 
     fn allow_syscall(&mut self, syscall: Syscall) -> Result<(), SeccompError> {
         debug!("seccomp: allowing syscall={:?}", syscall);
-        let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.as_i32(), 0) };
+        let ret = unsafe { seccomp_rule_add(self.ctx, SCMP_ACT_ALLOW, syscall.into_i32(), 0) };
 
         if ret != 0 {
             Err(SeccompError::FFI)

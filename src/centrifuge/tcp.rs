@@ -12,7 +12,7 @@ use structs::tcp::TCP;
 
 pub fn extract(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError> {
     if let Done(remaining, tcp_hdr) = tcp::parse_tcp_header(remaining) {
-        if remaining.len() == 0 {
+        if remaining.is_empty() {
             return Err(CentrifugeError::InvalidPacket);
         }
 
