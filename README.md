@@ -18,7 +18,11 @@ when processing packets. The output should be as useful as possible by default.
 
 ## Installation
 
-Make sure you have libpcap and libseccomp installed,
+There is an official package available for archlinux:
+
+    pacman -S sniffglue
+
+To build from source, make sure you have libpcap and libseccomp installed,
 Debian/Ubuntu: `libpcap-dev libseccomp-dev`,
 Archlinux: `libpcap libseccomp`.
 
