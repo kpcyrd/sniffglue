@@ -24,6 +24,7 @@ use std::sync::mpsc;
 
 mod fmt;
 use sniffglue::centrifuge;
+use sniffglue::link::DataLink;
 use sniffglue::sandbox;
 use sniffglue::structs;
 
@@ -144,6 +145,19 @@ fn main() {
         let pool = ThreadPool::new(cpus);
 
         let mut cap = cap.activate();
+
+        let datalink = match DataLink::from_linktype(cap.get_datalink()) {
+            Ok(link) => link,
+            Err(x) => {
+                // TODO: properly exit the program
+                eprintln!("Unknown link type: {:?}, {:?}, {}",
+                    x.get_name().unwrap_or("???".into()),
+                    x.get_description().unwrap_or("???".into()),
+                    x.0);
+                return;
+            },
+        };
+
         while let Ok(packet) = cap.next() {
             // let ts = packet.header.ts;
             // let len = packet.header.len;
@@ -152,8 +166,9 @@ fn main() {
             let packet = packet.data.to_vec();
 
             let filter = filter.clone();
+            let datalink = datalink.clone();
             pool.execute(move || {
-                if let Ok(packet) = centrifuge::parse(&packet) {
+                if let Ok(packet) = centrifuge::parse(&datalink, &packet) {
                     if filter.matches(&packet) {
                         tx.send(packet).unwrap()
                     }

@@ -3,6 +3,7 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
 #[macro_use] extern crate nom;
+extern crate pcap;
 extern crate pktparse;
 extern crate dhcp4r;
 extern crate dns_parser;
@@ -16,6 +17,7 @@ extern crate toml;
 extern crate users;
 
 pub mod centrifuge;
+pub mod link;
 mod nom_http;
 pub mod sandbox;
 pub mod structs;
@@ -111,7 +113,7 @@ mod tests {
             Text(String::from_utf8(HTML.to_vec()).unwrap())
         ))));
 
-        let x = centrifuge::parse(&pkt);
+        let x = centrifuge::parse_eth(&pkt);
         assert_eq!(expected, x);
     }
 
@@ -123,7 +125,7 @@ mod tests {
                       0, 67, 0, 68, 53, 53, 53, 53, 39, 0, 0, 10, 0, 10, 0, 0, 255,
                       255, 0, 56, 255, 255, 0, 0, 8, 0, 10, 10];
 
-        let _ = centrifuge::parse(bytes);
+        let _ = centrifuge::parse_eth(bytes);
 
 
         // 239 dhcp bytes
@@ -154,7 +156,7 @@ mod tests {
                       0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
                       255, 0, 56, 255, 255, 0, 0, 8, 0, 10];
 
-        let _ = centrifuge::parse(bytes);
+        let _ = centrifuge::parse_eth(bytes);
 
 
         // 240 dhcp bytes
@@ -185,6 +187,6 @@ mod tests {
                       0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
                       255, 0, 56, 255, 255, 0, 0, 8, 0, 10, 10];
 
-        let _ = centrifuge::parse(bytes);
+        let _ = centrifuge::parse_eth(bytes);
     }
 }
