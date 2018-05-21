@@ -390,42 +390,32 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 
 #[inline]
 fn display_kv_list(list: &[(&str, Option<String>)]) -> String {
-    match list.into_iter()
+    list.into_iter()
         .filter_map(|&(key, ref value)| {
-            match *value {
-                Some(ref value) => {
-                    Some(format!("{}: {:?}", key, value))
-                },
-                None => None,
-            }
+            value.as_ref().map(|value| {
+                format!("{}: {:?}", key, value)
+            })
         })
         .reduce(|a, b| a + ", " + &b)
-    {
-        Some(extra) => format!(" ({})", extra),
-        None => String::new(),
-    }
+        .map(|extra| format!(" ({})", extra))
+        .unwrap_or_else(|| String::new())
 }
 
 #[inline]
 fn display_dhcp_kv_list(list: &[(&str, Option<DhcpOption>)]) -> String {
-    match list.into_iter()
+    list.into_iter()
         .filter_map(|&(key, ref value)| {
-            match *value {
-                Some(ref value) => {
-                    let value = match *value {
-                        DhcpOption::String(ref value) => format!("{:?}", value),
-                        DhcpOption::IPv4(ref value) => format!("{:?}", value),
-                        DhcpOption::Bytes(ref value) => format!("{:?}", value),
-                    };
+            value.as_ref().map(|value| {
+                let value = match *value {
+                    DhcpOption::String(ref value) => format!("{:?}", value),
+                    DhcpOption::IPv4(ref value) => format!("{:?}", value),
+                    DhcpOption::Bytes(ref value) => format!("{:?}", value),
+                };
 
-                    Some(format!("{}: {}", key, value))
-                },
-                None => None,
-            }
+                format!("{}: {}", key, value)
+            })
         })
         .reduce(|a, b| a + ", " + &b)
-    {
-        Some(extra) => format!(" ({})", extra),
-        None => String::new(),
-    }
+        .map(|extra| format!(" ({})", extra))
+        .unwrap_or_else(|| String::new())
 }

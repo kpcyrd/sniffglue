@@ -171,14 +171,10 @@ pub mod http {
     }
 
     fn mkheader(x: Vec<&[u8]>) -> Option<String> {
-        match String::from_utf8(
-            x.into_iter()
-             .flat_map(|x| x.to_owned())
-             .collect(),
-        ) {
-            Ok(x) => Some(x),
-            Err(_) => None,
-        }
+        String::from_utf8(x.into_iter()
+            .flat_map(|x| x.to_owned())
+            .collect(),
+        ).ok()
     }
 
     impl Request {
