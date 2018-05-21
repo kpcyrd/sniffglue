@@ -78,45 +78,21 @@ impl Format {
 
         let color = match packet {
             Ether(eth_frame, eth) => {
-                out += &format!("{} -> {}",
+                out += &format!("{} -> {}, ",
                                 display_macaddr(&eth_frame.source_mac),
                                 display_macaddr(&eth_frame.dest_mac));
 
                 match eth {
-                    Arp(arp_pkt) => {
-                        let (txt, color) = self.format_compact_arp(arp_pkt);
-                        out += &format!(", {}", txt);
-                        color
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        let (txt, color) = self.format_compact_ipv4_tcp(ip_hdr, tcp_hdr, tcp);
-                        out += &format!(", {}", txt);
-                        color
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        let (txt, color) = self.format_compact_ipv4_udp(ip_hdr, udp_hdr, udp);
-                        out += &format!(", {}", txt);
-                        color
-                    },
+                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
+                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
+                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
                 }
             },
             Tun(eth) => {
                 match eth {
-                    Arp(arp_pkt) => {
-                        let (txt, color) = self.format_compact_arp(arp_pkt);
-                        out += &format!(", {}", txt);
-                        color
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        let (txt, color) = self.format_compact_ipv4_tcp(ip_hdr, tcp_hdr, tcp);
-                        out += &format!(", {}", txt);
-                        color
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        let (txt, color) = self.format_compact_ipv4_udp(ip_hdr, udp_hdr, udp);
-                        out += &format!(", {}", txt);
-                        color
-                    },
+                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
+                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
+                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
                 }
             },
         };
@@ -128,9 +104,9 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_arp(&self, arp_pkt: arp::ARP) -> (String, Option<Colour>) {
+    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Colour> {
         use structs::arp::ARP;
-        let txt = match arp_pkt {
+        out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
                 format!("[arp/request] who has {:15}? (tell {}, {})",
                     format!("{}", arp_pkt.dest_addr),
@@ -144,21 +120,21 @@ impl Format {
                     format!("{}", arp_pkt.dest_addr),
                     display_macaddr(&arp_pkt.dest_mac))
             },
-        };
-        (txt, Some(Blue))
+        });
+        Some(Blue)
     }
 
     #[inline]
-    fn format_compact_ipv4_tcp(&self, ip_hdr: pktparse::ipv4::IPv4Header, tcp_hdr: pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> (String, Option<Colour>) {
-        let mut out = format!("[tcp] {:22} -> {:22} ",
+    fn format_compact_ipv4_tcp(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, tcp_hdr: pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
+        out.push_str(&format!("[tcp] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr, tcp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, tcp_hdr.dest_port));
+                        format!("{}:{}", ip_hdr.dest_addr, tcp_hdr.dest_port)));
 
         use structs::tcp::TCP::*;
-        let color = match tcp {
+        match tcp {
             HTTP(http) => {
                 // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
-                out += &format!("[http] {:?}", http); // TODO
+                out.push_str(&format!("[http] {:?}", http)); // TODO
                 Some(Green)
             },
             TLS(client_hello) => {
@@ -166,31 +142,29 @@ impl Format {
                     ("hostname", client_hello.hostname),
                 ]);
 
-                out += "[tls] ClientHello";
-                out += &extra;
+                out.push_str("[tls] ClientHello");
+                out.push_str(&extra);
                 Some(Green)
             },
             Text(text) => {
-                out += &format!("[text] {:?}", text);
+                out.push_str(&format!("[text] {:?}", text));
                 Some(Red)
             },
             Binary(x) => {
-                out += &format!("[binary] {:?}", x);
+                out.push_str(&format!("[binary] {:?}", x));
                 Some(Red)
             },
-        };
-
-        (out, color)
+        }
     }
 
     #[inline]
-    fn format_compact_ipv4_udp(&self, ip_hdr: pktparse::ipv4::IPv4Header, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> (String, Option<Colour>) {
-        let mut out = format!("[udp] {:22} -> {:22} ",
+    fn format_compact_ipv4_udp(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
+        out.push_str(&format!("[udp] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr, udp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, udp_hdr.dest_port));
+                        format!("{}:{}", ip_hdr.dest_addr, udp_hdr.dest_port)));
 
         use structs::udp::UDP::*;
-        let color = match udp {
+        match udp {
             DHCP(dhcp) => {
                 use structs::dhcp::DHCP::*;
 
@@ -201,8 +175,9 @@ impl Format {
                             ("requested_ip_address", disc.requested_ip_address),
                         ]);
 
-                        out += &(format!("[dhcp] DISCOVER: {}",
-                                display_macadr_buf(disc.chaddr)) + &extra);
+                        out.push_str(&format!("[dhcp] DISCOVER: {}",
+                                display_macadr_buf(disc.chaddr)));
+                        out.push_str(&extra);
                     },
                     REQUEST(req) => {
                         let extra = display_dhcp_kv_list(&[
@@ -210,8 +185,9 @@ impl Format {
                             ("requested_ip_address", req.requested_ip_address),
                         ]);
 
-                        out += &(format!("[dhcp] REQ: {}",
-                                display_macadr_buf(req.chaddr)) + &extra);
+                        out.push_str(&format!("[dhcp] REQ: {}",
+                                display_macadr_buf(req.chaddr)));
+                        out.push_str(&extra);
                     },
                     ACK(ack) => {
                         let extra = display_dhcp_kv_list(&[
@@ -220,9 +196,10 @@ impl Format {
                             ("dns", ack.domain_name_server),
                         ]);
 
-                        out += &(format!("[dhcp] ACK: {} => {}",
+                        out.push_str(&format!("[dhcp] ACK: {} => {}",
                                 display_macadr_buf(ack.chaddr),
-                                ack.yiaddr) + &extra);
+                                ack.yiaddr));
+                        out.push_str(&extra);
                     },
                     OFFER(offer) => {
                         let extra = display_dhcp_kv_list(&[
@@ -231,12 +208,13 @@ impl Format {
                             ("dns", offer.domain_name_server),
                         ]);
 
-                        out += &(format!("[dhcp] OFFER: {} => {}",
+                        out.push_str(&format!("[dhcp] OFFER: {} => {}",
                                 display_macadr_buf(offer.chaddr),
-                                offer.yiaddr) + &extra);
+                                offer.yiaddr));
+                        out.push_str(&extra);
                     },
                     _ => {
-                        out += &format!("[dhcp] {:?}", dhcp); // TODO
+                        out.push_str(&format!("[dhcp] {:?}", dhcp)); // TODO
                     },
                 };
 
@@ -246,25 +224,25 @@ impl Format {
                 use structs::dns::DNS::*;
                 match dns {
                     Request(req) => {
-                        out += "[dns] req, ";
+                        out.push_str("[dns] req, ");
 
                         match req.questions.iter()
                             .map(|x| format!("{:?}", x))
                             .reduce(|a, b| a + &align(out.len(), &b))
                         {
-                            Some(dns) => out += &dns,
-                            None => out += "[]",
+                            Some(dns) => out.push_str(&dns),
+                            None => out.push_str("[]"),
                         };
                     },
                     Response(resp) => {
-                        out += "[dns] resp, ";
+                        out.push_str("[dns] resp, ");
 
                         match resp.answers.iter()
                             .map(|x| format!("{:?}", x))
                             .reduce(|a, b| a + &align(out.len(), &b))
                         {
-                            Some(dns) => out += &dns,
-                            None => out += "[]",
+                            Some(dns) => out.push_str(&dns),
+                            None => out.push_str("[]"),
                         };
                     },
                 };
@@ -272,16 +250,14 @@ impl Format {
                 Some(Yellow)
             },
             Text(text) => {
-                out += &format!("[text] {:?}", text);
+                out.push_str(&format!("[text] {:?}", text));
                 Some(Red)
             },
             Binary(x) => {
-                out += &format!("[binary] {:?}", x);
+                out.push_str(&format!("[binary] {:?}", x));
                 Some(Red)
             },
-        };
-
-        (out, color)
+        }
     }
 
     #[inline]
