@@ -273,42 +273,12 @@ impl Format {
                     IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
                         println!("\tipv4: {:?}", ip_hdr);
                         println!("\t\ttcp: {:?}", tcp_hdr);
-
-                        use structs::tcp::TCP::*;
-                        println!("\t\t\t{}", match tcp {
-                            HTTP(http) => {
-                                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
-                            },
-                            TLS(client_hello) => {
-                                self.colorify(Green, format!("tls: {:?}", client_hello))
-                            },
-                            Text(text) => {
-                                self.colorify(Blue, format!("remaining: {:?}", text))
-                            },
-                            Binary(x) => {
-                                self.colorify(Yellow, format!("remaining: {:?}", x))
-                            },
-                        });
+                        println!("\t\t\t{}", self.print_detailed_tcp(tcp));
                     },
                     IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
                         println!("\tipv4: {:?}", ip_hdr);
                         println!("\t\tudp: {:?}", udp_hdr);
-
-                        use structs::udp::UDP::*;
-                        println!("\t\t\t{}", match udp {
-                            DHCP(dhcp) => {
-                                self.colorify(Green, format!("dhcp: {:?}", dhcp))
-                            },
-                            DNS(dns) => {
-                                self.colorify(Green, format!("dns: {:?}", dns))
-                            },
-                            Text(text) => {
-                                self.colorify(Blue, format!("remaining: {:?}", text))
-                            },
-                            Binary(x) => {
-                                self.colorify(Yellow, format!("remaining: {:?}", x))
-                            },
-                        });
+                        println!("\t\t\t{}", self.print_detailed_udp(udp));
                     },
                 }
             },
@@ -320,44 +290,52 @@ impl Format {
                     IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
                         println!("ipv4: {:?}", ip_hdr);
                         println!("\ttcp: {:?}", tcp_hdr);
-
-                        use structs::tcp::TCP::*;
-                        println!("\t\t{}", match tcp {
-                            HTTP(http) => {
-                                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
-                            },
-                            TLS(client_hello) => {
-                                self.colorify(Green, format!("tls: {:?}", client_hello))
-                            },
-                            Text(text) => {
-                                self.colorify(Blue, format!("remaining: {:?}", text))
-                            },
-                            Binary(x) => {
-                                self.colorify(Yellow, format!("remaining: {:?}", x))
-                            },
-                        });
+                        println!("\t\t{}", self.print_detailed_tcp(tcp));
                     },
                     IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
                         println!("ipv4: {:?}", ip_hdr);
                         println!("\tudp: {:?}", udp_hdr);
-
-                        use structs::udp::UDP::*;
-                        println!("\t\t{}", match udp {
-                            DHCP(dhcp) => {
-                                self.colorify(Green, format!("dhcp: {:?}", dhcp))
-                            },
-                            DNS(dns) => {
-                                self.colorify(Green, format!("dns: {:?}", dns))
-                            },
-                            Text(text) => {
-                                self.colorify(Blue, format!("remaining: {:?}", text))
-                            },
-                            Binary(x) => {
-                                self.colorify(Yellow, format!("remaining: {:?}", x))
-                            },
-                        });
+                        println!("\t\t{}", self.print_detailed_udp(udp));
                     },
                 }
+            },
+        }
+    }
+
+    #[inline]
+    fn print_detailed_tcp(&self, tcp: tcp::TCP) -> String {
+        use structs::tcp::TCP::*;
+        match tcp {
+            HTTP(http) => {
+                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
+            },
+            TLS(client_hello) => {
+                self.colorify(Green, format!("tls: {:?}", client_hello))
+            },
+            Text(text) => {
+                self.colorify(Blue, format!("remaining: {:?}", text))
+            },
+            Binary(x) => {
+                self.colorify(Yellow, format!("remaining: {:?}", x))
+            },
+        }
+    }
+
+    #[inline]
+    fn print_detailed_udp(&self, udp: udp::UDP) -> String {
+        use structs::udp::UDP::*;
+        match udp {
+            DHCP(dhcp) => {
+                self.colorify(Green, format!("dhcp: {:?}", dhcp))
+            },
+            DNS(dns) => {
+                self.colorify(Green, format!("dns: {:?}", dns))
+            },
+            Text(text) => {
+                self.colorify(Blue, format!("remaining: {:?}", text))
+            },
+            Binary(x) => {
+                self.colorify(Yellow, format!("remaining: {:?}", x))
             },
         }
     }
