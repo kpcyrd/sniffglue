@@ -2,27 +2,17 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
+extern crate sniffglue;
 extern crate pcap;
-#[macro_use] extern crate nom;
 extern crate pktparse;
-extern crate dns_parser;
-extern crate tls_parser;
-extern crate dhcp4r;
 extern crate ansi_term;
 extern crate threadpool;
 extern crate num_cpus;
 extern crate reduce;
 extern crate clap;
 extern crate atty;
-#[cfg(target_os="linux")]
-extern crate seccomp_sys;
 extern crate env_logger;
-#[macro_use] extern crate log;
-extern crate libc;
-extern crate toml;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
-extern crate users;
 
 use pcap::Device;
 use pcap::Capture;
@@ -32,11 +22,10 @@ use threadpool::ThreadPool;
 use std::thread;
 use std::sync::mpsc;
 
-mod centrifuge;
 mod fmt;
-mod sandbox;
-mod structs;
-mod nom_http;
+use sniffglue::centrifuge;
+use sniffglue::sandbox;
+use sniffglue::structs;
 
 use clap::{App, Arg, AppSettings};
 
