@@ -32,9 +32,14 @@ pub fn extract(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeErro
             let http = http::extract(remaining)?;
             Ok((tcp_hdr, TCP::HTTP(http)))
         } else {
-            match from_utf8(remaining) {
-                Ok(remaining) => Ok((tcp_hdr, TCP::Text(remaining.to_owned()))),
-                Err(_) => Ok((tcp_hdr, TCP::Binary(remaining.to_vec()))),
+            // if slice contains null bytes, don't try to decode
+            if remaining.contains(&0) {
+                Ok((tcp_hdr, TCP::Binary(remaining.to_vec())))
+            } else {
+                match from_utf8(remaining) {
+                    Ok(remaining) => Ok((tcp_hdr, TCP::Text(remaining.to_owned()))),
+                    Err(_) => Ok((tcp_hdr, TCP::Binary(remaining.to_vec()))),
+                }
             }
         }
     } else {

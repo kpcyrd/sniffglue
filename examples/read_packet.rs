@@ -11,7 +11,7 @@ fn main() {
         let bytes = base64::decode(&arg).unwrap();
         println!("{:?}", bytes);
 
-        let packet = sniffglue::centrifuge::parse(&bytes);
+        let packet = sniffglue::centrifuge::parse_eth(&bytes);
         println!("{:?}", packet);
     }
 }

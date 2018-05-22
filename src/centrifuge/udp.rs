@@ -25,9 +25,14 @@ pub fn extract(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeErro
             let dhcp = dhcp::extract(remaining)?;
             Ok((udp_hdr, UDP::DHCP(dhcp)))
         } else {
-            match from_utf8(remaining) {
-                Ok(remaining) => Ok((udp_hdr, UDP::Text(remaining.to_owned()))),
-                Err(_) => Ok((udp_hdr, UDP::Binary(remaining.to_vec()))),
+            // if slice contains null bytes, don't try to decode
+            if remaining.contains(&0) {
+                Ok((udp_hdr, UDP::Binary(remaining.to_vec())))
+            } else {
+                match from_utf8(remaining) {
+                    Ok(remaining) => Ok((udp_hdr, UDP::Text(remaining.to_owned()))),
+                    Err(_) => Ok((udp_hdr, UDP::Binary(remaining.to_vec()))),
+                }
             }
         }
     } else {

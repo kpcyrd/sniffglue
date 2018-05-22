@@ -20,6 +20,7 @@ pub mod raw {
     #[derive(Debug, PartialEq, Serialize)]
     pub enum Raw {
         Ether(pktparse::ethernet::EthernetFrame, ether::Ether),
+        Tun(ether::Ether),
     }
 
     impl Raw {
@@ -27,6 +28,7 @@ pub mod raw {
             use self::Raw::*;
             match *self {
                 Ether(_, ref ether) => ether.is_noise(),
+                Tun(ref ether) => ether.is_noise(),
             }
         }
     }
@@ -169,14 +171,10 @@ pub mod http {
     }
 
     fn mkheader(x: Vec<&[u8]>) -> Option<String> {
-        match String::from_utf8(
-            x.into_iter()
-             .flat_map(|x| x.to_owned())
-             .collect(),
-        ) {
-            Ok(x) => Some(x),
-            Err(_) => None,
-        }
+        String::from_utf8(x.into_iter()
+            .flat_map(|x| x.to_owned())
+            .collect(),
+        ).ok()
     }
 
     impl Request {
