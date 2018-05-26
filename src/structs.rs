@@ -21,6 +21,7 @@ pub mod raw {
     pub enum Raw {
         Ether(pktparse::ethernet::EthernetFrame, ether::Ether),
         Tun(ether::Ether),
+        Unknown(Vec<u8>),
     }
 
     impl Raw {
@@ -29,6 +30,7 @@ pub mod raw {
             match *self {
                 Ether(_, ref ether) => ether.is_noise(),
                 Tun(ref ether) => ether.is_noise(),
+                Unknown(_) => true,
             }
         }
     }
@@ -43,6 +45,7 @@ pub mod ether {
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
+        Unknown(Vec<u8>),
     }
 
     impl Ether {
@@ -51,6 +54,7 @@ pub mod ether {
             match *self {
                 Arp(_) => true,
                 IPv4(_, ref ipv4) => ipv4.is_noise(),
+                Unknown(_) => true,
             }
         }
     }
@@ -75,6 +79,7 @@ pub mod ipv4 {
     pub enum IPv4 {
         TCP(pktparse::tcp::TcpHeader, tcp::TCP),
         UDP(pktparse::udp::UdpHeader, udp::UDP),
+        Unknown(Vec<u8>),
     }
 
     impl IPv4 {
@@ -83,6 +88,7 @@ pub mod ipv4 {
             match *self {
                 TCP(_, ref tcp) => tcp.is_noise(),
                 UDP(_, ref udp) => udp.is_noise(),
+                Unknown(_) => true,
             }
         }
     }

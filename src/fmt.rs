@@ -7,6 +7,7 @@ use serde_json;
 
 use structs::ether;
 use structs::arp;
+use structs::ipv4;
 use structs::tcp;
 use structs::udp;
 use structs::raw::Raw;
@@ -77,31 +78,40 @@ impl Format {
     fn print_compact(&self, packet: Raw) {
         let mut out = String::new();
 
+        use structs::raw::Raw::Unknown;
         let color = match packet {
             Ether(eth_frame, eth) => {
                 out += &format!("{} -> {}, ",
                                 display_macaddr(&eth_frame.source_mac),
                                 display_macaddr(&eth_frame.dest_mac));
 
-                match eth {
-                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
-                }
+                self.format_compact_eth(&mut out, eth)
             },
-            Tun(eth) => {
-                match eth {
-                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
-                }
-            },
+            Tun(eth) => self.format_compact_eth(&mut out, eth),
+            Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
         };
 
         println!("{}", match color {
             Some(color) => self.colorify(color, out),
             None => out,
         });
+    }
+
+    #[inline]
+    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Colour> {
+        out.push_str(&format!("[unknown] {:?}", data));
+        None
+    }
+
+    #[inline]
+    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
+        match eth {
+            Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
+            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, ip_hdr, tcp_hdr, tcp),
+            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, ip_hdr, udp_hdr, udp),
+            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, ip_hdr, &data),
+            ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
+        }
     }
 
     #[inline]
@@ -123,6 +133,15 @@ impl Format {
             },
         });
         Some(Blue)
+    }
+
+    #[inline]
+    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
+        out.push_str(&format!("[unknown] {:15} -> {:15} {:?}",
+                        ip_hdr.source_addr,
+                        ip_hdr.dest_addr,
+                        data));
+        None
     }
 
     #[inline]
@@ -263,12 +282,14 @@ impl Format {
 
     #[inline]
     fn print_detailed(&self, packet: Raw) {
+        use structs::raw::Raw::Unknown;
         match packet {
             Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
                 self.print_detailed_eth(1, eth);
             },
             Tun(eth) => self.print_detailed_eth(0, eth),
+            Unknown(data) => println!("unknown: {:?}", data),
         }
     }
 
@@ -288,6 +309,13 @@ impl Format {
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
             },
+            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
+                println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
+            },
+            ether::Ether::Unknown(data) => {
+                println!("{}unknown: {:?}", "\t".repeat(indent), data);
+            }
         }
     }
 

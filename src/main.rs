@@ -168,10 +168,9 @@ fn main() {
             let filter = filter.clone();
             let datalink = datalink.clone();
             pool.execute(move || {
-                if let Ok(packet) = centrifuge::parse(&datalink, &packet) {
-                    if filter.matches(&packet) {
-                        tx.send(packet).unwrap()
-                    }
+                let packet = centrifuge::parse(&datalink, &packet);
+                if filter.matches(&packet) {
+                    tx.send(packet).unwrap()
                 }
             });
         }
