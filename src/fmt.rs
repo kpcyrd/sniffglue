@@ -21,10 +21,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(layout: Layout, log_noise: bool, colors: bool) -> Config {
+    pub fn new(layout: Layout, verbose: u64, colors: bool) -> Config {
         Config {
             fmt: Format::new(layout, colors),
-            filter: Arc::new(Filter::new(log_noise)),
+            filter: Arc::new(Filter::new(verbose)),
         }
     }
 
@@ -364,23 +364,19 @@ impl Format {
 }
 
 pub struct Filter {
-    log_noise: bool,
+    verbose: u64,
 }
 
 impl Filter {
-    pub fn new(log_noise: bool) -> Filter {
+    pub fn new(verbose: u64) -> Filter {
         Filter {
-            log_noise,
+            verbose,
         }
     }
 
     #[inline]
     pub fn matches(&self, packet: &Raw) -> bool {
-        if self.log_noise {
-            true
-        } else {
-            !packet.is_noise()
-        }
+        packet.noise_level().to_u64() <= self.verbose
     }
 }
 

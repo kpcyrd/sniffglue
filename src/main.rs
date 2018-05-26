@@ -88,10 +88,11 @@ fn main() {
             .long("json")
             .help("Json output (unstable!)")
         )
-        .arg(Arg::with_name("noisy")
-            .short("x")
-            .long("noisy")
-            .help("Log noisy packets")
+        .arg(Arg::with_name("verbose")
+            .short("v")
+            .long("verbose")
+            .multiple(true)
+            .help("Show more packets (maximum: 4)")
         )
         .arg(Arg::with_name("read")
             .short("r")
@@ -107,8 +108,8 @@ fn main() {
         Some(device) => device.to_owned(),
         None => Device::lookup().unwrap().name,
     };
-    let log_noise = matches.occurrences_of("noisy") > 0;
-    let promisc = matches.occurrences_of("promisc") > 0;
+    let verbose = matches.occurrences_of("verbose");
+    let promisc = matches.is_present("promisc");
 
     let layout = match matches.occurrences_of("json") {
         0 => match matches.occurrences_of("detailed") {
@@ -119,7 +120,7 @@ fn main() {
     };
 
     let colors = atty::is(atty::Stream::Stdout);
-    let config = fmt::Config::new(layout, log_noise, colors);
+    let config = fmt::Config::new(layout, verbose, colors);
 
     let cap: CapWrap = match matches.occurrences_of("read") {
         0 => {
