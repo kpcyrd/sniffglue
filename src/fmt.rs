@@ -5,6 +5,7 @@ use reduce::Reduce;
 use ansi_term::Colour::{self, Yellow, Blue, Green, Red};
 use serde_json;
 
+use structs::ether;
 use structs::arp;
 use structs::tcp;
 use structs::udp;
@@ -265,39 +266,27 @@ impl Format {
         match packet {
             Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
-
-                match eth {
-                    Arp(arp_pkt) => {
-                        self.colorify(Blue, format!("\tarp: {:?}", arp_pkt));
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        println!("\tipv4: {:?}", ip_hdr);
-                        println!("\t\ttcp: {:?}", tcp_hdr);
-                        println!("\t\t\t{}", self.print_detailed_tcp(tcp));
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        println!("\tipv4: {:?}", ip_hdr);
-                        println!("\t\tudp: {:?}", udp_hdr);
-                        println!("\t\t\t{}", self.print_detailed_udp(udp));
-                    },
-                }
+                self.print_detailed_eth(1, eth);
             },
-            Tun(eth) => {
-                match eth {
-                    Arp(arp_pkt) => {
-                        self.colorify(Blue, format!("arp: {:?}", arp_pkt));
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        println!("ipv4: {:?}", ip_hdr);
-                        println!("\ttcp: {:?}", tcp_hdr);
-                        println!("\t\t{}", self.print_detailed_tcp(tcp));
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        println!("ipv4: {:?}", ip_hdr);
-                        println!("\tudp: {:?}", udp_hdr);
-                        println!("\t\t{}", self.print_detailed_udp(udp));
-                    },
-                }
+            Tun(eth) => self.print_detailed_eth(0, eth),
+        }
+    }
+
+    #[inline]
+    fn print_detailed_eth(&self, indent: usize, eth: ether::Ether) {
+        match eth {
+            Arp(arp_pkt) => {
+                println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
+            },
+            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
+            },
+            IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
             },
         }
     }
