@@ -146,12 +146,14 @@ pub mod tcp {
 pub mod udp {
     use structs::dns;
     use structs::dhcp;
+    use structs::ssdp;
     use structs::NoiseLevel;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum UDP {
         DHCP(dhcp::DHCP),
         DNS(dns::DNS),
+        SSDP(ssdp::SSDP),
 
         Text(String),
         Binary(Vec<u8>),
@@ -161,9 +163,11 @@ pub mod udp {
         pub fn noise_level(&self) -> NoiseLevel {
             use self::UDP::*;
             match *self {
+                DHCP(_) => NoiseLevel::Zero,
+                DNS(_) => NoiseLevel::Zero,
+                SSDP(_) => NoiseLevel::Two,
                 Text(_) => NoiseLevel::Two,
                 Binary(_) => NoiseLevel::AlmostMaximum,
-                _ => NoiseLevel::Zero,
             }
         }
     }
@@ -422,5 +426,14 @@ pub mod dns {
                 _ => Record::Unknown,
             }
         }
+    }
+}
+
+pub mod ssdp {
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum SSDP {
+        Discover(Option<String>),
+        Notify(String),
+        BTSearch(String),
     }
 }

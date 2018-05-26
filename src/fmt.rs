@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pktparse;
 use reduce::Reduce;
-use ansi_term::Colour::{self, Yellow, Blue, Green, Red};
+use ansi_term::Colour::{self, Yellow, Blue, Green, Red, Purple};
 use serde_json;
 
 use structs::ether;
@@ -269,6 +269,16 @@ impl Format {
 
                 Some(Yellow)
             },
+            SSDP(ssdp) => {
+                use structs::ssdp::SSDP::*;
+                out.push_str(&match ssdp {
+                    Discover(None) => format!("[ssdp] searching..."),
+                    Discover(Some(extra)) => format!("[ssdp] searching({:?})...", extra),
+                    Notify(extra) => format!("[ssdp] notify: {:?}", extra),
+                    BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
+                });
+                Some(Purple)
+            },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
                 Some(Red)
@@ -347,6 +357,9 @@ impl Format {
             },
             DNS(dns) => {
                 self.colorify(Green, format!("dns: {:?}", dns))
+            },
+            SSDP(ssdp) => {
+                self.colorify(Purple, format!("ssdp: {:?}", ssdp))
             },
             Text(text) => {
                 self.colorify(Blue, format!("remaining: {:?}", text))
