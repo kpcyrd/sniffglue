@@ -13,22 +13,45 @@ pub mod prelude {
     pub use structs::ipv4::IPv4::*;
 }
 
+/// Zero            - This packet is very interesting
+/// One             - This packet is somewhat interesting
+/// Two             - Stuff you want to see if you're looking really hard
+/// AlmostMaximum   - Some binary data
+/// Maximum         - We couldn't parse this
+#[derive(Debug)]
+pub enum NoiseLevel {
+    Zero          = 0,
+    One           = 1,
+    Two           = 2,
+    AlmostMaximum = 3,
+    Maximum       = 4,
+}
+
+impl NoiseLevel {
+    pub fn to_u64(self) -> u64 {
+        self as u64
+    }
+}
+
 pub mod raw {
     use structs::ether;
+    use structs::NoiseLevel;
     use pktparse;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum Raw {
         Ether(pktparse::ethernet::EthernetFrame, ether::Ether),
         Tun(ether::Ether),
+        Unknown(Vec<u8>),
     }
 
     impl Raw {
-        pub fn is_noise(&self) -> bool {
+        pub fn noise_level(&self) -> NoiseLevel {
             use self::Raw::*;
             match *self {
-                Ether(_, ref ether) => ether.is_noise(),
-                Tun(ref ether) => ether.is_noise(),
+                Ether(_, ref ether) => ether.noise_level(),
+                Tun(ref ether) => ether.noise_level(),
+                Unknown(_) => NoiseLevel::Maximum,
             }
         }
     }
@@ -37,20 +60,23 @@ pub mod raw {
 pub mod ether {
     use structs::arp;
     use structs::ipv4;
+    use structs::NoiseLevel;
     use pktparse;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
+        Unknown(Vec<u8>),
     }
 
     impl Ether {
-        pub fn is_noise(&self) -> bool {
+        pub fn noise_level(&self) -> NoiseLevel {
             use self::Ether::*;
             match *self {
-                Arp(_) => true,
-                IPv4(_, ref ipv4) => ipv4.is_noise(),
+                Arp(_) => NoiseLevel::One,
+                IPv4(_, ref ipv4) => ipv4.noise_level(),
+                Unknown(_) => NoiseLevel::Maximum,
             }
         }
     }
@@ -69,20 +95,23 @@ pub mod arp {
 pub mod ipv4 {
     use structs::tcp;
     use structs::udp;
+    use structs::NoiseLevel;
     use pktparse;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum IPv4 {
         TCP(pktparse::tcp::TcpHeader, tcp::TCP),
         UDP(pktparse::udp::UdpHeader, udp::UDP),
+        Unknown(Vec<u8>),
     }
 
     impl IPv4 {
-        pub fn is_noise(&self) -> bool {
+        pub fn noise_level(&self) -> NoiseLevel {
             use self::IPv4::*;
             match *self {
-                TCP(_, ref tcp) => tcp.is_noise(),
-                UDP(_, ref udp) => udp.is_noise(),
+                TCP(_, ref tcp) => tcp.noise_level(),
+                UDP(_, ref udp) => udp.noise_level(),
+                Unknown(_) => NoiseLevel::Maximum,
             }
         }
     }
@@ -91,6 +120,7 @@ pub mod ipv4 {
 pub mod tcp {
     use structs::tls;
     use structs::http;
+    use structs::NoiseLevel;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum TCP {
@@ -102,12 +132,12 @@ pub mod tcp {
     }
 
     impl TCP {
-        pub fn is_noise(&self) -> bool {
+        pub fn noise_level(&self) -> NoiseLevel {
             use self::TCP::*;
             match *self {
-                Text(ref text) => text.len() < 5,
-                Binary(_) => true,
-                _ => false,
+                Text(ref text) if text.len() < 5 => NoiseLevel::AlmostMaximum,
+                Binary(_) => NoiseLevel::AlmostMaximum,
+                _ => NoiseLevel::Zero,
             }
         }
     }
@@ -116,23 +146,28 @@ pub mod tcp {
 pub mod udp {
     use structs::dns;
     use structs::dhcp;
+    use structs::ssdp;
+    use structs::NoiseLevel;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum UDP {
         DHCP(dhcp::DHCP),
         DNS(dns::DNS),
+        SSDP(ssdp::SSDP),
 
         Text(String),
         Binary(Vec<u8>),
     }
 
     impl UDP {
-        pub fn is_noise(&self) -> bool {
+        pub fn noise_level(&self) -> NoiseLevel {
             use self::UDP::*;
             match *self {
-                Text(_) => true,
-                Binary(_) => true,
-                _ => false,
+                DHCP(_) => NoiseLevel::Zero,
+                DNS(_) => NoiseLevel::Zero,
+                SSDP(_) => NoiseLevel::Two,
+                Text(_) => NoiseLevel::Two,
+                Binary(_) => NoiseLevel::AlmostMaximum,
             }
         }
     }
@@ -391,5 +426,14 @@ pub mod dns {
                 _ => Record::Unknown,
             }
         }
+    }
+}
+
+pub mod ssdp {
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum SSDP {
+        Discover(Option<String>),
+        Notify(String),
+        BTSearch(String),
     }
 }

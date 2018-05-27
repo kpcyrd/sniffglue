@@ -88,10 +88,11 @@ fn main() {
             .long("json")
             .help("Json output (unstable!)")
         )
-        .arg(Arg::with_name("noisy")
-            .short("x")
-            .long("noisy")
-            .help("Log noisy packets")
+        .arg(Arg::with_name("verbose")
+            .short("v")
+            .long("verbose")
+            .multiple(true)
+            .help("Show more packets (maximum: 4)")
         )
         .arg(Arg::with_name("read")
             .short("r")
@@ -104,34 +105,47 @@ fn main() {
         .get_matches();
 
     let device = match matches.value_of("device") {
-        Some(device) => device.to_owned(),
+        Some(device) => device.to_string(),
         None => Device::lookup().unwrap().name,
     };
-    let log_noise = matches.occurrences_of("noisy") > 0;
-    let promisc = matches.occurrences_of("promisc") > 0;
+    let verbose = matches.occurrences_of("verbose");
+    let promisc = matches.is_present("promisc");
 
-    let layout = match matches.occurrences_of("json") {
-        0 => match matches.occurrences_of("detailed") {
-            0 => fmt::Layout::Compact,
-            _ => fmt::Layout::Detailed,
-        },
-        _ => fmt::Layout::Json,
+    let layout = if matches.is_present("json") {
+        fmt::Layout::Json
+    } else if matches.is_present("detailed") {
+        fmt::Layout::Detailed
+    } else {
+        fmt::Layout::Compact
     };
 
     let colors = atty::is(atty::Stream::Stdout);
-    let config = fmt::Config::new(layout, log_noise, colors);
+    let config = fmt::Config::new(layout, verbose, colors);
 
-    let cap: CapWrap = match matches.occurrences_of("read") {
-        0 => {
-            eprintln!("Listening on device: {:?}", device);
-            Capture::from_device(device.as_str()).unwrap()
+    let cap: CapWrap = if !matches.is_present("read") {
+        match Capture::from_device(device.as_str()).unwrap()
                 .promisc(promisc)
-                .open().expect("failed to open interface").into()
-        },
-        _ => {
-            eprintln!("Reading from file: {:?}", device);
-            Capture::from_file(device.as_str()).expect("failed to open pcap file").into()
-        },
+                .open() {
+            Ok(cap) => {
+                eprintln!("Listening on device: {:?}", device);
+                cap.into()
+            },
+            Err(e) => {
+                eprintln!("Failed to open interface {:?}: {}", device, e);
+                return;
+            },
+        }
+    } else {
+        match Capture::from_file(device.as_str()) {
+            Ok(cap) => {
+                eprintln!("Reading from file: {:?}", device);
+                cap.into()
+            },
+            Err(e) => {
+                eprintln!("Failed to open pcap file {:?}: {}", device, e);
+                return;
+            },
+        }
     };
 
 
@@ -168,10 +182,9 @@ fn main() {
             let filter = filter.clone();
             let datalink = datalink.clone();
             pool.execute(move || {
-                if let Ok(packet) = centrifuge::parse(&datalink, &packet) {
-                    if filter.matches(&packet) {
-                        tx.send(packet).unwrap()
-                    }
+                let packet = centrifuge::parse(&datalink, &packet);
+                if filter.matches(&packet) {
+                    tx.send(packet).unwrap()
                 }
             });
         }

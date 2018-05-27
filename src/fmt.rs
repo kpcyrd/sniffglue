@@ -2,10 +2,12 @@ use std::sync::Arc;
 
 use pktparse;
 use reduce::Reduce;
-use ansi_term::Colour::{self, Yellow, Blue, Green, Red};
+use ansi_term::Colour::{self, Yellow, Blue, Green, Red, Purple};
 use serde_json;
 
+use structs::ether;
 use structs::arp;
+use structs::ipv4;
 use structs::tcp;
 use structs::udp;
 use structs::raw::Raw;
@@ -19,10 +21,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(layout: Layout, log_noise: bool, colors: bool) -> Config {
+    pub fn new(layout: Layout, verbose: u64, colors: bool) -> Config {
         Config {
             fmt: Format::new(layout, colors),
-            filter: Arc::new(Filter::new(log_noise)),
+            filter: Arc::new(Filter::new(verbose)),
         }
     }
 
@@ -76,31 +78,40 @@ impl Format {
     fn print_compact(&self, packet: Raw) {
         let mut out = String::new();
 
+        use structs::raw::Raw::Unknown;
         let color = match packet {
             Ether(eth_frame, eth) => {
                 out += &format!("{} -> {}, ",
                                 display_macaddr(&eth_frame.source_mac),
                                 display_macaddr(&eth_frame.dest_mac));
 
-                match eth {
-                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
-                }
+                self.format_compact_eth(&mut out, eth)
             },
-            Tun(eth) => {
-                match eth {
-                    Arp(arp_pkt) => self.format_compact_arp(&mut out, arp_pkt),
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(&mut out, ip_hdr, tcp_hdr, tcp),
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(&mut out, ip_hdr, udp_hdr, udp),
-                }
-            },
+            Tun(eth) => self.format_compact_eth(&mut out, eth),
+            Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
         };
 
         println!("{}", match color {
             Some(color) => self.colorify(color, out),
             None => out,
         });
+    }
+
+    #[inline]
+    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Colour> {
+        out.push_str(&format!("[unknown] {:?}", data));
+        None
+    }
+
+    #[inline]
+    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
+        match eth {
+            Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
+            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, ip_hdr, tcp_hdr, tcp),
+            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, ip_hdr, udp_hdr, udp),
+            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, ip_hdr, &data),
+            ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
+        }
     }
 
     #[inline]
@@ -122,6 +133,15 @@ impl Format {
             },
         });
         Some(Blue)
+    }
+
+    #[inline]
+    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
+        out.push_str(&format!("[unknown] {:15} -> {:15} {:?}",
+                        ip_hdr.source_addr,
+                        ip_hdr.dest_addr,
+                        data));
+        None
     }
 
     #[inline]
@@ -249,6 +269,16 @@ impl Format {
 
                 Some(Yellow)
             },
+            SSDP(ssdp) => {
+                use structs::ssdp::SSDP::*;
+                out.push_str(&match ssdp {
+                    Discover(None) => format!("[ssdp] searching..."),
+                    Discover(Some(extra)) => format!("[ssdp] searching({:?})...", extra),
+                    Notify(extra) => format!("[ssdp] notify: {:?}", extra),
+                    BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
+                });
+                Some(Purple)
+            },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
                 Some(Red)
@@ -262,43 +292,40 @@ impl Format {
 
     #[inline]
     fn print_detailed(&self, packet: Raw) {
+        use structs::raw::Raw::Unknown;
         match packet {
             Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
+                self.print_detailed_eth(1, eth);
+            },
+            Tun(eth) => self.print_detailed_eth(0, eth),
+            Unknown(data) => println!("unknown: {:?}", data),
+        }
+    }
 
-                match eth {
-                    Arp(arp_pkt) => {
-                        self.colorify(Blue, format!("\tarp: {:?}", arp_pkt));
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        println!("\tipv4: {:?}", ip_hdr);
-                        println!("\t\ttcp: {:?}", tcp_hdr);
-                        println!("\t\t\t{}", self.print_detailed_tcp(tcp));
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        println!("\tipv4: {:?}", ip_hdr);
-                        println!("\t\tudp: {:?}", udp_hdr);
-                        println!("\t\t\t{}", self.print_detailed_udp(udp));
-                    },
-                }
+    #[inline]
+    fn print_detailed_eth(&self, indent: usize, eth: ether::Ether) {
+        match eth {
+            Arp(arp_pkt) => {
+                println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
             },
-            Tun(eth) => {
-                match eth {
-                    Arp(arp_pkt) => {
-                        self.colorify(Blue, format!("arp: {:?}", arp_pkt));
-                    },
-                    IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
-                        println!("ipv4: {:?}", ip_hdr);
-                        println!("\ttcp: {:?}", tcp_hdr);
-                        println!("\t\t{}", self.print_detailed_tcp(tcp));
-                    },
-                    IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
-                        println!("ipv4: {:?}", ip_hdr);
-                        println!("\tudp: {:?}", udp_hdr);
-                        println!("\t\t{}", self.print_detailed_udp(udp));
-                    },
-                }
+            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
             },
+            IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
+            },
+            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
+                println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
+            },
+            ether::Ether::Unknown(data) => {
+                println!("{}unknown: {:?}", "\t".repeat(indent), data);
+            }
         }
     }
 
@@ -331,6 +358,9 @@ impl Format {
             DNS(dns) => {
                 self.colorify(Green, format!("dns: {:?}", dns))
             },
+            SSDP(ssdp) => {
+                self.colorify(Purple, format!("ssdp: {:?}", ssdp))
+            },
             Text(text) => {
                 self.colorify(Blue, format!("remaining: {:?}", text))
             },
@@ -347,23 +377,19 @@ impl Format {
 }
 
 pub struct Filter {
-    log_noise: bool,
+    verbose: u64,
 }
 
 impl Filter {
-    pub fn new(log_noise: bool) -> Filter {
+    pub fn new(verbose: u64) -> Filter {
         Filter {
-            log_noise,
+            verbose,
         }
     }
 
     #[inline]
     pub fn matches(&self, packet: &Raw) -> bool {
-        if self.log_noise {
-            true
-        } else {
-            !packet.is_noise()
-        }
+        packet.noise_level().to_u64() <= self.verbose
     }
 }
 
