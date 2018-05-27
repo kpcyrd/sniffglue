@@ -61,15 +61,24 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::close)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::stat)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::stat64)?;
     ctx.allow_syscall(Syscall::fstat)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::fstat64)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::lstat)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::lstat64)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::poll)?;
     #[cfg(target_arch = "aarch64")]
     ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::lseek)?; // needed for stage2
+    #[cfg(not(target_arch = "arm"))]
     ctx.allow_syscall(Syscall::mmap)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::mmap2)?;
     ctx.allow_syscall(Syscall::mprotect)?;
     ctx.allow_syscall(Syscall::munmap)?;
     ctx.allow_syscall(Syscall::rt_sigprocmask)?;
@@ -77,6 +86,8 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::readv)?;
     ctx.allow_syscall(Syscall::socket)?;
     ctx.allow_syscall(Syscall::connect)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::send)?;
     ctx.allow_syscall(Syscall::sendto)?;
     ctx.allow_syscall(Syscall::recvfrom)?;
     ctx.allow_syscall(Syscall::sendmsg)?;
@@ -88,19 +99,29 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::clone)?;
     ctx.allow_syscall(Syscall::uname)?;
     ctx.allow_syscall(Syscall::fcntl)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::fcntl64)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::getdents)?;
     ctx.allow_syscall(Syscall::chdir)?; // needed for stage2
     ctx.allow_syscall(Syscall::getuid)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getuid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::getgid)?; // needed for stage2
     ctx.allow_syscall(Syscall::geteuid)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::geteuid32)?;
     ctx.allow_syscall(Syscall::getegid)?; // needed for stage2
     ctx.allow_syscall(Syscall::setresuid)?; // needed for stage2
     ctx.allow_syscall(Syscall::setresgid)?; // needed for stage2
     ctx.allow_syscall(Syscall::getgroups)?; // needed for stage2
     ctx.allow_syscall(Syscall::setgroups)?; // needed for stage2
     ctx.allow_syscall(Syscall::getresuid)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getresuid32)?;
     ctx.allow_syscall(Syscall::getresgid)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getresgid32)?;
     ctx.allow_syscall(Syscall::sigaltstack)?;
     ctx.allow_syscall(Syscall::prctl)?; // needed for stage2
     ctx.allow_syscall(Syscall::chroot)?; // needed for stage2
@@ -142,7 +163,10 @@ pub fn activate_stage2() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::poll)?;
     #[cfg(target_arch = "aarch64")]
     ctx.allow_syscall(Syscall::ppoll)?;
+    #[cfg(not(target_arch = "arm"))]
     ctx.allow_syscall(Syscall::mmap)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::mmap2)?;
     ctx.allow_syscall(Syscall::mprotect)?;
     ctx.allow_syscall(Syscall::munmap)?;
     ctx.allow_syscall(Syscall::rt_sigprocmask)?;
