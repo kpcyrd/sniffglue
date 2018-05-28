@@ -108,14 +108,26 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::getuid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::getgid)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getgid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::geteuid)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::geteuid32)?;
     ctx.allow_syscall(Syscall::getegid)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getegid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::setuid)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::setuid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::setgid)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::setgid32)?; // needed for stage2
     ctx.allow_syscall(Syscall::getgroups)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::getgroups32)?; // needed for stage2
     ctx.allow_syscall(Syscall::setgroups)?; // needed for stage2
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::setgroups32)?; // needed for stage2
     ctx.allow_syscall(Syscall::getresuid)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::getresuid32)?;
