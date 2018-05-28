@@ -15,6 +15,7 @@ extern crate libc;
 extern crate toml;
 #[macro_use] extern crate serde_derive;
 extern crate users;
+extern crate nix;
 
 pub mod centrifuge;
 pub mod link;

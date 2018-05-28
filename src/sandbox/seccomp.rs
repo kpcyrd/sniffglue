@@ -112,8 +112,8 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::geteuid32)?;
     ctx.allow_syscall(Syscall::getegid)?; // needed for stage2
-    ctx.allow_syscall(Syscall::setresuid)?; // needed for stage2
-    ctx.allow_syscall(Syscall::setresgid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::setuid)?; // needed for stage2
+    ctx.allow_syscall(Syscall::setgid)?; // needed for stage2
     ctx.allow_syscall(Syscall::getgroups)?; // needed for stage2
     ctx.allow_syscall(Syscall::setgroups)?; // needed for stage2
     ctx.allow_syscall(Syscall::getresuid)?;

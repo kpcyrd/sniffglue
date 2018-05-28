@@ -61,8 +61,8 @@ pub enum Syscall {
     #[cfg(target_arch = "arm")]
     geteuid32           = libc::SYS_geteuid32           as isize,
     getegid             = libc::SYS_getegid             as isize,
-    setresuid           = libc::SYS_setresuid           as isize,
-    setresgid           = libc::SYS_setresgid           as isize,
+    setuid              = libc::SYS_setuid              as isize,
+    setgid              = libc::SYS_setgid              as isize,
     getgroups           = libc::SYS_getgroups           as isize,
     setgroups           = libc::SYS_setgroups           as isize,
     getresuid           = libc::SYS_getresuid           as isize,
