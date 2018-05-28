@@ -90,6 +90,8 @@ pub enum Syscall {
     pipe                = libc::SYS_pipe                as isize,
     wait4               = libc::SYS_wait4               as isize,
     clock_gettime       = libc::SYS_clock_gettime       as isize,
+    #[cfg(target_arch = "arm")]
+    gettimeofday        = libc::SYS_gettimeofday        as isize,
 }
 
 impl Syscall {

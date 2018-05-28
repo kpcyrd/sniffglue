@@ -140,6 +140,8 @@ pub fn activate_stage1() -> Result<(), SeccompError> {
     ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
     ctx.allow_syscall(Syscall::wait4)?;
     ctx.allow_syscall(Syscall::clock_gettime)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::gettimeofday)?;
 
     ctx.load()?;
 
