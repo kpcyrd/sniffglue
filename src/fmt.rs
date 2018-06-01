@@ -279,6 +279,19 @@ impl Format {
                 });
                 Some(Purple)
             },
+            Dropbox(dropbox) => {
+                out.push_str(&format!("[dropbox] beacon: version={:?}, \
+                                                         host_int={:?}, \
+                                                         namespaces={:?}, \
+                                                         displayname={:?}, \
+                                                         port={:?}",
+                                        dropbox.version,
+                                        dropbox.host_int,
+                                        dropbox.namespaces,
+                                        dropbox.displayname,
+                                        dropbox.port));
+                Some(Purple)
+            },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
                 Some(Red)
@@ -360,6 +373,9 @@ impl Format {
             },
             SSDP(ssdp) => {
                 self.colorify(Purple, format!("ssdp: {:?}", ssdp))
+            },
+            Dropbox(dropbox) => {
+                self.colorify(Purple, format!("dropbox: {:?}", dropbox))
             },
             Text(text) => {
                 self.colorify(Blue, format!("remaining: {:?}", text))

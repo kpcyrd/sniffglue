@@ -147,6 +147,7 @@ pub mod udp {
     use structs::dns;
     use structs::dhcp;
     use structs::ssdp;
+    use structs::dropbox;
     use structs::NoiseLevel;
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -154,6 +155,7 @@ pub mod udp {
         DHCP(dhcp::DHCP),
         DNS(dns::DNS),
         SSDP(ssdp::SSDP),
+        Dropbox(dropbox::DropboxBeacon),
 
         Text(String),
         Binary(Vec<u8>),
@@ -166,6 +168,7 @@ pub mod udp {
                 DHCP(_) => NoiseLevel::Zero,
                 DNS(_) => NoiseLevel::Zero,
                 SSDP(_) => NoiseLevel::Two,
+                Dropbox(_) => NoiseLevel::Two,
                 Text(_) => NoiseLevel::Two,
                 Binary(_) => NoiseLevel::AlmostMaximum,
             }
@@ -435,5 +438,16 @@ pub mod ssdp {
         Discover(Option<String>),
         Notify(String),
         BTSearch(String),
+    }
+}
+
+pub mod dropbox {
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    pub struct DropboxBeacon {
+        pub version: Vec<u8>,
+        pub host_int: u128,
+        pub namespaces: Vec<u64>,
+        pub displayname: String,
+        pub port: u16,
     }
 }
