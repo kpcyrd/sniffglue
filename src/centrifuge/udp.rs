@@ -6,6 +6,7 @@ use pktparse::udp::{self, UdpHeader};
 use centrifuge::dns;
 use centrifuge::dhcp;
 use centrifuge::ssdp;
+use centrifuge::dropbox;
 
 use structs::CentrifugeError;
 use structs::udp::UDP;
@@ -35,6 +36,9 @@ pub fn extract(udp_hdr: &UdpHeader, remaining: &[u8]) -> Result<UDP, CentrifugeE
     {
         let dhcp = dhcp::extract(remaining)?;
         Ok(UDP::DHCP(dhcp))
+    } else if udp_hdr.source_port == 17500 && udp_hdr.dest_port == 17500 {
+        let dropbox = dropbox::extract(remaining)?;
+        Ok(UDP::Dropbox(dropbox))
     } else {
         Err(CentrifugeError::UnknownProtocol)
     }

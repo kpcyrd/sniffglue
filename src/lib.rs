@@ -13,6 +13,7 @@ extern crate seccomp_sys;
 #[macro_use] extern crate log;
 extern crate libc;
 extern crate toml;
+extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate users;
 extern crate nix;

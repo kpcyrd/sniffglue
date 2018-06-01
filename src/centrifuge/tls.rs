@@ -1,14 +1,13 @@
-use std::str::from_utf8;
+use std::str;
 
 use nom::IResult::Done;
 use tls_parser;
 use tls_parser::tls::{TlsMessage, TlsMessageHandshake};
 use tls_parser::tls_extensions::{TlsExtension, parse_tls_extension};
+use structs::{tls, CentrifugeError};
 
-use structs::{self, CentrifugeError};
 
-
-pub fn extract(remaining: &[u8]) -> Result<structs::tls::ClientHello, CentrifugeError> {
+pub fn extract(remaining: &[u8]) -> Result<tls::ClientHello, CentrifugeError> {
     if let Done(_remaining, tls) = tls_parser::parse_tls_plaintext(remaining) {
         for msg in tls.msg {
             if let TlsMessage::Handshake(TlsMessageHandshake::ClientHello(ch)) = msg {
@@ -19,13 +18,13 @@ pub fn extract(remaining: &[u8]) -> Result<structs::tls::ClientHello, Centrifuge
                     remaining = remaining2;
                     if let TlsExtension::SNI(sni) = ext {
                         for s in sni {
-                            let name = from_utf8(s.1).unwrap();
+                            let name = str::from_utf8(s.1).unwrap();
                             hostname = Some(name.to_owned());
                         }
                     }
                 }
 
-                return Ok(structs::tls::ClientHello::new(hostname));
+                return Ok(tls::ClientHello::new(hostname));
             }
         }
 
