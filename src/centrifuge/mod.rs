@@ -78,11 +78,11 @@ pub fn parse_tun(data: &[u8]) -> raw::Raw {
 pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
     if let Done(remaining, ip_hdr) = ipv4::parse_ipv4_header(data) {
         let inner = match ip_hdr.protocol {
-            IPv4Protocol::TCP => match tcp::extract(remaining) {
+            IPv4Protocol::TCP => match tcp::parse(remaining) {
                 Ok((tcp_hdr, tcp)) => TCP(tcp_hdr, tcp),
                 Err(_) => IPv4::Unknown(remaining.to_vec()),
             },
-            IPv4Protocol::UDP => match udp::extract(remaining) {
+            IPv4Protocol::UDP => match udp::parse(remaining) {
                 Ok((udp_hdr, udp)) => UDP(udp_hdr, udp),
                 Err(_) => IPv4::Unknown(remaining.to_vec()),
             },
