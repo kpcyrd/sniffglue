@@ -4,7 +4,7 @@ sniffglue \- secure multithreaded packet sniffer
 
 .SH SYNOPSIS
 .B sniffglue
-[\fB\-dxrpVh\fR]
+[\fB\-vdrpVh\fR]
 .IR device
 
 .SH DESCRIPTION
@@ -16,14 +16,14 @@ when processing packets. The output should be as useful as possible by default.
 
 .SH OPTIONS
 .TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Show more packets (maximum: 4)
+.TP
 \fB\-d\fR, \fB\-\-detailed\fR
 Detailed output
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints help information
-.TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Show more packets (maximum: 4)
 .TP
 \fB\-p\fR, \fB\-\-promisc\fR
 Set \fIdevice\fR to promisc
@@ -60,7 +60,9 @@ Read a dump from \fIsniff.pcap\fR and display all packets in detailed mode:
 .BR http,
 .BR tls,
 .BR dns,
-.BR dhcp
+.BR dhcp,
+.BR ssdp,
+.BR dropbox beacons
 
 .SH SECURITY
 To report a security issue please contact kpcyrd on ircs://irc.hackint.org.

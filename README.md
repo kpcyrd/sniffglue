@@ -39,11 +39,10 @@ Archlinux: `libpcap libseccomp`.
 - [ ] icmp
 - [X] http
 - [X] tls
-- [ ] pop3
-- [ ] smtp
-- [ ] imap
 - [X] dns
 - [X] dhcp
+- [X] ssdp
+- [X] dropbox beacons
 - [ ] 802.11
 
 ## Docker
