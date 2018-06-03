@@ -13,6 +13,7 @@ use link::DataLink;
 pub mod arp;
 pub mod tcp;
 pub mod udp;
+pub mod cjdns;
 
 pub mod dhcp;
 pub mod dns;
@@ -53,6 +54,10 @@ pub fn parse_eth(data: &[u8]) -> Result<raw::Raw, CentrifugeError> {
             EtherType::ARP => match arp::extract(remaining) {
                 Ok(arp_pkt) => Arp(arp_pkt),
                 Err(_)      => Unknown(remaining.to_vec()),
+            },
+            EtherType::Other(0xfc00) => match cjdns::parse(remaining) {
+                Ok(cjdns_pkt) => Cjdns(cjdns_pkt),
+                Err(_)        => Unknown(remaining.to_vec()),
             },
             _ => {
                 Unknown(remaining.to_vec())

@@ -13,6 +13,7 @@ extern crate clap;
 extern crate atty;
 extern crate env_logger;
 extern crate serde_json;
+extern crate sha2;
 
 use pcap::Device;
 use pcap::Capture;
