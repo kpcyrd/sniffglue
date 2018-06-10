@@ -7,6 +7,7 @@ use serde_json;
 
 use structs::ether;
 use structs::arp;
+use structs::cjdns;
 use structs::ipv4;
 use structs::tcp;
 use structs::udp;
@@ -110,6 +111,7 @@ impl Format {
             IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, ip_hdr, tcp_hdr, tcp),
             IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, ip_hdr, udp_hdr, udp),
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, ip_hdr, &data),
+            Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, cjdns_pkt),
             ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
     }
@@ -133,6 +135,45 @@ impl Format {
             },
         });
         Some(Blue)
+    }
+
+    #[inline]
+    fn format_compact_cjdns(&self, out: &mut String, cjdns: cjdns::CjdnsEthPkt) -> Option<Colour> {
+        let password = cjdns.password.iter()
+                                .map(|b| {
+                                    format!("\\x{:02x}", b)
+                                })
+                                .fold(String::new(), |a, b| a + &b);
+
+        use sha2::{Sha512, Digest};
+        let ipv6 = {
+            let bytes1 = Sha512::digest(&cjdns.pubkey);
+            let bytes2 = Sha512::digest(&bytes1);
+
+            let mut iter = bytes2.as_slice().into_iter();
+
+            let mut ipv6 = String::new();
+            for x in 0..8 {
+                let b1 = iter.next().unwrap();
+                let b2 = iter.next().unwrap();
+
+                ipv6.push_str(&format!("{:02x}{:02x}", b1, b2));
+
+                if x != 7 {
+                    ipv6.push(':');
+                }
+            }
+
+            ipv6
+        };
+
+        out.push_str(&format!("[cjdns beacon] version={:?}, password=\"{}\", ipv6={:?}, pubkey={:?}",
+                              cjdns.version,
+                              password,
+                              ipv6,
+                              cjdns.pubkey));
+
+        Some(Purple)
     }
 
     #[inline]
@@ -335,6 +376,9 @@ impl Format {
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
                 println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
+            },
+            Cjdns(cjdns_pkt) => {
+                println!("{}cjdns: {:?}",     "\t".repeat(indent), cjdns_pkt);
             },
             ether::Ether::Unknown(data) => {
                 println!("{}unknown: {:?}", "\t".repeat(indent), data);

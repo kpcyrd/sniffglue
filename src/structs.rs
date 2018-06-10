@@ -60,6 +60,7 @@ pub mod raw {
 pub mod ether {
     use structs::arp;
     use structs::ipv4;
+    use structs::cjdns;
     use structs::NoiseLevel;
     use pktparse;
 
@@ -67,6 +68,7 @@ pub mod ether {
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
+        Cjdns(cjdns::CjdnsEthPkt),
         Unknown(Vec<u8>),
     }
 
@@ -76,6 +78,7 @@ pub mod ether {
             match *self {
                 Arp(_) => NoiseLevel::One,
                 IPv4(_, ref ipv4) => ipv4.noise_level(),
+                Cjdns(_) => NoiseLevel::Two,
                 Unknown(_) => NoiseLevel::Maximum,
             }
         }
@@ -89,6 +92,15 @@ pub mod arp {
     pub enum ARP {
         Request(pktparse::arp::ArpPacket),
         Reply(pktparse::arp::ArpPacket),
+    }
+}
+
+pub mod cjdns {
+    #[derive(Debug, PartialEq, Serialize)]
+    pub struct CjdnsEthPkt {
+        pub version: u16,
+        pub password: Vec<u8>,
+        pub pubkey: Vec<u8>,
     }
 }
 
