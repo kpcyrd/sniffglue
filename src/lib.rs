@@ -1,22 +1,18 @@
 #![warn(unused_extern_crates)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
 #[macro_use] extern crate nom;
 extern crate pcap;
 extern crate pktparse;
 extern crate dhcp4r;
 extern crate dns_parser;
 extern crate tls_parser;
-#[cfg(target_os="linux")]
-extern crate seccomp_sys;
 #[macro_use] extern crate log;
-extern crate libc;
 extern crate toml;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate users;
 extern crate nix;
+#[cfg(target_os="linux")]
+extern crate syscallz;
 
 pub mod centrifuge;
 pub mod link;

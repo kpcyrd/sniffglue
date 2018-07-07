@@ -10,8 +10,6 @@ pub mod config;
 mod error;
 #[cfg(target_os="linux")]
 pub mod seccomp;
-#[cfg(target_os="linux")]
-mod syscalls;
 
 pub use self::error::Error;
 

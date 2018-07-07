@@ -1,10 +1,11 @@
 use sandbox::config;
 use nix;
+use syscallz;
 use std;
 
 #[derive(Debug)]
 pub enum Error {
-    Seccomp(SeccompError),
+    Seccomp(syscallz::Error),
     Config(config::Error),
     Nix(nix::Error),
     Io(std::io::Error),
@@ -13,13 +14,8 @@ pub enum Error {
     FFI,
 }
 
-#[derive(Debug)]
-pub enum SeccompError {
-    FFI,
-}
-
-impl From<SeccompError> for Error {
-    fn from(err: SeccompError) -> Error {
+impl From<syscallz::Error> for Error {
+    fn from(err: syscallz::Error) -> Error {
         Error::Seccomp(err)
     }
 }
