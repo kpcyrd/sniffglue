@@ -1,7 +1,4 @@
 #![warn(unused_extern_crates)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
 #[macro_use] extern crate nom;
 extern crate pcap;
 extern crate pktparse;
