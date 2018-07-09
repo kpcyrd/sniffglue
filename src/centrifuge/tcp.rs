@@ -11,7 +11,7 @@ use structs::tcp::TCP;
 
 
 pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError> {
-    if let Done(remaining, tcp_hdr) = tcp::parse_tcp_header(remaining) {
+    if let Ok((remaining, tcp_hdr)) = tcp::parse_tcp_header(remaining) {
         let inner = match extract(&tcp_hdr, remaining) {
             Ok(x) => x,
             Err(_) => unknown(remaining),

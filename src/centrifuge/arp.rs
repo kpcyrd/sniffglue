@@ -5,7 +5,7 @@ use structs::CentrifugeError;
 use structs::arp::ARP;
 
 pub fn extract(remaining: &[u8]) -> Result<ARP, CentrifugeError> {
-    if let Done(_remaining, arp_pkt) = pktparse::arp::parse_arp_pkt(remaining) {
+    if let Ok((_remaining, arp_pkt)) = pktparse::arp::parse_arp_pkt(remaining) {
         use pktparse::arp::Operation;
         match arp_pkt.operation {
             Operation::Request  => Ok(ARP::Request(arp_pkt)),
