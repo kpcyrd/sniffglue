@@ -1,6 +1,5 @@
 use std::str::from_utf8;
 
-use nom::IResult::Done;
 use pktparse::tcp::{self, TcpHeader};
 
 use centrifuge::http;

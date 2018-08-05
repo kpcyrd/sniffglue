@@ -1,4 +1,3 @@
-use nom::IResult::Done;
 use pktparse::{ethernet, ipv4};
 use pktparse::ipv4::IPv4Protocol;
 use pktparse::ethernet::EtherType;

@@ -1,6 +1,5 @@
 use std::str::from_utf8;
 
-use nom::IResult::Done;
 use pktparse::udp::{self, UdpHeader};
 
 use centrifuge::dns;

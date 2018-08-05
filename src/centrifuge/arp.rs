@@ -1,4 +1,3 @@
-use nom::IResult::Done;
 use pktparse;
 
 use structs::CentrifugeError;
