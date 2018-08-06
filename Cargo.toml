@@ -20,7 +20,7 @@ clap = "2"
 threadpool = "1.7"
 num_cpus = "1.6"
 pcap = "0.7.0"
-pktparse = { version = "0.2.2", features = ["derive"] }
+pktparse = { version = "0.3", features = ["derive"] }
 nom = "3.2"
 dns-parser = "0.7"
 tls-parser = "0.5"
@@ -39,8 +39,8 @@ nix = "0.11"
 sha2 = "0.7"
 
 [target.'cfg(target_os="linux")'.dependencies]
-syscallz = "0.6"
+syscallz = "0.7"
 
 [dev-dependencies]
-boxxy = "0.6"
+boxxy = "0.7"
 base64 = "0.9"

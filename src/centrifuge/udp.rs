@@ -1,6 +1,5 @@
 use std::str::from_utf8;
 
-use nom::IResult::Done;
 use pktparse::udp::{self, UdpHeader};
 
 use centrifuge::dns;
@@ -13,7 +12,7 @@ use structs::udp::UDP;
 
 
 pub fn parse(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeError> {
-    if let Done(remaining, udp_hdr) = udp::parse_udp_header(remaining) {
+    if let Ok((remaining, udp_hdr)) = udp::parse_udp_header(remaining) {
         let inner = match extract(&udp_hdr, remaining) {
             Ok(x) => x,
             Err(_) => unknown(remaining),

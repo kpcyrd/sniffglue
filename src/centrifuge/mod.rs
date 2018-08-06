@@ -1,4 +1,3 @@
-use nom::IResult::Done;
 use pktparse::{ethernet, ipv4};
 use pktparse::ipv4::IPv4Protocol;
 use pktparse::ethernet::EtherType;
@@ -41,7 +40,7 @@ pub fn parse(link: &DataLink, data: &[u8]) -> raw::Raw {
 #[inline]
 pub fn parse_eth(data: &[u8]) -> Result<raw::Raw, CentrifugeError> {
     use structs::ether::Ether::Unknown;
-    if let Done(remaining, eth_frame) = ethernet::parse_ethernet_frame(data) {
+    if let Ok((remaining, eth_frame)) = ethernet::parse_ethernet_frame(data) {
         let inner = match eth_frame.ethertype {
             EtherType::IPv4 => match parse_ipv4(remaining) {
                 Ok(ipv4) => ipv4,
@@ -82,7 +81,7 @@ pub fn parse_tun(data: &[u8]) -> raw::Raw {
 
 #[inline]
 pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
-    if let Done(remaining, ip_hdr) = ipv4::parse_ipv4_header(data) {
+    if let Ok((remaining, ip_hdr)) = ipv4::parse_ipv4_header(data) {
         let inner = match ip_hdr.protocol {
             IPv4Protocol::TCP => match tcp::parse(remaining) {
                 Ok((tcp_hdr, tcp)) => TCP(tcp_hdr, tcp),
