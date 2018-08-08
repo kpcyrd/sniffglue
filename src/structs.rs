@@ -427,17 +427,25 @@ pub mod dns {
         Unknown,
     }
 
-    impl<'a> From<dns_parser::RRData<'a>> for Record {
-        fn from(rrdata: dns_parser::RRData) -> Record {
-            use dns_parser::RRData::*;
+    impl<'a> From<dns_parser::RData<'a>> for Record {
+        fn from(rdata: dns_parser::RData) -> Record {
+            use dns_parser::RData::*;
 
-            match rrdata {
-                A(addr) => Record::A(addr),
-                AAAA(addr) => Record::AAAA(addr),
+            match rdata {
+                A(addr) => Record::A(addr.0),
+                AAAA(addr) => Record::AAAA(addr.0),
                 CNAME(name) => Record::CNAME(name.to_string()),
                 NS(name) => Record::NS(name.to_string()),
                 PTR(name) => Record::PTR(name.to_string()),
-                TXT(string) => Record::TXT(string),
+                TXT(data) => {
+                    let mut x = Vec::new();
+
+                    for r in data.iter() {
+                        x.extend(r);
+                    }
+
+                    Record::TXT(String::from_utf8_lossy(&x).to_string())
+                },
                 _ => Record::Unknown,
             }
         }
