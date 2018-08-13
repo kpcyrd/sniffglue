@@ -163,8 +163,8 @@ fn main() {
             Err(x) => {
                 // TODO: properly exit the program
                 eprintln!("Unknown link type: {:?}, {:?}, {}",
-                    x.get_name().unwrap_or("???".into()),
-                    x.get_description().unwrap_or("???".into()),
+                    x.get_name().unwrap_or_else(|_| "???".into()),
+                    x.get_description().unwrap_or_else(|_| "???".into()),
                     x.0);
                 return;
             },
