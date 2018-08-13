@@ -1,5 +1,5 @@
 use structs::{cjdns, CentrifugeError};
-use nom::{IResult, be_u16};
+use nom::be_u16;
 
 const BEACON_PASSWORD_LEN: usize = 20;
 const BEACON_PUBKEY_LEN: usize = 32;
@@ -24,7 +24,7 @@ named!(cjdns_eth_header<&[u8], cjdns::CjdnsEthPkt>, do_parse!(
 ));
 
 pub fn parse(remaining: &[u8]) -> Result<cjdns::CjdnsEthPkt, CentrifugeError> {
-    if let IResult::Done(remaining, cjdns_eth_hdr) = cjdns_eth_header(remaining) {
+    if let Ok((remaining, cjdns_eth_hdr)) = cjdns_eth_header(remaining) {
         if remaining.is_empty() {
             Ok(cjdns_eth_hdr)
         } else {

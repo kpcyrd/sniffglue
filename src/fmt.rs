@@ -108,10 +108,10 @@ impl Format {
     fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
         match eth {
             Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
-            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, ip_hdr, tcp_hdr, tcp),
-            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, ip_hdr, udp_hdr, udp),
-            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, ip_hdr, &data),
-            Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, cjdns_pkt),
+            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, &ip_hdr, &tcp_hdr, tcp),
+            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, &ip_hdr, &udp_hdr, udp),
+            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, &ip_hdr, &data),
+            Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, &cjdns_pkt),
             ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
     }
@@ -138,7 +138,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_cjdns(&self, out: &mut String, cjdns: cjdns::CjdnsEthPkt) -> Option<Colour> {
+    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Colour> {
         let password = cjdns.password.iter()
                                 .map(|b| {
                                     format!("\\x{:02x}", b)
@@ -177,7 +177,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
+    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
         out.push_str(&format!("[unknown] {:15} -> {:15} {:?}",
                         ip_hdr.source_addr,
                         ip_hdr.dest_addr,
@@ -186,7 +186,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_tcp(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, tcp_hdr: pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
+    fn format_compact_ipv4_tcp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
         out.push_str(&format!("[tcp] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr, tcp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr, tcp_hdr.dest_port)));
@@ -219,7 +219,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_udp(&self, out: &mut String, ip_hdr: pktparse::ipv4::IPv4Header, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
+    fn format_compact_ipv4_udp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
         out.push_str(&format!("[udp] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr, udp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr, udp_hdr.dest_port)));
@@ -313,7 +313,7 @@ impl Format {
             SSDP(ssdp) => {
                 use structs::ssdp::SSDP::*;
                 out.push_str(&match ssdp {
-                    Discover(None) => format!("[ssdp] searching..."),
+                    Discover(None) => "[ssdp] searching...".to_string(),
                     Discover(Some(extra)) => format!("[ssdp] searching({:?})...", extra),
                     Notify(extra) => format!("[ssdp] notify: {:?}", extra),
                     BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
@@ -484,7 +484,7 @@ fn display_kv_list(list: &[(&str, Option<String>)]) -> String {
         })
         .reduce(|a, b| a + ", " + &b)
         .map(|extra| format!(" ({})", extra))
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_else(String::new)
 }
 
 #[inline]
@@ -503,5 +503,5 @@ fn display_dhcp_kv_list(list: &[(&str, Option<DhcpOption>)]) -> String {
         })
         .reduce(|a, b| a + ", " + &b)
         .map(|extra| format!(" ({})", extra))
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_else(String::new)
 }

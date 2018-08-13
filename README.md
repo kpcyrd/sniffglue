@@ -41,6 +41,7 @@ Archlinux: `libpcap libseccomp`.
 - [X] tls
 - [X] dns
 - [X] dhcp
+- [X] cjdns eth beacons
 - [X] ssdp
 - [X] dropbox beacons
 - [ ] 802.11
