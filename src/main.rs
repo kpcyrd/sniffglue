@@ -97,6 +97,11 @@ fn main() {
             .long("read")
             .help("Open device as pcap file")
         )
+        .arg(Arg::with_name("cpus")
+            .short("n")
+            .long("cpus")
+            .help("Number of cores")
+        )
         .arg(Arg::with_name("device")
             .help("Device for sniffing")
         )
@@ -115,6 +120,17 @@ fn main() {
         fmt::Layout::Detailed
     } else {
         fmt::Layout::Compact
+    };
+
+    let cpus = match matches.value_of("cpus") {
+        Some(cpus) => match cpus.parse() {
+            Ok(cpus) => cpus,
+            Err(err) => {
+                eprintln!("Failed to parse cpus argument: {}", err);
+                return;
+            },
+        },
+        None => num_cpus::get(),
     };
 
     let colors = atty::is(atty::Stream::Stdout);
@@ -153,7 +169,6 @@ fn main() {
     sandbox::activate_stage2().expect("init sandbox stage2");
 
     let join = thread::spawn(move || {
-        let cpus = num_cpus::get();
         let pool = ThreadPool::new(cpus);
 
         let mut cap = cap.activate();
