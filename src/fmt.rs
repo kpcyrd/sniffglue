@@ -449,7 +449,7 @@ impl Filter {
 
     #[inline]
     pub fn matches(&self, packet: &Raw) -> bool {
-        packet.noise_level().to_u64() <= self.verbose
+        packet.noise_level().into_u64() <= self.verbose
     }
 }
 

@@ -1,8 +1,8 @@
-use std::env;
 use std::io::{self, Read};
 use std::fs::File;
 use std::path::Path;
 use toml;
+use dirs;
 
 #[derive(Debug, Default, Deserialize, PartialEq)]
 pub struct Config {
@@ -38,8 +38,8 @@ pub fn find() -> Option<String> {
 
     // paths.push(String::from("sniffglue.conf"));
 
-    if let Some(home) = env::home_dir() {
-        let path = home.join(Path::new(".config/sniffglue.conf"));
+    if let Some(home) = dirs::config_dir() {
+        let path = home.join(Path::new("sniffglue.conf"));
 
         if let Some(path) = path.to_str() {
             paths.push(path.into());

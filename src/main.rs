@@ -85,10 +85,7 @@ fn main() {
         fmt::Layout::Compact
     };
 
-    let cpus = match args.cpus {
-        Some(cpus) => cpus,
-        None => num_cpus::get(),
-    };
+    let cpus = args.cpus.unwrap_or_else(num_cpus::get);
 
     let colors = atty::is(atty::Stream::Stdout);
     let config = fmt::Config::new(layout, args.verbose, colors);
