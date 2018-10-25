@@ -10,6 +10,7 @@ extern crate toml;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate users;
+extern crate dirs;
 extern crate nix;
 #[cfg(target_os="linux")]
 extern crate syscallz;

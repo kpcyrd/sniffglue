@@ -6,7 +6,7 @@ extern crate ansi_term;
 extern crate threadpool;
 extern crate num_cpus;
 extern crate reduce;
-extern crate clap;
+#[macro_use] extern crate structopt;
 extern crate atty;
 extern crate env_logger;
 extern crate serde_json;
@@ -20,13 +20,15 @@ use threadpool::ThreadPool;
 use std::thread;
 use std::sync::mpsc;
 
+mod cli;
 mod fmt;
+use cli::Args;
 use sniffglue::centrifuge;
 use sniffglue::link::DataLink;
 use sniffglue::sandbox;
 use sniffglue::structs;
 
-use clap::{App, Arg, AppSettings};
+use structopt::StructOpt;
 
 
 type Message = structs::raw::Raw;
@@ -68,61 +70,29 @@ fn main() {
 
     sandbox::activate_stage1().expect("init sandbox stage1");
 
-    let matches = App::new("sniffglue")
-        .version(env!("CARGO_PKG_VERSION"))
-        .setting(AppSettings::ColoredHelp)
-        .arg(Arg::with_name("promisc")
-            .short("p")
-            .long("promisc")
-            .help("Set device to promisc")
-        )
-        .arg(Arg::with_name("detailed")
-            .short("d")
-            .long("detailed")
-            .help("Detailed output")
-        )
-        .arg(Arg::with_name("json")
-            .short("j")
-            .long("json")
-            .help("Json output (unstable!)")
-        )
-        .arg(Arg::with_name("verbose")
-            .short("v")
-            .long("verbose")
-            .multiple(true)
-            .help("Show more packets (maximum: 4)")
-        )
-        .arg(Arg::with_name("read")
-            .short("r")
-            .long("read")
-            .help("Open device as pcap file")
-        )
-        .arg(Arg::with_name("device")
-            .help("Device for sniffing")
-        )
-        .get_matches();
+    let args = Args::from_args();
 
-    let device = match matches.value_of("device") {
-        Some(device) => device.to_string(),
+    let device = match args.device {
+        Some(device) => device,
         None => Device::lookup().unwrap().name,
     };
-    let verbose = matches.occurrences_of("verbose");
-    let promisc = matches.is_present("promisc");
 
-    let layout = if matches.is_present("json") {
+    let layout = if args.json {
         fmt::Layout::Json
-    } else if matches.is_present("detailed") {
+    } else if args.detailed {
         fmt::Layout::Detailed
     } else {
         fmt::Layout::Compact
     };
 
-    let colors = atty::is(atty::Stream::Stdout);
-    let config = fmt::Config::new(layout, verbose, colors);
+    let cpus = args.cpus.unwrap_or_else(num_cpus::get);
 
-    let cap: CapWrap = if !matches.is_present("read") {
+    let colors = atty::is(atty::Stream::Stdout);
+    let config = fmt::Config::new(layout, args.verbose, colors);
+
+    let cap: CapWrap = if !args.read {
         match Capture::from_device(device.as_str()).unwrap()
-                .promisc(promisc)
+                .promisc(args.promisc)
                 .open() {
             Ok(cap) => {
                 eprintln!("Listening on device: {:?}", device);
@@ -153,7 +123,6 @@ fn main() {
     sandbox::activate_stage2().expect("init sandbox stage2");
 
     let join = thread::spawn(move || {
-        let cpus = num_cpus::get();
         let pool = ThreadPool::new(cpus);
 
         let mut cap = cap.activate();

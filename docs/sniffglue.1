@@ -1,10 +1,11 @@
-.TH SNIFFGLUE "1" "August 2018" "sniffglue 0.8.0" "User Commands"
+.TH SNIFFGLUE "1" "October 2018" "sniffglue 0.8.0" "User Commands"
 .SH NAME
 sniffglue \- secure multithreaded packet sniffer
 
 .SH SYNOPSIS
 .B sniffglue
 [\fB\-vdrpVh\fR]
+[\fB\-n <cpus>\fR]
 .IR device
 
 .SH DESCRIPTION
@@ -30,6 +31,9 @@ Set \fIdevice\fR to promisc
 .TP
 \fB\-r\fR, \fB\-\-read\fR
 Open \fIdevice\fR as pcap file
+.TP
+\fB\-n\fR, \fB\-\-cpus\fR \fIcpus\fR
+Specify the number of threads
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Prints version information. If \fB\-r\fR was specified, open as pcap file
