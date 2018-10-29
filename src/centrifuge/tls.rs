@@ -12,18 +12,20 @@ pub fn extract(remaining: &[u8]) -> Result<tls::ClientHello, CentrifugeError> {
             if let TlsMessage::Handshake(TlsMessageHandshake::ClientHello(ch)) = msg {
                 let mut hostname = None;
 
-                let mut remaining = ch.ext.unwrap();
-                while let Ok((remaining2, ext)) = parse_tls_extension(remaining) {
-                    remaining = remaining2;
-                    if let TlsExtension::SNI(sni) = ext {
-                        for s in sni {
-                            let name = str::from_utf8(s.1).unwrap();
-                            hostname = Some(name.to_owned());
+                if let Some(mut remaining) = ch.ext {
+                    while let Ok((remaining2, ext)) = parse_tls_extension(remaining) {
+                        remaining = remaining2;
+                        if let TlsExtension::SNI(sni) = ext {
+                            for s in sni {
+                                let name = str::from_utf8(s.1)
+                                    .map_err(|_| CentrifugeError::ParsingError)?;
+                                hostname = Some(name.to_owned());
+                            }
                         }
                     }
-                }
 
-                return Ok(tls::ClientHello::new(hostname));
+                    return Ok(tls::ClientHello::new(hostname));
+                }
             }
         }
 
