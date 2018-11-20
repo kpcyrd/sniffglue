@@ -44,4 +44,4 @@ syscallz = "0.7"
 
 [dev-dependencies]
 boxxy = "0.8"
-base64 = "0.9"
+base64 = "0.10"
