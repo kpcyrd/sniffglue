@@ -106,6 +106,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::gettimeofday)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
+    ctx.allow_syscall(Syscall::access)?; // needed for debian /etc/ld.so.nohwcap
 
     ctx.load()?;
 
