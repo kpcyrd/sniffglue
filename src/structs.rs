@@ -164,19 +164,19 @@ pub mod ip {
     pub trait IPHeader {
         type Addr: Display;
 
-        #[inline]
         fn source_addr(&self) -> Self::Addr;
-        #[inline]
         fn dest_addr(&self) -> Self::Addr;
     }
 
     impl IPHeader for ipv4::IPv4Header {
         type Addr = Ipv4Addr;
 
+        #[inline]
         fn source_addr(&self) -> Self::Addr {
             self.source_addr
         }
 
+        #[inline]
         fn dest_addr(&self) -> Self::Addr {
             self.dest_addr
         }
@@ -185,10 +185,12 @@ pub mod ip {
     impl IPHeader for ipv6::IPv6Header {
         type Addr = String;
 
+        #[inline]
         fn source_addr(&self) -> Self::Addr {
             format!("[{}]", self.source_addr)
         }
 
+        #[inline]
         fn dest_addr(&self) -> Self::Addr {
             format!("[{}]", self.dest_addr)
         }
