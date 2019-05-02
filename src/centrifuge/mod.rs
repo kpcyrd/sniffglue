@@ -1,12 +1,11 @@
-use pktparse::{ethernet, ipv4};
-use pktparse::ipv4::IPv4Protocol;
+use pktparse::{ethernet, ipv4, ipv6};
+use pktparse::ip::IPProtocol;
 use pktparse::ethernet::EtherType;
 
 use structs::prelude::*;
 use structs::CentrifugeError;
 use structs::raw;
 use structs::ether::{self, Ether};
-use structs::ipv4::IPv4;
 use link::DataLink;
 
 pub mod arp;
@@ -46,9 +45,9 @@ pub fn parse_eth(data: &[u8]) -> Result<raw::Raw, CentrifugeError> {
                 Ok(ipv4) => ipv4,
                 Err(_)   => Unknown(remaining.to_vec()),
             },
-            EtherType::IPv6 => {
-                // TODO
-                Unknown(remaining.to_vec())
+            EtherType::IPv6 => match parse_ipv6(remaining) {
+                Ok(ipv6) => ipv6,
+                Err(_)   => Unknown(remaining.to_vec()),
             },
             EtherType::ARP => match arp::extract(remaining) {
                 Ok(arp_pkt) => Arp(arp_pkt),
@@ -81,21 +80,47 @@ pub fn parse_tun(data: &[u8]) -> raw::Raw {
 
 #[inline]
 pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
+    use structs::ipv4::IPv4::*;
+
     if let Ok((remaining, ip_hdr)) = ipv4::parse_ipv4_header(data) {
         let inner = match ip_hdr.protocol {
-            IPv4Protocol::TCP => match tcp::parse(remaining) {
+            IPProtocol::TCP => match tcp::parse(remaining) {
                 Ok((tcp_hdr, tcp)) => TCP(tcp_hdr, tcp),
-                Err(_) => IPv4::Unknown(remaining.to_vec()),
+                Err(_) => Unknown(remaining.to_vec()),
             },
-            IPv4Protocol::UDP => match udp::parse(remaining) {
+            IPProtocol::UDP => match udp::parse(remaining) {
                 Ok((udp_hdr, udp)) => UDP(udp_hdr, udp),
-                Err(_) => IPv4::Unknown(remaining.to_vec()),
+                Err(_) => Unknown(remaining.to_vec()),
             },
             _ => {
-                IPv4::Unknown(remaining.to_vec())
+                Unknown(remaining.to_vec())
             }
         };
         Ok(IPv4(ip_hdr, inner))
+    } else {
+        Ok(Ether::Unknown(data.to_vec()))
+    }
+}
+
+#[inline]
+pub fn parse_ipv6(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
+    use structs::ipv6::IPv6::*;
+
+    if let Ok((remaining, ip_hdr)) = ipv6::parse_ipv6_header(data) {
+        let inner = match ip_hdr.next_header {
+            IPProtocol::TCP => match tcp::parse(remaining) {
+                Ok((tcp_hdr, tcp)) => TCP(tcp_hdr, tcp),
+                Err(_) => Unknown(remaining.to_vec()),
+            },
+            IPProtocol::UDP => match udp::parse(remaining) {
+                Ok((udp_hdr, udp)) => UDP(udp_hdr, udp),
+                Err(_) => Unknown(remaining.to_vec()),
+            },
+            _ => {
+                Unknown(remaining.to_vec())
+            }
+        };
+        Ok(IPv6(ip_hdr, inner))
     } else {
         Ok(Ether::Unknown(data.to_vec()))
     }

@@ -10,7 +10,6 @@ pub enum CentrifugeError {
 pub mod prelude {
     pub use structs::raw::Raw::*;
     pub use structs::ether::Ether::*;
-    pub use structs::ipv4::IPv4::*;
 }
 
 /// Zero            - This packet is very interesting
@@ -60,6 +59,7 @@ pub mod raw {
 pub mod ether {
     use structs::arp;
     use structs::ipv4;
+    use structs::ipv6;
     use structs::cjdns;
     use structs::NoiseLevel;
     use pktparse;
@@ -68,6 +68,7 @@ pub mod ether {
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
+        IPv6(pktparse::ipv6::IPv6Header, ipv6::IPv6),
         Cjdns(cjdns::CjdnsEthPkt),
         Unknown(Vec<u8>),
     }
@@ -78,6 +79,7 @@ pub mod ether {
             match *self {
                 Arp(_) => NoiseLevel::One,
                 IPv4(_, ref ipv4) => ipv4.noise_level(),
+                IPv6(_, ref ipv6) => ipv6.noise_level(),
                 Cjdns(_) => NoiseLevel::Two,
                 Unknown(_) => NoiseLevel::Maximum,
             }
@@ -125,6 +127,70 @@ pub mod ipv4 {
                 UDP(_, ref udp) => udp.noise_level(),
                 Unknown(_) => NoiseLevel::Maximum,
             }
+        }
+    }
+}
+
+pub mod ipv6 {
+    use structs::tcp;
+    use structs::udp;
+    use structs::NoiseLevel;
+    use pktparse;
+
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum IPv6 {
+        TCP(pktparse::tcp::TcpHeader, tcp::TCP),
+        UDP(pktparse::udp::UdpHeader, udp::UDP),
+        Unknown(Vec<u8>),
+    }
+
+    impl IPv6 {
+        pub fn noise_level(&self) -> NoiseLevel {
+            use self::IPv6::*;
+            match *self {
+                TCP(_, ref tcp) => tcp.noise_level(),
+                UDP(_, ref udp) => udp.noise_level(),
+                Unknown(_) => NoiseLevel::Maximum,
+            }
+        }
+    }
+}
+
+pub mod ip {
+    use pktparse::{ipv4, ipv6};
+    use std::fmt::Display;
+    use std::net::Ipv4Addr;
+
+    pub trait IPHeader {
+        type Addr: Display;
+
+        #[inline]
+        fn source_addr(&self) -> Self::Addr;
+        #[inline]
+        fn dest_addr(&self) -> Self::Addr;
+    }
+
+    impl IPHeader for ipv4::IPv4Header {
+        type Addr = Ipv4Addr;
+
+        fn source_addr(&self) -> Self::Addr {
+            self.source_addr
+        }
+
+        fn dest_addr(&self) -> Self::Addr {
+            self.dest_addr
+        }
+    }
+
+    impl IPHeader for ipv6::IPv6Header {
+        type Addr = String;
+
+        fn source_addr(&self) -> Self::Addr {
+            format!("[{}]", self.source_addr)
+        }
+
+        fn dest_addr(&self) -> Self::Addr {
+            format!("[{}]", self.dest_addr)
         }
     }
 }

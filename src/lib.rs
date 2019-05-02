@@ -57,7 +57,8 @@ mod tests {
         use structs::tcp::TCP::Text;
 
         use pktparse::ethernet::{MacAddress, EtherType, EthernetFrame};
-        use pktparse::ipv4::{IPv4Header, IPv4Protocol};
+        use pktparse::ip::IPProtocol;
+        use pktparse::ipv4::IPv4Header;
         use pktparse::tcp::TcpHeader;
 
         let mut pkt = Vec::new();
@@ -86,7 +87,7 @@ mod tests {
                 flags: 2,
                 fragment_offset: 0,
                 ttl: 55,
-                protocol: IPv4Protocol::TCP,
+                protocol: IPProtocol::TCP,
                 chksum: 64371,
                 source_addr: "93.184.216.34".parse().unwrap(),
                 dest_addr: "192.168.44.55".parse().unwrap(),

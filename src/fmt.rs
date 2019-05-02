@@ -8,7 +8,9 @@ use serde_json;
 use structs::ether;
 use structs::arp;
 use structs::cjdns;
+use structs::ip::IPHeader;
 use structs::ipv4;
+use structs::ipv6;
 use structs::tcp;
 use structs::udp;
 use structs::raw::Raw;
@@ -108,9 +110,8 @@ impl Format {
     fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
         match eth {
             Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
-            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, &ip_hdr, &tcp_hdr, tcp),
-            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, &ip_hdr, &udp_hdr, udp),
-            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, &ip_hdr, &data),
+            IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
+            IPv6(ip_hdr, ipv6) => self.format_compact_ipv6(out, &ip_hdr, ipv6),
             Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, &cjdns_pkt),
             ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
@@ -177,19 +178,37 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
-        out.push_str(&format!("[unknown] {:15} -> {:15} {:?}",
-                        ip_hdr.source_addr,
-                        ip_hdr.dest_addr,
+    fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Colour> {
+        match next {
+            ipv4::IPv4::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
+            ipv4::IPv4::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv4::IPv4::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
+        }
+    }
+
+    #[inline]
+    fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Colour> {
+        match next {
+            ipv6::IPv6::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
+            ipv6::IPv6::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv6::IPv6::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
+        }
+    }
+
+    #[inline]
+    fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Colour> {
+        out.push_str(&format!("[unknown] {} -> {} {:?}",
+                        ip_hdr.source_addr(),
+                        ip_hdr.dest_addr(),
                         data));
         None
     }
 
     #[inline]
-    fn format_compact_ipv4_tcp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
+    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
         out.push_str(&format!("[tcp] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr, tcp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, tcp_hdr.dest_port)));
+                        format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
+                        format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
 
         use structs::tcp::TCP::*;
         match tcp {
@@ -219,10 +238,10 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_udp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
+    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
         out.push_str(&format!("[udp] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr, udp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, udp_hdr.dest_port)));
+                        format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
+                        format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
 
         use structs::udp::UDP::*;
         match udp {
@@ -363,18 +382,32 @@ impl Format {
             Arp(arp_pkt) => {
                 println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
             },
-            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
+            IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
             },
-            IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
+            IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
             },
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
+            },
+            IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
+                println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
+            },
+            IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
+                println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
+            },
+            IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
+                println!("{}ipv6: {:?}",     "\t".repeat(indent), ip_hdr);
                 println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
             },
             Cjdns(cjdns_pkt) => {
