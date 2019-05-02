@@ -1,4 +1,4 @@
-use syscallz::{self, Context, Syscall};
+use syscallz::{self, Context, Syscall, Action};
 
 pub fn activate_stage1() -> Result<(), syscallz::Error> {
     let mut ctx = Context::init()?;
@@ -169,6 +169,11 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::clock_gettime)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
+
+    // /proc/sys/vm/overcommit_memory
+    ctx.set_action_for_syscall(Action::Errno(1), Syscall::openat)?;
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    ctx.set_action_for_syscall(Action::Errno(1), Syscall::open)?;
 
     ctx.load()?;
 
