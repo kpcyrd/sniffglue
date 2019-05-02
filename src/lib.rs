@@ -12,6 +12,7 @@ extern crate serde_json;
 extern crate users;
 extern crate dirs;
 extern crate nix;
+extern crate base64;
 #[cfg(target_os="linux")]
 extern crate syscallz;
 

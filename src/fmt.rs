@@ -13,6 +13,7 @@ use structs::ipv4;
 use structs::ipv6;
 use structs::tcp;
 use structs::udp;
+use structs::tls;
 use structs::raw::Raw;
 use structs::prelude::*;
 use structs::dhcp::DhcpOption;
@@ -217,12 +218,28 @@ impl Format {
                 out.push_str(&format!("[http] {:?}", http)); // TODO
                 Some(Green)
             },
-            TLS(client_hello) => {
+            TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
-                    ("hostname", client_hello.hostname),
+                    ("version", client_hello.version),
+                    ("session", client_hello.session_id.as_ref()
+                        .map(|s| s.as_str())),
+                    ("hostname", client_hello.hostname.as_ref()
+                        .map(|s| s.as_str())),
                 ]);
 
                 out.push_str("[tls] ClientHello");
+                out.push_str(&extra);
+                Some(Green)
+            },
+            TLS(tls::TLS::ServerHello(server_hello)) => {
+                let extra = display_kv_list(&[
+                    ("version", server_hello.version),
+                    ("session", server_hello.session_id.as_ref()
+                        .map(|s| s.as_str())),
+                    ("cipher", server_hello.cipher),
+                ]);
+
+                out.push_str("[tls] ServerHello");
                 out.push_str(&extra);
                 Some(Green)
             },
@@ -508,7 +525,7 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 }
 
 #[inline]
-fn display_kv_list(list: &[(&str, Option<String>)]) -> String {
+fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
     list.iter()
         .filter_map(|&(key, ref value)| {
             value.as_ref().map(|value| {

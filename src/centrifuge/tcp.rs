@@ -29,14 +29,8 @@ pub fn extract(tcp_hdr: &TcpHeader, remaining: &[u8]) -> Result<TCP, CentrifugeE
         let client_hello = tls::extract(remaining)?;
         Ok(TCP::TLS(client_hello))
     } else if tcp_hdr.source_port == 443 {
-        // ignore
-        /*
-        if tcp_hdr.source_port == 443 {
-            let x = tls_parser::parse_tls_plaintext(remaining);
-            println!("tls(in): {:?}", &x);
-        }
-        */
-        Err(CentrifugeError::UnknownProtocol)
+        let server_hello = tls::extract(remaining)?;
+        Ok(TCP::TLS(server_hello))
     } else if tcp_hdr.dest_port == 80 {
         let http = http::extract(remaining)?;
         Ok(TCP::HTTP(http))
