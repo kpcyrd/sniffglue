@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pktparse;
 use reduce::Reduce;
-use ansi_term::Colour::{self, Yellow, Blue, Green, Red, Purple};
+use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
 use serde_json;
 use std::cmp;
 
@@ -19,6 +19,8 @@ use structs::raw::Raw;
 use structs::prelude::*;
 use structs::dhcp::DhcpOption;
 use structs::NoiseLevel;
+
+const GREY: u8 = 245;
 
 
 pub struct Config {
@@ -72,7 +74,7 @@ impl Format {
     }
 
     #[inline]
-    fn colorify(&self, color: Colour, out: String) -> String {
+    fn colorify(&self, color: Color, out: String) -> String {
         if self.colors {
             color.normal().paint(out).to_string()
         } else {
@@ -104,13 +106,13 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Colour> {
+    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Color> {
         out.push_str(&format!("[unknown] {:?}", data));
         None
     }
 
     #[inline]
-    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
+    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Color> {
         match eth {
             Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
             IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
@@ -121,17 +123,17 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Colour> {
+    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Color> {
         use structs::arp::ARP;
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
-                format!("[arp/request] {:15}?                         (tell {}, {})",
+                format!("[arp/request] {:15}   ?                         (tell {}, {})",
                     format!("{}", arp_pkt.dest_addr),
                     format!("{}", arp_pkt.src_addr),
                     display_macaddr(&arp_pkt.src_mac))
             },
             ARP::Reply(arp_pkt) => {
-                format!("[arp/reply  ] {:15}! => {}    (fyi  {}, {})",
+                format!("[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
                     format!("{}", arp_pkt.src_addr),
                     display_macaddr(&arp_pkt.src_mac),
                     format!("{}", arp_pkt.dest_addr),
@@ -142,7 +144,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Colour> {
+    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Color> {
         let password = cjdns.password.iter()
                                 .map(|b| {
                                     format!("\\x{:02x}", b)
@@ -181,7 +183,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Colour> {
+    fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Color> {
         match next {
             ipv4::IPv4::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
             ipv4::IPv4::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
@@ -190,7 +192,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Colour> {
+    fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Color> {
         match next {
             ipv6::IPv6::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
             ipv6::IPv6::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
@@ -199,7 +201,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Colour> {
+    fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Color> {
         out.push_str(&format!("[unknown] {} -> {} {:?}",
                         ip_hdr.source_addr(),
                         ip_hdr.dest_addr(),
@@ -208,8 +210,14 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
-        out.push_str(&format!("[tcp] {:22} -> {:22} ",
+    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Color> {
+        let mut flags = String::new();
+        if tcp_hdr.flag_syn { flags.push('S') }
+        if tcp_hdr.flag_ack { flags.push('A') }
+        if tcp_hdr.flag_rst { flags.push('R') }
+        if tcp_hdr.flag_fin { flags.push('F') }
+
+        out.push_str(&format!("[tcp/{:2}] {:22} -> {:22} ", flags,
                         format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
 
@@ -253,12 +261,15 @@ impl Format {
                 out.push_str(&format!("[binary] {:?}", x));
                 Some(Red)
             },
+            Empty => {
+                Some(Fixed(GREY))
+            },
         }
     }
 
     #[inline]
-    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
-        out.push_str(&format!("[udp] {:22} -> {:22} ",
+    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Color> {
+        out.push_str(&format!("[udp   ] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
 
@@ -454,6 +465,7 @@ impl Format {
             Binary(x) => {
                 self.colorify(Yellow, format!("remaining: {:?}", x))
             },
+            Empty => self.colorify(Fixed(GREY), String::new()),
         }
     }
 

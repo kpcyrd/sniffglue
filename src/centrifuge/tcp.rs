@@ -24,7 +24,7 @@ pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError>
 #[inline]
 pub fn extract(tcp_hdr: &TcpHeader, remaining: &[u8]) -> Result<TCP, CentrifugeError> {
     if remaining.is_empty() {
-        Ok(TCP::Binary(Vec::new()))
+        Ok(TCP::Empty)
     } else if tcp_hdr.dest_port == 443 {
         let client_hello = tls::extract(remaining)?;
         Ok(TCP::TLS(client_hello))

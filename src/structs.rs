@@ -209,6 +209,7 @@ pub mod tcp {
 
         Text(String),
         Binary(Vec<u8>),
+        Empty,
     }
 
     impl TCP {
@@ -217,6 +218,7 @@ pub mod tcp {
             match *self {
                 Text(ref text) if text.len() < 5 => NoiseLevel::AlmostMaximum,
                 Binary(_) => NoiseLevel::AlmostMaximum,
+                Empty => NoiseLevel::Two,
                 _ => NoiseLevel::Zero,
             }
         }
