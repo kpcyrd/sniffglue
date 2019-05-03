@@ -27,8 +27,8 @@ pub enum NoiseLevel {
 }
 
 impl NoiseLevel {
-    pub fn into_u64(self) -> u64 {
-        self as u64
+    pub fn into_u8(self) -> u8 {
+        self as u8
     }
 }
 

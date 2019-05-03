@@ -4,6 +4,7 @@ use pktparse;
 use reduce::Reduce;
 use ansi_term::Colour::{self, Yellow, Blue, Green, Red, Purple};
 use serde_json;
+use std::cmp;
 
 use structs::ether;
 use structs::arp;
@@ -17,6 +18,7 @@ use structs::tls;
 use structs::raw::Raw;
 use structs::prelude::*;
 use structs::dhcp::DhcpOption;
+use structs::NoiseLevel;
 
 
 pub struct Config {
@@ -25,10 +27,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(layout: Layout, verbose: u64, colors: bool) -> Config {
+    pub fn new(layout: Layout, verbosity: u8, colors: bool) -> Config {
         Config {
             fmt: Format::new(layout, colors),
-            filter: Arc::new(Filter::new(verbose)),
+            filter: Arc::new(Filter::new(verbosity)),
         }
     }
 
@@ -487,19 +489,21 @@ impl Format {
 }
 
 pub struct Filter {
-    verbose: u64,
+    pub verbosity: u8,
 }
 
 impl Filter {
-    pub fn new(verbose: u64) -> Filter {
+    #[inline]
+    pub fn new(verbosity: u8) -> Filter {
+        let verbosity = cmp::min(verbosity, NoiseLevel::Maximum.into_u8());
         Filter {
-            verbose,
+            verbosity,
         }
     }
 
     #[inline]
     pub fn matches(&self, packet: &Raw) -> bool {
-        packet.noise_level().into_u64() <= self.verbose
+        packet.noise_level().into_u8() <= self.verbosity
     }
 }
 

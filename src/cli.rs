@@ -15,7 +15,7 @@ pub struct Args {
     /// Show more packets (maximum: 4)
     #[structopt(short="v", long="verbose",
                 parse(from_occurrences))]
-    pub verbose: u64,
+    pub verbose: u8,
     /// Open device as pcap file
     #[structopt(short="r", long="read")]
     pub read: bool,
