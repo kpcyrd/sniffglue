@@ -9,6 +9,19 @@ categories = ["command-line-utilities"]
 readme = "README.md"
 exclude = ["pcaps/**/*", "**/*.pcap"]
 
+[package.metadata.deb]
+license-file = [ "LICENSE" ]
+extended-description = """\
+sniffglue is a network sniffer written in rust. Network packets are parsed \
+concurrently using a thread pool to utilize all cpu cores. Project goals are \
+that you can run sniffglue securely on untrusted networks and that it must \
+not crash when processing packets. The output should be as useful as possible \
+by default.\
+"""
+depends = "$auto"
+section = "net"
+priority = "optional"
+
 [lib]
 doc = false
 
