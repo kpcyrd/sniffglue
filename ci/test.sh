@@ -25,7 +25,7 @@ case "$BUILD_MODE" in
         fi
         ;;
     reprotest)
-        docker run --privileged reprotest-sniffglue ci/reprotest.sh
+        docker run --privileged reprotest-sniffglue ci/reprotest.sh || true
         ;;
     musl)
         docker run -e RUST_LOG=sniffglue musl-sniffglue --help
