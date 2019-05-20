@@ -28,6 +28,10 @@ Archlinux: `libpcap libseccomp`.
 
     cargo install sniffglue
 
+Or you can build a Debian package via [cargo-deb](https://github.com/mmstick/cargo-deb):
+
+    cargo deb
+
 ## Protocols
 
 - [X] ethernet
