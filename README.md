@@ -32,7 +32,7 @@ Archlinux: `libpcap libseccomp`.
 
 - [X] ethernet
 - [X] ipv4
-- [ ] ipv6
+- [X] ipv6
 - [X] arp
 - [X] tcp
 - [X] udp

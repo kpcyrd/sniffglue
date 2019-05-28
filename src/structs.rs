@@ -10,7 +10,6 @@ pub enum CentrifugeError {
 pub mod prelude {
     pub use structs::raw::Raw::*;
     pub use structs::ether::Ether::*;
-    pub use structs::ipv4::IPv4::*;
 }
 
 /// Zero            - This packet is very interesting
@@ -28,8 +27,8 @@ pub enum NoiseLevel {
 }
 
 impl NoiseLevel {
-    pub fn into_u64(self) -> u64 {
-        self as u64
+    pub fn into_u8(self) -> u8 {
+        self as u8
     }
 }
 
@@ -60,6 +59,7 @@ pub mod raw {
 pub mod ether {
     use structs::arp;
     use structs::ipv4;
+    use structs::ipv6;
     use structs::cjdns;
     use structs::NoiseLevel;
     use pktparse;
@@ -68,6 +68,7 @@ pub mod ether {
     pub enum Ether {
         Arp(arp::ARP),
         IPv4(pktparse::ipv4::IPv4Header, ipv4::IPv4),
+        IPv6(pktparse::ipv6::IPv6Header, ipv6::IPv6),
         Cjdns(cjdns::CjdnsEthPkt),
         Unknown(Vec<u8>),
     }
@@ -78,6 +79,7 @@ pub mod ether {
             match *self {
                 Arp(_) => NoiseLevel::One,
                 IPv4(_, ref ipv4) => ipv4.noise_level(),
+                IPv6(_, ref ipv6) => ipv6.noise_level(),
                 Cjdns(_) => NoiseLevel::Two,
                 Unknown(_) => NoiseLevel::Maximum,
             }
@@ -129,6 +131,72 @@ pub mod ipv4 {
     }
 }
 
+pub mod ipv6 {
+    use structs::tcp;
+    use structs::udp;
+    use structs::NoiseLevel;
+    use pktparse;
+
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum IPv6 {
+        TCP(pktparse::tcp::TcpHeader, tcp::TCP),
+        UDP(pktparse::udp::UdpHeader, udp::UDP),
+        Unknown(Vec<u8>),
+    }
+
+    impl IPv6 {
+        pub fn noise_level(&self) -> NoiseLevel {
+            use self::IPv6::*;
+            match *self {
+                TCP(_, ref tcp) => tcp.noise_level(),
+                UDP(_, ref udp) => udp.noise_level(),
+                Unknown(_) => NoiseLevel::Maximum,
+            }
+        }
+    }
+}
+
+pub mod ip {
+    use pktparse::{ipv4, ipv6};
+    use std::fmt::Display;
+    use std::net::Ipv4Addr;
+
+    pub trait IPHeader {
+        type Addr: Display;
+
+        fn source_addr(&self) -> Self::Addr;
+        fn dest_addr(&self) -> Self::Addr;
+    }
+
+    impl IPHeader for ipv4::IPv4Header {
+        type Addr = Ipv4Addr;
+
+        #[inline]
+        fn source_addr(&self) -> Self::Addr {
+            self.source_addr
+        }
+
+        #[inline]
+        fn dest_addr(&self) -> Self::Addr {
+            self.dest_addr
+        }
+    }
+
+    impl IPHeader for ipv6::IPv6Header {
+        type Addr = String;
+
+        #[inline]
+        fn source_addr(&self) -> Self::Addr {
+            format!("[{}]", self.source_addr)
+        }
+
+        #[inline]
+        fn dest_addr(&self) -> Self::Addr {
+            format!("[{}]", self.dest_addr)
+        }
+    }
+}
+
 pub mod tcp {
     use structs::tls;
     use structs::http;
@@ -136,11 +204,12 @@ pub mod tcp {
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum TCP {
-        TLS(tls::ClientHello),
+        TLS(tls::TLS),
         HTTP(http::Request),
 
         Text(String),
         Binary(Vec<u8>),
+        Empty,
     }
 
     impl TCP {
@@ -149,6 +218,7 @@ pub mod tcp {
             match *self {
                 Text(ref text) if text.len() < 5 => NoiseLevel::AlmostMaximum,
                 Binary(_) => NoiseLevel::AlmostMaximum,
+                Empty => NoiseLevel::Two,
                 _ => NoiseLevel::Zero,
             }
         }
@@ -189,15 +259,64 @@ pub mod udp {
 }
 
 pub mod tls {
+    use base64;
+    use tls_parser::TlsClientHelloContents;
+    use tls_parser::TlsServerHelloContents;
+    use tls_parser::tls::TlsVersion;
+
+    #[derive(Debug, PartialEq, Serialize)]
+    pub enum TLS {
+        ClientHello(ClientHello),
+        ServerHello(ServerHello),
+    }
+
+    fn tls_version(ver: &TlsVersion) -> Option<&'static str> {
+        match *ver {
+            TlsVersion::Ssl30 => Some("ssl3.0"),
+            TlsVersion::Tls10 => Some("tls1.0"),
+            TlsVersion::Tls11 => Some("tls1.1"),
+            TlsVersion::Tls12 => Some("tls1.2"),
+            TlsVersion::Tls13 => Some("tls1.3"),
+            _                 => None,
+        }
+    }
+
     #[derive(Debug, PartialEq, Serialize)]
     pub struct ClientHello {
+        pub version: Option<&'static str>,
+        pub session_id: Option<String>,
         pub hostname: Option<String>,
     }
 
     impl ClientHello {
-        pub fn new(hostname: Option<String>) -> ClientHello {
+        pub fn new(ch: TlsClientHelloContents, hostname: Option<String>) -> ClientHello {
+            let session_id = ch.session_id.map(base64::encode);
+
             ClientHello {
+                version: tls_version(&ch.version),
+                session_id,
                 hostname,
+            }
+        }
+    }
+
+    #[derive(Debug, PartialEq, Serialize)]
+    pub struct ServerHello {
+        pub version: Option<&'static str>,
+        pub session_id: Option<String>,
+        pub cipher: Option<&'static str>,
+    }
+
+    impl ServerHello {
+        pub fn new(sh: TlsServerHelloContents) -> ServerHello {
+            let cipher = sh.cipher.get_ciphersuite()
+                .map(|cs| cs.name);
+            let session_id = sh.session_id.map(base64::encode);
+
+            ServerHello {
+                version: tls_version(&sh.version),
+                session_id,
+                cipher,
             }
         }
     }

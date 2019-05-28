@@ -2,18 +2,25 @@ use std::sync::Arc;
 
 use pktparse;
 use reduce::Reduce;
-use ansi_term::Colour::{self, Yellow, Blue, Green, Red, Purple};
+use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
 use serde_json;
+use std::cmp;
 
 use structs::ether;
 use structs::arp;
 use structs::cjdns;
+use structs::ip::IPHeader;
 use structs::ipv4;
+use structs::ipv6;
 use structs::tcp;
 use structs::udp;
+use structs::tls;
 use structs::raw::Raw;
 use structs::prelude::*;
 use structs::dhcp::DhcpOption;
+use structs::NoiseLevel;
+
+const GREY: u8 = 245;
 
 
 pub struct Config {
@@ -22,10 +29,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(layout: Layout, verbose: u64, colors: bool) -> Config {
+    pub fn new(layout: Layout, verbosity: u8, colors: bool) -> Config {
         Config {
             fmt: Format::new(layout, colors),
-            filter: Arc::new(Filter::new(verbose)),
+            filter: Arc::new(Filter::new(verbosity)),
         }
     }
 
@@ -67,7 +74,7 @@ impl Format {
     }
 
     #[inline]
-    fn colorify(&self, color: Colour, out: String) -> String {
+    fn colorify(&self, color: Color, out: String) -> String {
         if self.colors {
             color.normal().paint(out).to_string()
         } else {
@@ -99,35 +106,34 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Colour> {
+    fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Color> {
         out.push_str(&format!("[unknown] {:?}", data));
         None
     }
 
     #[inline]
-    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Colour> {
+    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Color> {
         match eth {
             Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
-            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => self.format_compact_ipv4_tcp(out, &ip_hdr, &tcp_hdr, tcp),
-            IPv4(ip_hdr, UDP(udp_hdr, udp)) => self.format_compact_ipv4_udp(out, &ip_hdr, &udp_hdr, udp),
-            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => self.format_compact_ipv4_unknown(out, &ip_hdr, &data),
+            IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
+            IPv6(ip_hdr, ipv6) => self.format_compact_ipv6(out, &ip_hdr, ipv6),
             Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, &cjdns_pkt),
             ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
     }
 
     #[inline]
-    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Colour> {
+    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Color> {
         use structs::arp::ARP;
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
-                format!("[arp/request] who has {:15}? (tell {}, {})",
+                format!("[arp/request] {:15}   ?                         (tell {}, {})",
                     format!("{}", arp_pkt.dest_addr),
                     format!("{}", arp_pkt.src_addr),
                     display_macaddr(&arp_pkt.src_mac))
             },
             ARP::Reply(arp_pkt) => {
-                format!("[arp/reply] {:15} => {} (fyi {}, {})",
+                format!("[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
                     format!("{}", arp_pkt.src_addr),
                     display_macaddr(&arp_pkt.src_mac),
                     format!("{}", arp_pkt.dest_addr),
@@ -138,7 +144,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Colour> {
+    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Color> {
         let password = cjdns.password.iter()
                                 .map(|b| {
                                     format!("\\x{:02x}", b)
@@ -150,7 +156,7 @@ impl Format {
             let bytes1 = Sha512::digest(&cjdns.pubkey);
             let bytes2 = Sha512::digest(&bytes1);
 
-            let mut iter = bytes2.as_slice().into_iter();
+            let mut iter = bytes2.as_slice().iter();
 
             let mut ipv6 = String::new();
             for x in 0..8 {
@@ -177,19 +183,43 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ipv4_unknown(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, data: &[u8]) -> Option<Colour> {
-        out.push_str(&format!("[unknown] {:15} -> {:15} {:?}",
-                        ip_hdr.source_addr,
-                        ip_hdr.dest_addr,
+    fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Color> {
+        match next {
+            ipv4::IPv4::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
+            ipv4::IPv4::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv4::IPv4::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
+        }
+    }
+
+    #[inline]
+    fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Color> {
+        match next {
+            ipv6::IPv6::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
+            ipv6::IPv6::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv6::IPv6::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
+        }
+    }
+
+    #[inline]
+    fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Color> {
+        out.push_str(&format!("[unknown] {} -> {} {:?}",
+                        ip_hdr.source_addr(),
+                        ip_hdr.dest_addr(),
                         data));
         None
     }
 
     #[inline]
-    fn format_compact_ipv4_tcp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Colour> {
-        out.push_str(&format!("[tcp] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr, tcp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, tcp_hdr.dest_port)));
+    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Color> {
+        let mut flags = String::new();
+        if tcp_hdr.flag_syn { flags.push('S') }
+        if tcp_hdr.flag_ack { flags.push('A') }
+        if tcp_hdr.flag_rst { flags.push('R') }
+        if tcp_hdr.flag_fin { flags.push('F') }
+
+        out.push_str(&format!("[tcp/{:2}] {:22} -> {:22} ", flags,
+                        format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
+                        format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
 
         use structs::tcp::TCP::*;
         match tcp {
@@ -198,12 +228,28 @@ impl Format {
                 out.push_str(&format!("[http] {:?}", http)); // TODO
                 Some(Green)
             },
-            TLS(client_hello) => {
+            TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
-                    ("hostname", client_hello.hostname),
+                    ("version", client_hello.version),
+                    ("session", client_hello.session_id.as_ref()
+                        .map(|s| s.as_str())),
+                    ("hostname", client_hello.hostname.as_ref()
+                        .map(|s| s.as_str())),
                 ]);
 
                 out.push_str("[tls] ClientHello");
+                out.push_str(&extra);
+                Some(Green)
+            },
+            TLS(tls::TLS::ServerHello(server_hello)) => {
+                let extra = display_kv_list(&[
+                    ("version", server_hello.version),
+                    ("session", server_hello.session_id.as_ref()
+                        .map(|s| s.as_str())),
+                    ("cipher", server_hello.cipher),
+                ]);
+
+                out.push_str("[tls] ServerHello");
                 out.push_str(&extra);
                 Some(Green)
             },
@@ -215,14 +261,17 @@ impl Format {
                 out.push_str(&format!("[binary] {:?}", x));
                 Some(Red)
             },
+            Empty => {
+                Some(Fixed(GREY))
+            },
         }
     }
 
     #[inline]
-    fn format_compact_ipv4_udp(&self, out: &mut String, ip_hdr: &pktparse::ipv4::IPv4Header, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Colour> {
-        out.push_str(&format!("[udp] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr, udp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr, udp_hdr.dest_port)));
+    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Color> {
+        out.push_str(&format!("[udp   ] {:22} -> {:22} ",
+                        format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
+                        format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
 
         use structs::udp::UDP::*;
         match udp {
@@ -363,18 +412,32 @@ impl Format {
             Arp(arp_pkt) => {
                 println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
             },
-            IPv4(ip_hdr, TCP(tcp_hdr, tcp)) => {
+            IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
             },
-            IPv4(ip_hdr, UDP(udp_hdr, udp)) => {
+            IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
             },
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
+            },
+            IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
+                println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
+            },
+            IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
+                println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
+                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
+            },
+            IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
+                println!("{}ipv6: {:?}",     "\t".repeat(indent), ip_hdr);
                 println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
             },
             Cjdns(cjdns_pkt) => {
@@ -402,6 +465,7 @@ impl Format {
             Binary(x) => {
                 self.colorify(Yellow, format!("remaining: {:?}", x))
             },
+            Empty => self.colorify(Fixed(GREY), String::new()),
         }
     }
 
@@ -437,19 +501,21 @@ impl Format {
 }
 
 pub struct Filter {
-    verbose: u64,
+    pub verbosity: u8,
 }
 
 impl Filter {
-    pub fn new(verbose: u64) -> Filter {
+    #[inline]
+    pub fn new(verbosity: u8) -> Filter {
+        let verbosity = cmp::min(verbosity, NoiseLevel::Maximum.into_u8());
         Filter {
-            verbose,
+            verbosity,
         }
     }
 
     #[inline]
     pub fn matches(&self, packet: &Raw) -> bool {
-        packet.noise_level().into_u64() <= self.verbose
+        packet.noise_level().into_u8() <= self.verbosity
     }
 }
 
@@ -475,8 +541,8 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 }
 
 #[inline]
-fn display_kv_list(list: &[(&str, Option<String>)]) -> String {
-    list.into_iter()
+fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
+    list.iter()
         .filter_map(|&(key, ref value)| {
             value.as_ref().map(|value| {
                 format!("{}: {:?}", key, value)
@@ -489,7 +555,7 @@ fn display_kv_list(list: &[(&str, Option<String>)]) -> String {
 
 #[inline]
 fn display_dhcp_kv_list(list: &[(&str, Option<DhcpOption>)]) -> String {
-    list.into_iter()
+    list.iter()
         .filter_map(|&(key, ref value)| {
             value.as_ref().map(|value| {
                 let value = match *value {

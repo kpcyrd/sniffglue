@@ -95,7 +95,8 @@ fn main() {
                 .promisc(args.promisc)
                 .open() {
             Ok(cap) => {
-                eprintln!("Listening on device: {:?}", device);
+                let verbosity = config.filter().verbosity;
+                eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
                 cap.into()
             },
             Err(e) => {
