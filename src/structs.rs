@@ -123,7 +123,7 @@ pub mod ipv4 {
         pub fn noise_level(&self) -> NoiseLevel {
             use self::IPv4::*;
             match *self {
-                TCP(_, ref tcp) => tcp.noise_level(),
+                TCP(ref header, ref tcp) => tcp.noise_level(header),
                 UDP(_, ref udp) => udp.noise_level(),
                 Unknown(_) => NoiseLevel::Maximum,
             }
@@ -148,7 +148,7 @@ pub mod ipv6 {
         pub fn noise_level(&self) -> NoiseLevel {
             use self::IPv6::*;
             match *self {
-                TCP(_, ref tcp) => tcp.noise_level(),
+                TCP(ref header, ref tcp) => tcp.noise_level(header),
                 UDP(_, ref udp) => udp.noise_level(),
                 Unknown(_) => NoiseLevel::Maximum,
             }
@@ -213,12 +213,18 @@ pub mod tcp {
     }
 
     impl TCP {
-        pub fn noise_level(&self) -> NoiseLevel {
+        pub fn noise_level(&self, header: &pktparse::tcp::TcpHeader) -> NoiseLevel {
             use self::TCP::*;
             match *self {
                 Text(ref text) if text.len() < 5 => NoiseLevel::AlmostMaximum,
                 Binary(_) => NoiseLevel::AlmostMaximum,
-                Empty => NoiseLevel::Two,
+                Empty => if !header.flag_rst &&
+                            !header.flag_syn &&
+                            !header.flag_fin {
+                    NoiseLevel::AlmostMaximum
+                } else {
+                    NoiseLevel::Two
+                },
                 _ => NoiseLevel::Zero,
             }
         }
