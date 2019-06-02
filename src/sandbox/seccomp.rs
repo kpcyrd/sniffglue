@@ -106,6 +106,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::gettimeofday)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
+    ctx.allow_syscall(Syscall::membarrier)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::access)?; // needed for debian /etc/ld.so.nohwcap
     ctx.allow_syscall(Syscall::faccessat)?; // needed for debian /etc/ld.so.nohwcap
@@ -169,6 +170,7 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::clock_gettime)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
+    ctx.allow_syscall(Syscall::membarrier)?;
 
     // /proc/sys/vm/overcommit_memory
     ctx.set_action_for_syscall(Action::Errno(1), Syscall::openat)?;
