@@ -23,7 +23,6 @@ pub mod tls;
 
 #[inline]
 pub fn parse(link: &DataLink, data: &[u8]) -> raw::Raw {
-    use structs::raw::Raw::Unknown;
     match *link {
         DataLink::Ethernet => match parse_eth(data) {
             Ok(eth) => eth,
