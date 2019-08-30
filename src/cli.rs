@@ -1,7 +1,7 @@
 use structopt::clap::AppSettings;
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(global_settings = "&[AppSettings::ColoredHelp]"))]
+#[structopt(global_settings = &[AppSettings::ColoredHelp])]
 pub struct Args {
     /// Set device to promisc
     #[structopt(short="p", long="promisc")]
