@@ -11,14 +11,20 @@ extern crate atty;
 extern crate env_logger;
 extern crate serde_json;
 extern crate sha2;
+extern crate pcap_file;
 
 use pcap::Device;
 use pcap::Capture;
+
+use pcap_file::PcapWriter;
 
 use threadpool::ThreadPool;
 
 use std::thread;
 use std::sync::mpsc;
+use std::path::Path;
+use std::fs::File;
+use std::convert::TryInto;
 
 mod cli;
 mod fmt;
@@ -69,6 +75,8 @@ fn main() {
     env_logger::init();
 
     sandbox::activate_stage1().expect("init sandbox stage1");
+    let pcap_out = File::create("test.pcap").expect("Error creating pcap file");
+    let mut pcap_writer = PcapWriter::new(pcap_out).unwrap();
 
     let args = Args::from_args();
 
@@ -76,7 +84,7 @@ fn main() {
         Some(device) => device,
         None => Device::lookup().unwrap().name,
     };
-
+    
     let layout = if args.json {
         fmt::Layout::Json
     } else if args.detailed {
@@ -117,9 +125,9 @@ fn main() {
         }
     };
 
-
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
+    
 
     sandbox::activate_stage2().expect("init sandbox stage2");
 
@@ -140,23 +148,30 @@ fn main() {
             },
         };
 
+
         while let Ok(packet) = cap.next() {
-            // let ts = packet.header.ts;
+            let sec : u32 = packet.header.ts.tv_sec.try_into().unwrap();
+            let usec : u32 = packet.header.ts.tv_usec.try_into().unwrap();
             // let len = packet.header.len;
 
             let tx = tx.clone();
-            let packet = packet.data.to_vec();
+            // let packet = packet.clone();
+            let packet_data = packet.data.to_vec();
 
             let filter = filter.clone();
             let datalink = datalink.clone();
             pool.execute(move || {
-                let packet = centrifuge::parse(&datalink, &packet);
-                if filter.matches(&packet) {
-                    tx.send(packet).unwrap()
+                let packet_data = centrifuge::parse(&datalink, &packet_data);
+                if filter.matches(&packet_data) {
+                    //temporarily write it out to file
+                    tx.send(packet_data).unwrap()
                 }
             });
         }
     });
+
+    // pcap outfile
+    // pcap_writer.write(sec, usec, packet.data);
 
     let format = config.format();
     for packet in rx.iter() {

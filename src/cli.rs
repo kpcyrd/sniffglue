@@ -19,6 +19,9 @@ pub struct Args {
     /// Open device as pcap file
     #[structopt(short="r", long="read")]
     pub read: bool,
+    /// Output pcap file path
+    #[structopt(short="o", long="output")]
+    pub output: Option<String>,
     /// Number of cores
     #[structopt(short="n", long="cpus")]
     pub cpus: Option<usize>,
