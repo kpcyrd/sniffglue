@@ -11,14 +11,21 @@ extern crate atty;
 extern crate env_logger;
 extern crate serde_json;
 extern crate sha2;
+extern crate pcap_file;
 
 use pcap::Device;
 use pcap::Capture;
+
+use pcap_file::PcapWriter;
+use pcap_file::Packet;
+use pcap_file::errors::{Error, ErrorKind::Msg};
 
 use threadpool::ThreadPool;
 
 use std::thread;
 use std::sync::mpsc;
+use std::fs::File;
+use std::convert::TryInto;
 
 mod cli;
 mod fmt;
@@ -76,7 +83,7 @@ fn main() {
         Some(device) => device,
         None => Device::lookup().unwrap().name,
     };
-
+    
     let layout = if args.json {
         fmt::Layout::Json
     } else if args.detailed {
@@ -116,10 +123,21 @@ fn main() {
             },
         }
     };
-
+    
+    let mut is_pcap = false;
+    let pcap_writer = match args.output {
+        Some(filename) => {
+            let pcap_out = File::create(filename).expect("Error creating pcap file");
+            is_pcap = true;
+            PcapWriter::new(pcap_out)
+        },
+        None => Err(Error::from_kind(Msg("No pcap output file specified".to_string()))),
+    };
+    let (pcap_tx, pcap_rx) = mpsc::channel();
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
+    
 
     sandbox::activate_stage2().expect("init sandbox stage2");
 
@@ -140,27 +158,42 @@ fn main() {
             },
         };
 
+
         while let Ok(packet) = cap.next() {
-            // let ts = packet.header.ts;
+            let sec : u32 = packet.header.ts.tv_sec.try_into().unwrap();
+            let usec : u32 = packet.header.ts.tv_usec.try_into().unwrap();
             // let len = packet.header.len;
 
             let tx = tx.clone();
-            let packet = packet.data.to_vec();
+            let pcap_tx = pcap_tx.clone();
+            let packet_data = packet.data.to_vec();
 
             let filter = filter.clone();
             let datalink = datalink.clone();
             pool.execute(move || {
-                let packet = centrifuge::parse(&datalink, &packet);
-                if filter.matches(&packet) {
-                    tx.send(packet).unwrap()
+                let parsed_packet = centrifuge::parse(&datalink, &packet_data);
+                if filter.matches(&parsed_packet) {
+                    tx.send(parsed_packet).unwrap();
+                    if is_pcap {
+                        let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
+                        pcap_tx.send(pcap_pkt).unwrap();
+                    }
                 }
             });
         }
     });
 
     let format = config.format();
-    for packet in rx.iter() {
-        format.print(packet);
+    if is_pcap {
+        let mut pcap_writer = pcap_writer.unwrap();
+        for (packet, pcap) in rx.iter().zip(pcap_rx.iter()) {
+            format.print(packet);
+            pcap_writer.write_packet(&pcap).unwrap();
+        }
+    } else {
+        for packet in rx.iter() {
+            format.print(packet);
+        }
     }
 
     join.join().unwrap();
