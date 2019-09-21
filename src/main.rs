@@ -24,7 +24,6 @@ use threadpool::ThreadPool;
 
 use std::thread;
 use std::sync::mpsc;
-use std::path::Path;
 use std::fs::File;
 use std::convert::TryInto;
 
@@ -126,7 +125,7 @@ fn main() {
     };
     
     let mut is_pcap = false;
-    let mut pcap_writer = match args.output {
+    let pcap_writer = match args.output {
         Some(filename) => {
             let pcap_out = File::create(filename).expect("Error creating pcap file");
             is_pcap = true;
@@ -174,7 +173,6 @@ fn main() {
             pool.execute(move || {
                 let parsed_packet = centrifuge::parse(&datalink, &packet_data);
                 if filter.matches(&parsed_packet) {
-                    //temporarily write it out to file
                     tx.send(parsed_packet).unwrap();
                     if is_pcap {
                         let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
@@ -190,7 +188,7 @@ fn main() {
         let mut pcap_writer = pcap_writer.unwrap();
         for (packet, pcap) in rx.iter().zip(pcap_rx.iter()) {
             format.print(packet);
-            pcap_writer.write_packet(&pcap);
+            pcap_writer.write_packet(&pcap).unwrap();
         }
     } else {
         for packet in rx.iter() {

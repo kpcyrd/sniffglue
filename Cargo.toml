@@ -19,7 +19,7 @@ travis-ci = { repository = "kpcyrd/sniffglue" }
 structopt = "0.2"
 threadpool = "1.7"
 num_cpus = "1.6"
-pcap = { version = "0.7.0", features = ["pcap-savefile-append"] }
+pcap = "0.7.0"
 pktparse = { version = "0.4", features = ["derive"] }
 nom = "4.0"
 dns-parser = "0.8"
