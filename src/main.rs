@@ -18,6 +18,7 @@ use pcap::Capture;
 
 use pcap_file::PcapWriter;
 use pcap_file::Packet;
+use pcap_file::errors::{Error, ErrorKind::Msg};
 
 use threadpool::ThreadPool;
 
@@ -124,8 +125,15 @@ fn main() {
         }
     };
     
-    let pcap_out = File::create(args.output.unwrap()).expect("Error creating pcap file");
-    let mut pcap_writer = PcapWriter::new(pcap_out).unwrap();
+    let mut is_pcap = false;
+    let mut pcap_writer = match args.output {
+        Some(filename) => {
+            let pcap_out = File::create(filename).expect("Error creating pcap file");
+            is_pcap = true;
+            PcapWriter::new(pcap_out)
+        },
+        None => Err(Error::from_kind(Msg("No pcap output file specified".to_string()))),
+    };
     let (pcap_tx, pcap_rx) = mpsc::channel();
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
@@ -165,25 +173,31 @@ fn main() {
             let datalink = datalink.clone();
             pool.execute(move || {
                 let parsed_packet = centrifuge::parse(&datalink, &packet_data);
-                let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
                 if filter.matches(&parsed_packet) {
                     //temporarily write it out to file
                     tx.send(parsed_packet).unwrap();
                     // if the user wants a pcap output then parse that and send
                     // it
-                    pcap_tx.send(pcap_pkt);
+                    if is_pcap {
+                        let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
+                        pcap_tx.send(pcap_pkt);
+                    }
                 }
             });
         }
     });
 
-    // pcap outfile
-    // pcap_writer.write(sec, usec, packet.data);
-
     let format = config.format();
-    for (packet, pcap) in rx.iter().zip(pcap_rx.iter()) {
-        format.print(packet);
-        pcap_writer.write_packet(&pcap);
+    if is_pcap {
+        let mut pcap_writer = pcap_writer.unwrap();
+        for (packet, pcap) in rx.iter().zip(pcap_rx.iter()) {
+            format.print(packet);
+            pcap_writer.write_packet(&pcap);
+        }
+    } else {
+        for packet in rx.iter() {
+            format.print(packet);
+        }
     }
 
     join.join().unwrap();
