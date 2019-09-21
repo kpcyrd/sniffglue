@@ -17,6 +17,7 @@ use pcap::Device;
 use pcap::Capture;
 
 use pcap_file::PcapWriter;
+use pcap_file::Packet;
 
 use threadpool::ThreadPool;
 
@@ -75,8 +76,6 @@ fn main() {
     env_logger::init();
 
     sandbox::activate_stage1().expect("init sandbox stage1");
-    let pcap_out = File::create("test.pcap").expect("Error creating pcap file");
-    let mut pcap_writer = PcapWriter::new(pcap_out).unwrap();
 
     let args = Args::from_args();
 
@@ -124,6 +123,10 @@ fn main() {
             },
         }
     };
+    
+    let pcap_out = File::create(args.output.unwrap()).expect("Error creating pcap file");
+    let mut pcap_writer = PcapWriter::new(pcap_out).unwrap();
+    let (pcap_tx, pcap_rx) = mpsc::channel();
 
     let (tx, rx): (Sender, Receiver) = mpsc::channel();
     let filter = config.filter();
@@ -155,16 +158,20 @@ fn main() {
             // let len = packet.header.len;
 
             let tx = tx.clone();
-            // let packet = packet.clone();
+            let pcap_tx = pcap_tx.clone();
             let packet_data = packet.data.to_vec();
 
             let filter = filter.clone();
             let datalink = datalink.clone();
             pool.execute(move || {
-                let packet_data = centrifuge::parse(&datalink, &packet_data);
-                if filter.matches(&packet_data) {
+                let parsed_packet = centrifuge::parse(&datalink, &packet_data);
+                let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
+                if filter.matches(&parsed_packet) {
                     //temporarily write it out to file
-                    tx.send(packet_data).unwrap()
+                    tx.send(parsed_packet).unwrap();
+                    // if the user wants a pcap output then parse that and send
+                    // it
+                    pcap_tx.send(pcap_pkt);
                 }
             });
         }
@@ -174,8 +181,9 @@ fn main() {
     // pcap_writer.write(sec, usec, packet.data);
 
     let format = config.format();
-    for packet in rx.iter() {
+    for (packet, pcap) in rx.iter().zip(pcap_rx.iter()) {
         format.print(packet);
+        pcap_writer.write_packet(&pcap);
     }
 
     join.join().unwrap();
