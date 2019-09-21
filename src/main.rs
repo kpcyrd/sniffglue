@@ -176,11 +176,9 @@ fn main() {
                 if filter.matches(&parsed_packet) {
                     //temporarily write it out to file
                     tx.send(parsed_packet).unwrap();
-                    // if the user wants a pcap output then parse that and send
-                    // it
                     if is_pcap {
                         let pcap_pkt = Packet::new_owned(sec, usec, packet_data.len() as u32, packet_data);
-                        pcap_tx.send(pcap_pkt);
+                        pcap_tx.send(pcap_pkt).unwrap();
                     }
                 }
             });
