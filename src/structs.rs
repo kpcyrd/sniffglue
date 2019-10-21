@@ -404,13 +404,6 @@ pub mod dhcp {
         UNKNOWN(Packet),
     }
 
-    /*#[derive(Debug, PartialEq, Serialize)]
-    pub enum DhcpOption {
-        String(String),
-        IPv4(Ipv4Addr),
-        Bytes(Vec<u8>),
-    }*/
-
     #[derive(Debug, PartialEq, Serialize)]
     pub struct Packet {
         pub ciaddr: Ipv4Addr,
