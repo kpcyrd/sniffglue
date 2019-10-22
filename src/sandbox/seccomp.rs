@@ -30,6 +30,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::mmap2)?;
     ctx.allow_syscall(Syscall::mprotect)?;
+    ctx.allow_syscall(Syscall::mremap)?;
     ctx.allow_syscall(Syscall::munmap)?;
     ctx.allow_syscall(Syscall::rt_sigprocmask)?;
     ctx.allow_syscall(Syscall::ioctl)?;
@@ -138,6 +139,7 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::mmap2)?;
     ctx.allow_syscall(Syscall::mprotect)?;
+    ctx.allow_syscall(Syscall::mremap)?;
     ctx.allow_syscall(Syscall::munmap)?;
     ctx.allow_syscall(Syscall::rt_sigprocmask)?;
     // ctx.allow_syscall(Syscall::ioctl)?;

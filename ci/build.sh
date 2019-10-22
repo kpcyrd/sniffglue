@@ -23,10 +23,6 @@ case "$BUILD_MODE" in
     reprotest)
         docker build -t reprotest-sniffglue -f docs/Dockerfile.reprotest .
         ;;
-    musl)
-        docker build -t musl-sniffglue -f docs/Dockerfile.musl .
-        docker images musl-sniffglue
-        ;;
     cross)
         docker build --build-arg TARGET="$TARGET" -t "sniffglue-test-$TARGET" -f ci/Dockerfile .
         # restart this script but inside the container and without BUILD_MODE=cross
