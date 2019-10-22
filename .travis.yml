@@ -17,9 +17,6 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
-  - os: linux
-    rust: stable
-    env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=musl
   ## broken on 1.26.0
   #- os: linux
   #  rust: stable
