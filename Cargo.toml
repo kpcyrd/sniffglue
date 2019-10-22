@@ -17,6 +17,7 @@ travis-ci = { repository = "kpcyrd/sniffglue" }
 
 [dependencies]
 structopt = "0.2"
+failure = "0.1"
 threadpool = "1.7"
 num_cpus = "1.6"
 pcap = "0.7.0"

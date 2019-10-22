@@ -25,8 +25,8 @@ pub struct Header<'a> {
 
 fn is_token(c: u8) -> bool {
     match c {
-        128...255 => false,
-        0...31    => false,
+        128..=255 => false,
+        0..=31    => false,
         b'('      => false,
         b')'      => false,
         b'<'      => false,
