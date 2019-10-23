@@ -5,6 +5,7 @@ use reduce::Reduce;
 use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
 use serde_json;
 use std::cmp;
+use std::fmt::Debug;
 
 use structs::ether;
 use structs::arp;
@@ -17,7 +18,6 @@ use structs::udp;
 use structs::tls;
 use structs::raw::Raw;
 use structs::prelude::*;
-use structs::dhcp::DhcpOption;
 use structs::NoiseLevel;
 
 const GREY: u8 = 245;
@@ -280,48 +280,40 @@ impl Format {
 
                 match dhcp {
                     DISCOVER(disc) => {
-                        let extra = display_dhcp_kv_list(&[
-                            ("hostname", disc.hostname),
-                            ("requested_ip_address", disc.requested_ip_address),
-                        ]);
-
                         out.push_str(&format!("[dhcp] DISCOVER: {}",
                                 display_macadr_buf(disc.chaddr)));
-                        out.push_str(&extra);
+                        out.push_str(&DhcpKvListWriter::new()
+                                     .append("hostname", &disc.hostname)
+                                     .append("requested_ip_address", &disc.requested_ip_address)
+                                     .finalize());
                     },
                     REQUEST(req) => {
-                        let extra = display_dhcp_kv_list(&[
-                            ("hostname", req.hostname),
-                            ("requested_ip_address", req.requested_ip_address),
-                        ]);
-
                         out.push_str(&format!("[dhcp] REQ: {}",
                                 display_macadr_buf(req.chaddr)));
-                        out.push_str(&extra);
+                        out.push_str(&DhcpKvListWriter::new()
+                                     .append("hostname", &req.hostname)
+                                     .append("requested_ip_address", &req.requested_ip_address)
+                                     .finalize());
                     },
                     ACK(ack) => {
-                        let extra = display_dhcp_kv_list(&[
-                            ("hostname", ack.hostname),
-                            ("router", ack.router),
-                            ("dns", ack.domain_name_server),
-                        ]);
-
                         out.push_str(&format!("[dhcp] ACK: {} => {}",
                                 display_macadr_buf(ack.chaddr),
                                 ack.yiaddr));
-                        out.push_str(&extra);
+                        out.push_str(&DhcpKvListWriter::new()
+                                     .append("hostname", &ack.hostname)
+                                     .append("router", &ack.router)
+                                     .append("dns", &ack.domain_name_server)
+                                     .finalize());
                     },
                     OFFER(offer) => {
-                        let extra = display_dhcp_kv_list(&[
-                            ("hostname", offer.hostname),
-                            ("router", offer.router),
-                            ("dns", offer.domain_name_server),
-                        ]);
-
                         out.push_str(&format!("[dhcp] OFFER: {} => {}",
                                 display_macadr_buf(offer.chaddr),
                                 offer.yiaddr));
-                        out.push_str(&extra);
+                        out.push_str(&DhcpKvListWriter::new()
+                                     .append("hostname", &offer.hostname)
+                                     .append("router", &offer.router)
+                                     .append("dns", &offer.domain_name_server)
+                                     .finalize());
                     },
                     _ => {
                         out.push_str(&format!("[dhcp] {:?}", dhcp)); // TODO
@@ -553,21 +545,37 @@ fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
         .unwrap_or_else(String::new)
 }
 
-#[inline]
-fn display_dhcp_kv_list(list: &[(&str, Option<DhcpOption>)]) -> String {
-    list.iter()
-        .filter_map(|&(key, ref value)| {
-            value.as_ref().map(|value| {
-                let value = match *value {
-                    DhcpOption::String(ref value) => format!("{:?}", value),
-                    DhcpOption::IPv4(ref value) => format!("{:?}", value),
-                    DhcpOption::Bytes(ref value) => format!("{:?}", value),
-                };
+struct DhcpKvListWriter<'a> {
+    elements: Vec<(&'a str, String)>,
+}
 
+impl<'a> DhcpKvListWriter<'a> {
+    fn new() -> DhcpKvListWriter<'a> {
+        DhcpKvListWriter{
+            elements: vec!()
+        }
+    }
+
+    fn append<T: Debug>(mut self, key: &'a str, value: &Option<T>) -> Self {
+        match value {
+            Some(value) => {
+                self.elements.push((
+                    key,
+                    format!("{:?}", value),
+                ));
+            }
+            _ => {}
+        }
+        self
+    }
+
+    fn finalize(self) -> String {
+        self.elements.iter()
+            .map(|&(key, ref value)| {
                 format!("{}: {}", key, value)
             })
-        })
-        .reduce(|a, b| a + ", " + &b)
-        .map(|extra| format!(" ({})", extra))
-        .unwrap_or_else(String::new)
+            .reduce(|a, b| a + ", " + &b)
+            .map(|extra| format!(" ({})", extra))
+            .unwrap_or_else(String::new)
+    }
 }

@@ -405,23 +405,16 @@ pub mod dhcp {
     }
 
     #[derive(Debug, PartialEq, Serialize)]
-    pub enum DhcpOption {
-        String(String),
-        IPv4(Ipv4Addr),
-        Bytes(Vec<u8>),
-    }
-
-    #[derive(Debug, PartialEq, Serialize)]
     pub struct Packet {
         pub ciaddr: Ipv4Addr,
         pub yiaddr: Ipv4Addr,
         pub siaddr: Ipv4Addr,
         pub chaddr: [u8; 6],
 
-        pub hostname: Option<DhcpOption>,
-        pub requested_ip_address: Option<DhcpOption>,
-        pub router: Option<DhcpOption>,
-        pub domain_name_server: Option<DhcpOption>,
+        pub hostname: Option<String>,
+        pub requested_ip_address: Option<Ipv4Addr>,
+        pub router: Option<Vec<Ipv4Addr>>,
+        pub domain_name_server: Option<Vec<Ipv4Addr>>,
     }
 
     impl Packet {
