@@ -43,7 +43,7 @@ enum CapWrap {
 }
 
 impl CapWrap {
-    fn activate(self) -> Capture<pcap::Activated> {
+    fn activate(self) -> Capture<dyn pcap::Activated> {
         match self {
             CapWrap::Active(cap) => cap.into(),
             CapWrap::Offline(cap) => cap.into(),

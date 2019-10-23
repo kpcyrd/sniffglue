@@ -216,7 +216,7 @@ pub mod tcp {
         pub fn noise_level(&self, header: &pktparse::tcp::TcpHeader) -> NoiseLevel {
             use self::TCP::*;
             match *self {
-                Text(ref text) if text.len() < 5 => NoiseLevel::AlmostMaximum,
+                Text(ref text) if text.len() <= 8 => NoiseLevel::AlmostMaximum,
                 Binary(_) => NoiseLevel::AlmostMaximum,
                 Empty => if !header.flag_rst &&
                             !header.flag_syn &&
