@@ -40,7 +40,6 @@ sha2 = "0.8"
 dirs = "2.0"
 base64 = "0.11"
 libc = "0.2"
-crossbeam-channel = "0.4"
 
 [target.'cfg(target_os="linux")'.dependencies]
 syscallz = "0.11"

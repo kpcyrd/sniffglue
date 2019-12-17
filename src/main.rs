@@ -1,6 +1,5 @@
 #![warn(unused_extern_crates)]
 extern crate sniffglue;
-extern crate crossbeam_channel;
 extern crate pktparse;
 extern crate ansi_term;
 extern crate num_cpus;
@@ -12,9 +11,7 @@ extern crate serde_json;
 extern crate sha2;
 
 use std::thread;
-use crossbeam_channel::bounded;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{mpsc, Arc, Mutex};
 
 mod cli;
 mod fmt;
@@ -46,13 +43,13 @@ fn run() -> Result<()> {
 
     let layout = if args.json {
         fmt::Layout::Json
-    } else if args.detailed {
-        fmt::Layout::Detailed
+    } else if args.debugging {
+        fmt::Layout::Debugging
     } else {
         fmt::Layout::Compact
     };
 
-    let cpus = args.cpus.unwrap_or_else(num_cpus::get);
+    let threads = args.threads.unwrap_or_else(num_cpus::get);
 
     let colors = atty::is(atty::Stream::Stdout);
     let config = fmt::Config::new(layout, args.verbose, colors);
@@ -75,13 +72,13 @@ fn run() -> Result<()> {
     let datalink = DataLink::from_linktype(cap.datalink())?;
 
     let filter = config.filter();
-    let (tx, rx) = bounded(64);
+    let (tx, rx) = mpsc::sync_channel(256);
     let cap = Arc::new(Mutex::new(cap));
 
     sandbox::activate_stage2()
         .context("Failed to init sandbox stage2")?;
 
-    for _ in 0..cpus {
+    for _ in 0..threads {
         let cap = cap.clone();
         let datalink = datalink.clone();
         let filter = filter.clone();
