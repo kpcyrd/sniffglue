@@ -1,5 +1,5 @@
-use std::io::{self, Read};
-use std::fs::File;
+use crate::errors::*;
+use std::fs;
 use std::path::Path;
 use toml;
 use dirs;
@@ -13,24 +13,6 @@ pub struct Config {
 pub struct SandboxConfig {
     pub user: Option<String>,
     pub chroot: Option<String>,
-}
-
-#[derive(Debug)]
-pub enum Error {
-    Io(io::Error),
-    Toml(toml::de::Error),
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Error {
-        Error::Io(err)
-    }
-}
-
-impl From<toml::de::Error> for Error {
-    fn from(err: toml::de::Error) -> Error {
-        Error::Toml(err)
-    }
 }
 
 pub fn find() -> Option<String> {
@@ -55,12 +37,8 @@ pub fn find() -> Option<String> {
     None
 }
 
-pub fn load(path: &str) -> Result<Config, Error> {
-    let mut file = File::open(path)?;
-
-    let mut content = String::new();
-    file.read_to_string(&mut content)?;
-
+pub fn load(path: &str) -> Result<Config> {
+    let content = fs::read_to_string(path)?;
     let config = toml::from_str(&content)?;
     Ok(config)
 }

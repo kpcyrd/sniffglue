@@ -1,4 +1,4 @@
-use pcap;
+use crate::errors::*;
 
 #[derive(Debug, Clone)]
 pub enum DataLink {
@@ -8,21 +8,21 @@ pub enum DataLink {
 }
 
 impl DataLink {
-    pub fn from_linktype(linktype: pcap::Linktype) -> Result<DataLink, pcap::Linktype> {
+    pub fn from_linktype(linktype: i32) -> Result<DataLink> {
         match linktype {
-            pcap::Linktype(1) => {
+            1 => {
                 // LINKTYPE_ETHERNET
                 Ok(DataLink::Ethernet)
             },
-            pcap::Linktype(12) => {
+            12 => {
                 // RAW IP (linux tun)
                 Ok(DataLink::Tun)
             },
-            pcap::Linktype(127) => {
+            127 => {
                 // LINKTYPE_IEEE802_11_RADIOTAP
                 Ok(DataLink::RadioTap)
             },
-            x => Err(x),
+            x => bail!("Unknown link type: {:?}", x),
         }
     }
 }
