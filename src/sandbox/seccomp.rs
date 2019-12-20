@@ -20,6 +20,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::lstat)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::lstat64)?;
+    ctx.allow_syscall(Syscall::statx)?;
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::poll)?;
     #[cfg(target_arch = "aarch64")]
