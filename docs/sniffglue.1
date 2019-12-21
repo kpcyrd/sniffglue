@@ -1,11 +1,11 @@
-.TH SNIFFGLUE "1" "June 2019" "sniffglue 0.9.0" "User Commands"
+.TH SNIFFGLUE "1" "December 2019" "sniffglue 0.10.0" "User Commands"
 .SH NAME
 sniffglue \- secure multithreaded packet sniffer
 
 .SH SYNOPSIS
 .B sniffglue
-[\fB\-vdrpVh\fR]
-[\fB\-n <cpus>\fR]
+[\fB\-vrpVh\fR]
+[\fB\-n <threads>\fR]
 .IR device
 
 .SH DESCRIPTION
@@ -18,21 +18,19 @@ when processing packets. The output should be as useful as possible by default.
 .SH OPTIONS
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
-Show more packets (maximum: 4)
-.TP
-\fB\-d\fR, \fB\-\-detailed\fR
-Detailed output
+Increase filter sensitivity to show more (possibly less useful) packets.
+The default only shows few packets, this flag can be specified multiple times. (maximum: 4)
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints help information
 .TP
 \fB\-p\fR, \fB\-\-promisc\fR
-Set \fIdevice\fR to promisc
+Set \fIdevice\fR to promiscuous mode
 .TP
 \fB\-r\fR, \fB\-\-read\fR
 Open \fIdevice\fR as pcap file
 .TP
-\fB\-n\fR, \fB\-\-cpus\fR \fIcpus\fR
+\fB\-n\fR, \fB\-\-threads\fR \fIthreads\fR
 Specify the number of threads
 .TP
 \fB\-V\fR, \fB\-\-version\fR
@@ -41,23 +39,52 @@ instead
 
 .SH EXAMPLES
 .LP
-Sniff and print interesting packets in compact mode from \fIenp0s25\fR:
+Sniff with default filters (dhcp, dns, tls, http) from \fIenp0s25\fR:
 .RS
 .nf
 \fBsniffglue enp0s25\fP
 .fi
 .RE
 .LP
-Read a dump from \fIsniff.pcap\fR and display all packets in detailed mode:
+Increase the filter sensitivity (arp):
 .RS
 .nf
-\fBsniffglue -dxr sniff.pcap\fP
+\fBsniffglue -v enp0s25\fP
+.fi
+.RE
+.LP
+Increase the filter sensitivity (cjdns, ssdp, dropbox, packets with valid utf8)
+.RS
+.nf
+\fBsniffglue -vv enp0s25\fP
+.fi
+.RE
+.LP
+Almost everything
+.RS
+.nf
+\fBsniffglue -vvv enp0s25\fP
+.fi
+.RE
+.LP
+Everything
+.RS
+.nf
+\fBsniffglue -vvvv enp0s25\fP
+.fi
+.RE
+.LP
+Read a dump from \fIsniff.pcap\fR, with increased filter sensitivity and decode packets with 1 thread:
+.RS
+.nf
+\fBsniffglue -vvrn1 sniff.pcap\fP
 .fi
 .RE
 
 .SH PROTOCOLS
 .BR "ethernet,"
 .BR "ipv4,"
+.BR "ipv6,"
 .BR "arp,"
 .BR "tcp,"
 .BR "udp,"
@@ -101,7 +128,7 @@ to \fIlibpcap\fR which is not included in the current fuzzing configuration.
 
 .SH AUTHORS
 This program was originally written and is currently maintained by kpcyrd.
-Bugs and patches are welcome on github:
+Bug reports and patches are welcome on github:
 .LP
 .RS
 .I https://github.com/kpcyrd/sniffglue
