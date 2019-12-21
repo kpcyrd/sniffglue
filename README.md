@@ -14,7 +14,16 @@ when processing packets. The output should be as useful as possible by default.
 
 ## Usage
 
+    # sniff with default filters (dhcp, dns, tls, http)
     sniffglue enp0s25
+    # increase the filter sensitivity (arp)
+    sniffglue -v enp0s25
+    # increase the filter sensitivity (cjdns, ssdp, dropbox, packets with valid utf8)
+    sniffglue -vv enp0s25
+    # almost everything
+    sniffglue -vvv enp0s25
+    # everything
+    sniffglue -vvvv enp0s25
 
 ## Installation
 
@@ -22,11 +31,21 @@ There is an official package available for archlinux:
 
     pacman -S sniffglue
 
-To build from source, make sure you have libpcap and libseccomp installed,
-Debian/Ubuntu: `libpcap-dev libseccomp-dev`,
-Archlinux: `libpcap libseccomp`.
+There's also a package available in debian unstable (still trying to get it to testing):
 
+    apt install sniffglue
+
+To build from source make sure you have libpcap and libseccomp installed. On
+debian based systems:
+
+    # install the dependencies
+    sudo apt install libpcap-dev libseccomp-dev
+    # install rust with rustup
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    source $HOME/.cargo/env
+    # install sniffglue and test it
     cargo install sniffglue
+    sniffglue --help
 
 ## Protocols
 

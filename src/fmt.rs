@@ -47,7 +47,7 @@ impl Config {
 
 pub enum Layout {
     Compact,
-    Detailed,
+    Debugging,
     Json,
 }
 
@@ -68,7 +68,7 @@ impl Format {
     pub fn print(&self, packet: Raw) {
         match self.layout {
             Layout::Compact => self.print_compact(packet),
-            Layout::Detailed => self.print_detailed(packet),
+            Layout::Debugging => self.print_debugging(packet),
             Layout::Json => self.print_json(&packet),
         }
     }
@@ -386,20 +386,20 @@ impl Format {
     }
 
     #[inline]
-    fn print_detailed(&self, packet: Raw) {
+    fn print_debugging(&self, packet: Raw) {
         use structs::raw::Raw::Unknown;
         match packet {
             Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
-                self.print_detailed_eth(1, eth);
+                self.print_debugging_eth(1, eth);
             },
-            Tun(eth) => self.print_detailed_eth(0, eth),
+            Tun(eth) => self.print_debugging_eth(0, eth),
             Unknown(data) => println!("unknown: {:?}", data),
         }
     }
 
     #[inline]
-    fn print_detailed_eth(&self, indent: usize, eth: ether::Ether) {
+    fn print_debugging_eth(&self, indent: usize, eth: ether::Ether) {
         match eth {
             Arp(arp_pkt) => {
                 println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
@@ -407,12 +407,12 @@ impl Format {
             IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
+                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
             },
             IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
+                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
             },
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
@@ -421,12 +421,12 @@ impl Format {
             IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_tcp(tcp));
+                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
             },
             IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_detailed_udp(udp));
+                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
             },
             IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
                 println!("{}ipv6: {:?}",     "\t".repeat(indent), ip_hdr);
@@ -442,7 +442,7 @@ impl Format {
     }
 
     #[inline]
-    fn print_detailed_tcp(&self, tcp: tcp::TCP) -> String {
+    fn print_debugging_tcp(&self, tcp: tcp::TCP) -> String {
         use structs::tcp::TCP::*;
         match tcp {
             HTTP(http) => {
@@ -462,7 +462,7 @@ impl Format {
     }
 
     #[inline]
-    fn print_detailed_udp(&self, udp: udp::UDP) -> String {
+    fn print_debugging_udp(&self, udp: udp::UDP) -> String {
         use structs::udp::UDP::*;
         match udp {
             DHCP(dhcp) => {
