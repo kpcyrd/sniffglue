@@ -790,7 +790,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "sniffglue"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "ansi_term 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -824,7 +824,7 @@ name = "sniffglue-fuzz"
 version = "0.0.1"
 dependencies = [
  "libfuzzer-sys 0.1.0 (git+https://github.com/rust-fuzz/libfuzzer-sys.git)",
- "sniffglue 0.10.0",
+ "sniffglue 0.10.1",
 ]
 
 [[package]]
