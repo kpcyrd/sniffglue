@@ -4,4 +4,4 @@ WORKDIR /app
 COPY . .
 RUN rustup install "stable-$TARGET" \
     && rustup target add "$TARGET"
-RUN ci/dependencies.sh "$TARGET"
+RUN ci/setup.sh linux

@@ -16,9 +16,10 @@ pub struct SandboxConfig {
 }
 
 pub fn find() -> Option<String> {
-    let mut paths = vec![String::from("/etc/sniffglue.conf")];
-
-    // paths.push(String::from("sniffglue.conf"));
+    let mut paths = vec![
+        String::from("/etc/sniffglue.conf"),
+        String::from("/usr/local/etc/sniffglue.conf"),
+    ];
 
     if let Some(home) = dirs::config_dir() {
         let path = home.join(Path::new("sniffglue.conf"));
