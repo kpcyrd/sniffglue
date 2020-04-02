@@ -155,7 +155,7 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     // ctx.allow_syscall(Syscall::recvmsg)?;
     // ctx.allow_syscall(Syscall::bind)?;
     // ctx.allow_syscall(Syscall::getsockname)?;
-    // ctx.allow_syscall(Syscall::setsockopt)?;
+    ctx.allow_syscall(Syscall::setsockopt)?;
     // ctx.allow_syscall(Syscall::getsockopt)?;
     ctx.allow_syscall(Syscall::clone)?;
     // ctx.allow_syscall(Syscall::uname)?;
