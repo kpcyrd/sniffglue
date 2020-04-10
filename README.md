@@ -34,6 +34,8 @@ There is an official package available for archlinux:
 There's also a package available in debian unstable (still trying to get it to testing):
 
     apt install sniffglue
+    
+[![Packaging status](https://repology.org/badge/vertical-allrepos/sniffglue.svg)](https://repology.org/project/sniffglue/versions)
 
 To build from source make sure you have libpcap and libseccomp installed. On
 debian based systems:
