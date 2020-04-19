@@ -43,7 +43,7 @@ base64 = "0.12"
 libc = "0.2"
 
 [target.'cfg(target_os="linux")'.dependencies]
-syscallz = "0.13"
+syscallz = "0.13.2"
 #syscallz = { path="../syscallz-rs" }
 
 [dev-dependencies]
