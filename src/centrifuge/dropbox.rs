@@ -1,6 +1,6 @@
 use std::str;
 
-use structs::{dropbox, CentrifugeError};
+use crate::structs::{dropbox, CentrifugeError};
 use serde_json;
 
 

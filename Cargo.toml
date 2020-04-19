@@ -8,6 +8,7 @@ repository = "https://github.com/kpcyrd/sniffglue"
 categories = ["command-line-utilities"]
 readme = "README.md"
 exclude = ["pcaps/**/*", "**/*.pcap"]
+edition = "2018"
 
 [lib]
 doc = false
