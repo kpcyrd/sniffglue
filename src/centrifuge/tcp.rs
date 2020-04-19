@@ -22,17 +22,14 @@ pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError>
 }
 
 #[inline]
-pub fn extract(tcp_hdr: &TcpHeader, remaining: &[u8]) -> Result<TCP, CentrifugeError> {
+pub fn extract(_tcp_hdr: &TcpHeader, remaining: &[u8]) -> Result<TCP, CentrifugeError> {
     if remaining.is_empty() {
         Ok(TCP::Empty)
-    } else if tcp_hdr.dest_port == 443 {
-        let client_hello = tls::extract(remaining)?;
+    } else if let Ok(client_hello) = tls::extract(remaining) {
         Ok(TCP::TLS(client_hello))
-    } else if tcp_hdr.source_port == 443 {
-        let server_hello = tls::extract(remaining)?;
+    } else if let Ok(server_hello) = tls::extract(remaining) {
         Ok(TCP::TLS(server_hello))
-    } else if tcp_hdr.dest_port == 80 {
-        let http = http::extract(remaining)?;
+    } else if let Ok(http) = http::extract(remaining) {
         Ok(TCP::HTTP(http))
     } else {
         Err(CentrifugeError::UnknownProtocol)
