@@ -1,10 +1,10 @@
 use dhcp4r;
 
-use structs::dhcp::*;
-use structs::{self, CentrifugeError};
+use crate::structs::dhcp::*;
+use crate::structs::{self, CentrifugeError};
 
 fn wrap_packet(dhcp: &dhcp4r::packet::Packet, packet: structs::dhcp::Packet) -> structs::dhcp::DHCP {
-    use structs::dhcp::DHCP::*;
+    use crate::structs::dhcp::DHCP::*;
 
     match dhcp.option(dhcp4r::options::DHCP_MESSAGE_TYPE) {
         Some(dhcp4r::options::DhcpOption::DhcpMessageType(msg_type)) => {

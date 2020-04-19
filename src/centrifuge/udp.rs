@@ -2,13 +2,13 @@ use std::str::from_utf8;
 
 use pktparse::udp::{self, UdpHeader};
 
-use centrifuge::dns;
-use centrifuge::dhcp;
-use centrifuge::ssdp;
-use centrifuge::dropbox;
+use crate::centrifuge::dns;
+use crate::centrifuge::dhcp;
+use crate::centrifuge::ssdp;
+use crate::centrifuge::dropbox;
 
-use structs::CentrifugeError;
-use structs::udp::UDP;
+use crate::structs::CentrifugeError;
+use crate::structs::udp::UDP;
 
 
 pub fn parse(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeError> {

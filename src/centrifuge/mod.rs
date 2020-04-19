@@ -2,11 +2,11 @@ use pktparse::{ethernet, ipv4, ipv6};
 use pktparse::ip::IPProtocol;
 use pktparse::ethernet::EtherType;
 
-use structs::prelude::*;
-use structs::CentrifugeError;
-use structs::raw;
-use structs::ether::{self, Ether};
-use link::DataLink;
+use crate::structs::prelude::*;
+use crate::structs::CentrifugeError;
+use crate::structs::raw;
+use crate::structs::ether::{self, Ether};
+use crate::link::DataLink;
 
 pub mod arp;
 pub mod tcp;
@@ -37,7 +37,7 @@ pub fn parse(link: &DataLink, data: &[u8]) -> raw::Raw {
 
 #[inline]
 pub fn parse_eth(data: &[u8]) -> Result<raw::Raw, CentrifugeError> {
-    use structs::ether::Ether::Unknown;
+    use crate::structs::ether::Ether::Unknown;
     if let Ok((remaining, eth_frame)) = ethernet::parse_ethernet_frame(data) {
         let inner = match eth_frame.ethertype {
             EtherType::IPv4 => match parse_ipv4(remaining) {
@@ -79,7 +79,7 @@ pub fn parse_tun(data: &[u8]) -> raw::Raw {
 
 #[inline]
 pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
-    use structs::ipv4::IPv4::*;
+    use crate::structs::ipv4::IPv4::*;
 
     if let Ok((remaining, ip_hdr)) = ipv4::parse_ipv4_header(data) {
         let inner = match ip_hdr.protocol {
@@ -103,7 +103,7 @@ pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
 
 #[inline]
 pub fn parse_ipv6(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
-    use structs::ipv6::IPv6::*;
+    use crate::structs::ipv6::IPv6::*;
 
     if let Ok((remaining, ip_hdr)) = ipv6::parse_ipv6_header(data) {
         let inner = match ip_hdr.next_header {

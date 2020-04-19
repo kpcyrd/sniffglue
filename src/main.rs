@@ -1,21 +1,9 @@
-#![warn(unused_extern_crates)]
-extern crate sniffglue;
-extern crate pktparse;
-extern crate ansi_term;
-extern crate num_cpus;
-extern crate reduce;
-#[macro_use] extern crate structopt;
-extern crate atty;
-extern crate env_logger;
-extern crate serde_json;
-extern crate sha2;
-
 use std::thread;
 use std::sync::{mpsc, Arc, Mutex};
 
 mod cli;
 mod fmt;
-use cli::Args;
+use crate::cli::Args;
 use sniffglue::centrifuge;
 use sniffglue::errors::*;
 use sniffglue::link::DataLink;

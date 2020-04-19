@@ -1,3 +1,4 @@
+use structopt::StructOpt;
 use structopt::clap::AppSettings;
 
 #[derive(Debug, StructOpt)]

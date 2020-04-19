@@ -7,18 +7,18 @@ use serde_json;
 use std::cmp;
 use std::fmt::Debug;
 
-use structs::ether;
-use structs::arp;
-use structs::cjdns;
-use structs::ip::IPHeader;
-use structs::ipv4;
-use structs::ipv6;
-use structs::tcp;
-use structs::udp;
-use structs::tls;
-use structs::raw::Raw;
-use structs::prelude::*;
-use structs::NoiseLevel;
+use crate::structs::ether;
+use crate::structs::arp;
+use crate::structs::cjdns;
+use crate::structs::ip::IPHeader;
+use crate::structs::ipv4;
+use crate::structs::ipv6;
+use crate::structs::tcp;
+use crate::structs::udp;
+use crate::structs::tls;
+use crate::structs::raw::Raw;
+use crate::structs::prelude::*;
+use crate::structs::NoiseLevel;
 
 const GREY: u8 = 245;
 
@@ -86,7 +86,7 @@ impl Format {
     fn print_compact(&self, packet: Raw) {
         let mut out = String::new();
 
-        use structs::raw::Raw::Unknown;
+        use crate::structs::raw::Raw::Unknown;
         let color = match packet {
             Ether(eth_frame, eth) => {
                 out += &format!("{} -> {}, ",
@@ -124,7 +124,7 @@ impl Format {
 
     #[inline]
     fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Color> {
-        use structs::arp::ARP;
+        use crate::structs::arp::ARP;
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
                 format!("[arp/request] {:15}   ?                         (tell {}, {})",
@@ -221,7 +221,7 @@ impl Format {
                         format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
 
-        use structs::tcp::TCP::*;
+        use crate::structs::tcp::TCP::*;
         match tcp {
             HTTP(http) => {
                 // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
@@ -273,10 +273,10 @@ impl Format {
                         format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
 
-        use structs::udp::UDP::*;
+        use crate::structs::udp::UDP::*;
         match udp {
             DHCP(dhcp) => {
-                use structs::dhcp::DHCP::*;
+                use crate::structs::dhcp::DHCP::*;
 
                 match dhcp {
                     DISCOVER(disc) => {
@@ -323,7 +323,7 @@ impl Format {
                 Some(Blue)
             },
             DNS(dns) => {
-                use structs::dns::DNS::*;
+                use crate::structs::dns::DNS::*;
                 match dns {
                     Request(req) => {
                         out.push_str("[dns] req, ");
@@ -352,7 +352,7 @@ impl Format {
                 Some(Yellow)
             },
             SSDP(ssdp) => {
-                use structs::ssdp::SSDP::*;
+                use crate::structs::ssdp::SSDP::*;
                 out.push_str(&match ssdp {
                     Discover(None) => "[ssdp] searching...".to_string(),
                     Discover(Some(extra)) => format!("[ssdp] searching({:?})...", extra),
@@ -387,7 +387,7 @@ impl Format {
 
     #[inline]
     fn print_debugging(&self, packet: Raw) {
-        use structs::raw::Raw::Unknown;
+        use crate::structs::raw::Raw::Unknown;
         match packet {
             Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
@@ -443,7 +443,7 @@ impl Format {
 
     #[inline]
     fn print_debugging_tcp(&self, tcp: tcp::TCP) -> String {
-        use structs::tcp::TCP::*;
+        use crate::structs::tcp::TCP::*;
         match tcp {
             HTTP(http) => {
                 self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
@@ -463,7 +463,7 @@ impl Format {
 
     #[inline]
     fn print_debugging_udp(&self, udp: udp::UDP) -> String {
-        use structs::udp::UDP::*;
+        use crate::structs::udp::UDP::*;
         match udp {
             DHCP(dhcp) => {
                 self.colorify(Green, format!("dhcp: {:?}", dhcp))

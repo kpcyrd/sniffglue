@@ -1,5 +1,5 @@
 use dns_parser;
-use structs::{self, CentrifugeError};
+use crate::structs::{self, CentrifugeError};
 
 pub fn extract(remaining: &[u8]) -> Result<structs::dns::DNS, CentrifugeError> {
     if let Ok(dns) = dns_parser::Packet::parse(remaining) {

@@ -1,5 +1,5 @@
-use structs::ssdp::SSDP;
-use structs::CentrifugeError;
+use crate::structs::ssdp::SSDP;
+use crate::structs::CentrifugeError;
 
 
 pub fn parse_ssdp(data: &str) -> Result<SSDP, CentrifugeError> {

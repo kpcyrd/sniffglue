@@ -1,4 +1,4 @@
-use structs::{cjdns, CentrifugeError};
+use crate::structs::{cjdns, CentrifugeError};
 use nom::be_u16;
 
 const BEACON_PASSWORD_LEN: usize = 20;

@@ -1,4 +1,3 @@
-#![warn(unused_extern_crates)]
 #[macro_use] extern crate nom;
 extern crate pktparse;
 extern crate dhcp4r;
@@ -8,13 +7,6 @@ extern crate tls_parser;
 #[macro_use] extern crate log;
 extern crate toml;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
-extern crate users;
-extern crate dirs;
-extern crate nix;
-extern crate base64;
-#[cfg(target_os="linux")]
-extern crate syscallz;
 
 pub mod centrifuge;
 pub mod errors;
@@ -54,10 +46,10 @@ mod tests {
 
     #[test]
     fn tcp() {
-        use structs::raw::Raw::Ether;
-        use structs::ether::Ether::IPv4;
-        use structs::ipv4::IPv4::TCP;
-        use structs::tcp::TCP::Text;
+        use crate::structs::raw::Raw::Ether;
+        use crate::structs::ether::Ether::IPv4;
+        use crate::structs::ipv4::IPv4::TCP;
+        use crate::structs::tcp::TCP::Text;
 
         use pktparse::ethernet::{MacAddress, EtherType, EthernetFrame};
         use pktparse::ip::IPProtocol;

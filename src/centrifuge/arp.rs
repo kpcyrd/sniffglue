@@ -1,7 +1,7 @@
 use pktparse;
 
-use structs::CentrifugeError;
-use structs::arp::ARP;
+use crate::structs::CentrifugeError;
+use crate::structs::arp::ARP;
 
 pub fn extract(remaining: &[u8]) -> Result<ARP, CentrifugeError> {
     if let Ok((_remaining, arp_pkt)) = pktparse::arp::parse_arp_pkt(remaining) {

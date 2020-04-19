@@ -8,8 +8,8 @@ pub enum CentrifugeError {
 }
 
 pub mod prelude {
-    pub use structs::raw::Raw::*;
-    pub use structs::ether::Ether::*;
+    pub use crate::structs::raw::Raw::*;
+    pub use crate::structs::ether::Ether::*;
 }
 
 /// Zero            - This packet is very interesting
@@ -33,9 +33,10 @@ impl NoiseLevel {
 }
 
 pub mod raw {
-    use structs::ether;
-    use structs::NoiseLevel;
+    use crate::structs::ether;
+    use crate::structs::NoiseLevel;
     use pktparse;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum Raw {
@@ -57,12 +58,13 @@ pub mod raw {
 }
 
 pub mod ether {
-    use structs::arp;
-    use structs::ipv4;
-    use structs::ipv6;
-    use structs::cjdns;
-    use structs::NoiseLevel;
+    use crate::structs::arp;
+    use crate::structs::ipv4;
+    use crate::structs::ipv6;
+    use crate::structs::cjdns;
+    use crate::structs::NoiseLevel;
     use pktparse;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum Ether {
@@ -89,6 +91,7 @@ pub mod ether {
 
 pub mod arp {
     use pktparse;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum ARP {
@@ -98,6 +101,8 @@ pub mod arp {
 }
 
 pub mod cjdns {
+    use serde::Serialize;
+
     #[derive(Debug, PartialEq, Serialize)]
     pub struct CjdnsEthPkt {
         pub version: u16,
@@ -107,10 +112,11 @@ pub mod cjdns {
 }
 
 pub mod ipv4 {
-    use structs::tcp;
-    use structs::udp;
-    use structs::NoiseLevel;
+    use crate::structs::tcp;
+    use crate::structs::udp;
+    use crate::structs::NoiseLevel;
     use pktparse;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum IPv4 {
@@ -132,10 +138,11 @@ pub mod ipv4 {
 }
 
 pub mod ipv6 {
-    use structs::tcp;
-    use structs::udp;
-    use structs::NoiseLevel;
+    use crate::structs::tcp;
+    use crate::structs::udp;
+    use crate::structs::NoiseLevel;
     use pktparse;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum IPv6 {
@@ -198,9 +205,10 @@ pub mod ip {
 }
 
 pub mod tcp {
-    use structs::tls;
-    use structs::http;
-    use structs::NoiseLevel;
+    use crate::structs::tls;
+    use crate::structs::http;
+    use crate::structs::NoiseLevel;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum TCP {
@@ -232,11 +240,12 @@ pub mod tcp {
 }
 
 pub mod udp {
-    use structs::dns;
-    use structs::dhcp;
-    use structs::ssdp;
-    use structs::dropbox;
-    use structs::NoiseLevel;
+    use crate::structs::dns;
+    use crate::structs::dhcp;
+    use crate::structs::ssdp;
+    use crate::structs::dropbox;
+    use crate::structs::NoiseLevel;
+    use serde::Serialize;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum UDP {
@@ -266,6 +275,7 @@ pub mod udp {
 
 pub mod tls {
     use base64;
+    use serde::Serialize;
     use tls_parser::TlsClientHelloContents;
     use tls_parser::TlsServerHelloContents;
     use tls_parser::tls::TlsVersion;
@@ -329,9 +339,10 @@ pub mod tls {
 }
 
 pub mod http {
+    use serde::Serialize;
     use std::str::from_utf8;
     use std::string::FromUtf8Error;
-    use nom_http;
+    use crate::nom_http;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub struct Request {
@@ -389,6 +400,7 @@ pub mod http {
 }
 
 pub mod dhcp {
+    use serde::Serialize;
     use std::net::Ipv4Addr;
 
     #[derive(Debug, PartialEq, Serialize)]
@@ -435,6 +447,7 @@ pub mod dhcp {
 }
 
 pub mod dns {
+    use serde::Serialize;
     use std::net::{Ipv4Addr, Ipv6Addr};
     use dns_parser;
 
@@ -571,6 +584,8 @@ pub mod dns {
 }
 
 pub mod ssdp {
+    use serde::Serialize;
+
     #[derive(Debug, PartialEq, Serialize)]
     pub enum SSDP {
         Discover(Option<String>),
@@ -580,6 +595,8 @@ pub mod ssdp {
 }
 
 pub mod dropbox {
+    use serde::{Serialize, Deserialize};
+
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     pub struct DropboxBeacon {
         pub version: Vec<u8>,

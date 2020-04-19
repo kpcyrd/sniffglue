@@ -2,11 +2,11 @@ use std::str::from_utf8;
 
 use pktparse::tcp::{self, TcpHeader};
 
-use centrifuge::http;
-use centrifuge::tls;
+use crate::centrifuge::http;
+use crate::centrifuge::tls;
 
-use structs::CentrifugeError;
-use structs::tcp::TCP;
+use crate::structs::CentrifugeError;
+use crate::structs::tcp::TCP;
 
 
 pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError> {
