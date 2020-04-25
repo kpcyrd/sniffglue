@@ -223,17 +223,23 @@ pub mod tcp {
     impl TCP {
         pub fn noise_level(&self, header: &pktparse::tcp::TcpHeader) -> NoiseLevel {
             use self::TCP::*;
-            match *self {
-                Text(ref text) if text.len() <= 8 => NoiseLevel::AlmostMaximum,
-                Binary(_) => NoiseLevel::AlmostMaximum,
-                Empty => if !header.flag_rst &&
-                            !header.flag_syn &&
-                            !header.flag_fin {
-                    NoiseLevel::AlmostMaximum
-                } else {
-                    NoiseLevel::Two
-                },
-                _ => NoiseLevel::Zero,
+
+            if header.flag_rst || header.flag_syn || header.flag_fin {
+                // control packet
+                match *self {
+                    Text(_) => NoiseLevel::Two,
+                    Binary(_) => NoiseLevel::Two,
+                    Empty => NoiseLevel::Two,
+                    _ => NoiseLevel::Zero,
+                }
+            } else {
+                // data packet
+                match *self {
+                    Text(ref text) if text.len() <= 8 => NoiseLevel::AlmostMaximum,
+                    Binary(_) => NoiseLevel::AlmostMaximum,
+                    Empty => NoiseLevel::AlmostMaximum,
+                    _ => NoiseLevel::Zero,
+                }
             }
         }
     }
