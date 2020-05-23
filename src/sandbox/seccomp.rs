@@ -95,6 +95,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::sched_yield)?;
     ctx.allow_syscall(Syscall::getdents64)?;
     ctx.allow_syscall(Syscall::clock_getres)?;
+    ctx.allow_syscall(Syscall::exit)?;
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
@@ -168,6 +169,7 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::sched_getaffinity)?;
     ctx.allow_syscall(Syscall::sched_yield)?;
     // ctx.allow_syscall(Syscall::clock_getres)?;
+    ctx.allow_syscall(Syscall::exit)?;
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     // ctx.allow_syscall(Syscall::openat)?;
