@@ -47,6 +47,10 @@ debian based systems:
     cargo install sniffglue
     sniffglue --help
 
+Or you can build a Debian package via [cargo-deb](https://github.com/mmstick/cargo-deb):
+
+    cargo deb
+
 ## Protocols
 
 - [X] ethernet
