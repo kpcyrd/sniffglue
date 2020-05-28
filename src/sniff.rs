@@ -12,12 +12,12 @@ pub struct Config {
 }
 
 pub fn open(dev: &str, config: &Config) -> Result<Cap> {
-    let mut errbuf = [0i8; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
     let dev = CString::new(dev).unwrap();
-    let handle = unsafe { pcap_sys::pcap_create(dev.as_ptr(), errbuf.as_mut_ptr() as *mut libc::c_char) };
+    let handle = unsafe { pcap_sys::pcap_create(dev.as_ptr(), errbuf.as_mut_ptr()) };
 
     if handle.is_null() {
-        let err = unsafe { CStr::from_ptr(errbuf.as_ptr() as *const libc::c_char) };
+        let err = unsafe { CStr::from_ptr(errbuf.as_ptr()) };
         bail!("Failed to open interface: {}", err.to_str()?);
     }
 
@@ -42,12 +42,12 @@ pub fn open(dev: &str, config: &Config) -> Result<Cap> {
 }
 
 pub fn open_file(path: &str) -> Result<Cap> {
-    let mut errbuf = [0i8; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
     let path = CString::new(path).unwrap();
-    let handle = unsafe { pcap_sys::pcap_open_offline(path.as_ptr(), errbuf.as_mut_ptr() as *mut libc::c_char) };
+    let handle = unsafe { pcap_sys::pcap_open_offline(path.as_ptr(), errbuf.as_mut_ptr()) };
 
     if handle.is_null() {
-        let err = unsafe { CStr::from_ptr(errbuf.as_ptr() as *const libc::c_char) };
+        let err = unsafe { CStr::from_ptr(errbuf.as_ptr()) };
         bail!("Failed to open file: {}", err.to_str()?);
     }
 
@@ -57,11 +57,11 @@ pub fn open_file(path: &str) -> Result<Cap> {
 }
 
 pub fn default_interface() -> Result<String> {
-    let mut errbuf = [0i8; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
 
-    let dev = unsafe { pcap_sys::pcap_lookupdev(errbuf.as_mut_ptr() as *mut libc::c_char) };
+    let dev = unsafe { pcap_sys::pcap_lookupdev(errbuf.as_mut_ptr()) };
     if dev.is_null() {
-        let err = unsafe { CStr::from_ptr(errbuf.as_ptr() as *const libc::c_char) };
+        let err = unsafe { CStr::from_ptr(errbuf.as_ptr()) };
         bail!("Failed to find interface: {}", err.to_str()?);
     }
 
