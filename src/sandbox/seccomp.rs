@@ -108,6 +108,8 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     ctx.allow_syscall(Syscall::wait4)?;
     ctx.allow_syscall(Syscall::clock_gettime)?;
     #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::clock_gettime64)?;
+    #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::gettimeofday)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
@@ -175,6 +177,8 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     // ctx.allow_syscall(Syscall::openat)?;
     // ctx.allow_syscall(Syscall::getrandom)?;
     ctx.allow_syscall(Syscall::clock_gettime)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::clock_gettime64)?;
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
     ctx.allow_syscall(Syscall::membarrier)?;
