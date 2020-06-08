@@ -1,23 +1,22 @@
-use std::fs;
 use std::env;
+use std::fs;
 use std::os::unix::fs::MetadataExt;
 
-use users;
 use nix;
-use nix::unistd::{Uid, Gid, setuid, setgid};
+use nix::unistd::{setgid, setuid, Gid, Uid};
+use users;
 // TODO: drop the condition after nix added getgroups/setgroups support to osx
-#[cfg(target_os="linux")]
+#[cfg(target_os = "linux")]
 use nix::unistd::{getgroups, setgroups};
 
 pub mod config;
-#[cfg(target_os="linux")]
+#[cfg(target_os = "linux")]
 pub mod seccomp;
 
 pub use crate::errors::*;
 
-
 pub fn activate_stage1() -> Result<()> {
-    #[cfg(target_os="linux")]
+    #[cfg(target_os = "linux")]
     seccomp::activate_stage1()?;
 
     info!("stage 1/2 is active");
@@ -45,7 +44,7 @@ pub fn chroot(path: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os="linux")]
+#[cfg(target_os = "linux")]
 pub fn id() -> String {
     let uid = users::get_current_uid();
     let euid = users::get_effective_uid();
@@ -55,16 +54,12 @@ pub fn id() -> String {
 
     format!(
         "uid={:?} euid={:?} gid={:?} egid={:?} groups={:?}",
-        uid,
-        euid,
-        gid,
-        egid,
-        groups,
+        uid, euid, gid, egid, groups,
     )
 }
 
 // TODO: use the other id function everywhere after nix added getgroups/setgroups support to osx
-#[cfg(not(target_os="linux"))]
+#[cfg(not(target_os = "linux"))]
 pub fn id() -> String {
     let uid = users::get_current_uid();
     let euid = users::get_effective_uid();
@@ -73,10 +68,7 @@ pub fn id() -> String {
 
     format!(
         "uid={:?} euid={:?} gid={:?} egid={:?}",
-        uid,
-        euid,
-        gid,
-        egid,
+        uid, euid, gid, egid,
     )
 }
 
@@ -90,7 +82,7 @@ fn apply_config(config: config::Config) -> Result<()> {
                 None => bail!("Invalid sandbox user"),
             };
             Some((user.uid(), user.primary_group_id()))
-        },
+        }
         _ => None,
     };
 
@@ -101,7 +93,7 @@ fn apply_config(config: config::Config) -> Result<()> {
             info!("starting chroot: {:?}", path);
             chroot(path)?;
             info!("successfully chrooted");
-        },
+        }
         _ => (),
     }
 
@@ -111,15 +103,15 @@ fn apply_config(config: config::Config) -> Result<()> {
                 info!("id: {}", id());
                 info!("setting uid to {:?}", uid);
                 // TODO: drop the condition after nix added getgroups/setgroups support to osx
-                #[cfg(target_os="linux")]
+                #[cfg(target_os = "linux")]
                 setgroups(&[])?;
                 setgid(Gid::from_raw(gid))?;
                 setuid(Uid::from_raw(uid))?;
                 info!("id: {}", id());
-            },
+            }
             None => {
                 warn!("executing as root!");
-            },
+            }
         }
     } else {
         info!("can't drop privileges, executing as {}", id());
@@ -138,7 +130,7 @@ pub fn activate_stage2() -> Result<()> {
 
     apply_config(config)?;
 
-    #[cfg(target_os="linux")]
+    #[cfg(target_os = "linux")]
     seccomp::activate_stage2()?;
 
     info!("stage 2/2 is active");

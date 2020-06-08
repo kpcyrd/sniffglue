@@ -8,8 +8,8 @@ pub enum CentrifugeError {
 }
 
 pub mod prelude {
-    pub use crate::structs::raw::Raw::*;
     pub use crate::structs::ether::Ether::*;
+    pub use crate::structs::raw::Raw::*;
 }
 
 /// Zero            - This packet is very interesting
@@ -19,11 +19,11 @@ pub mod prelude {
 /// Maximum         - We couldn't parse this
 #[derive(Debug)]
 pub enum NoiseLevel {
-    Zero          = 0,
-    One           = 1,
-    Two           = 2,
+    Zero = 0,
+    One = 1,
+    Two = 2,
     AlmostMaximum = 3,
-    Maximum       = 4,
+    Maximum = 4,
 }
 
 impl NoiseLevel {
@@ -59,9 +59,9 @@ pub mod raw {
 
 pub mod ether {
     use crate::structs::arp;
+    use crate::structs::cjdns;
     use crate::structs::ipv4;
     use crate::structs::ipv6;
-    use crate::structs::cjdns;
     use crate::structs::NoiseLevel;
     use pktparse;
     use serde::Serialize;
@@ -205,8 +205,8 @@ pub mod ip {
 }
 
 pub mod tcp {
-    use crate::structs::tls;
     use crate::structs::http;
+    use crate::structs::tls;
     use crate::structs::NoiseLevel;
     use serde::Serialize;
 
@@ -246,10 +246,10 @@ pub mod tcp {
 }
 
 pub mod udp {
-    use crate::structs::dns;
     use crate::structs::dhcp;
-    use crate::structs::ssdp;
+    use crate::structs::dns;
     use crate::structs::dropbox;
+    use crate::structs::ssdp;
     use crate::structs::NoiseLevel;
     use serde::Serialize;
 
@@ -282,9 +282,9 @@ pub mod udp {
 pub mod tls {
     use base64;
     use serde::Serialize;
+    use tls_parser::tls::TlsVersion;
     use tls_parser::TlsClientHelloContents;
     use tls_parser::TlsServerHelloContents;
-    use tls_parser::tls::TlsVersion;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub enum TLS {
@@ -299,7 +299,7 @@ pub mod tls {
             TlsVersion::Tls11 => Some("tls1.1"),
             TlsVersion::Tls12 => Some("tls1.2"),
             TlsVersion::Tls13 => Some("tls1.3"),
-            _                 => None,
+            _ => None,
         }
     }
 
@@ -331,8 +331,7 @@ pub mod tls {
 
     impl ServerHello {
         pub fn new(sh: TlsServerHelloContents) -> ServerHello {
-            let cipher = sh.cipher.get_ciphersuite()
-                .map(|cs| cs.name);
+            let cipher = sh.cipher.get_ciphersuite().map(|cs| cs.name);
             let session_id = sh.session_id.map(base64::encode);
 
             ServerHello {
@@ -345,10 +344,10 @@ pub mod tls {
 }
 
 pub mod http {
+    use crate::nom_http;
     use serde::Serialize;
     use std::str::from_utf8;
     use std::string::FromUtf8Error;
-    use crate::nom_http;
 
     #[derive(Debug, PartialEq, Serialize)]
     pub struct Request {
@@ -363,14 +362,14 @@ pub mod http {
     }
 
     fn mkheader(x: Vec<&[u8]>) -> Option<String> {
-        String::from_utf8(x.into_iter()
-            .flat_map(|x| x.to_owned())
-            .collect(),
-        ).ok()
+        String::from_utf8(x.into_iter().flat_map(|x| x.to_owned()).collect()).ok()
     }
 
     impl Request {
-        pub fn from_nom(req: &nom_http::Request, headers: Vec<nom_http::Header>) -> Result<Request, FromUtf8Error> {
+        pub fn from_nom(
+            req: &nom_http::Request,
+            headers: Vec<nom_http::Header>,
+        ) -> Result<Request, FromUtf8Error> {
             let mut host = None;
             let mut agent = None;
             let mut referer = None;
@@ -436,7 +435,12 @@ pub mod dhcp {
     }
 
     impl Packet {
-        pub fn new(ciaddr: Ipv4Addr, yiaddr: Ipv4Addr, siaddr: Ipv4Addr, chaddr: [u8; 6]) -> Packet {
+        pub fn new(
+            ciaddr: Ipv4Addr,
+            yiaddr: Ipv4Addr,
+            siaddr: Ipv4Addr,
+            chaddr: [u8; 6],
+        ) -> Packet {
             Packet {
                 ciaddr,
                 yiaddr,
@@ -453,9 +457,9 @@ pub mod dhcp {
 }
 
 pub mod dns {
+    use dns_parser;
     use serde::Serialize;
     use std::net::{Ipv4Addr, Ipv6Addr};
-    use dns_parser;
 
     // https://github.com/tailhook/dns-parser/pull/34
     #[derive(Debug, PartialEq, Serialize)]
@@ -526,9 +530,7 @@ pub mod dns {
 
     impl Request {
         pub fn new(questions: Vec<(QueryType, String)>) -> Request {
-            Request {
-                questions,
-            }
+            Request { questions }
         }
 
         pub fn wrap(self) -> DNS {
@@ -543,9 +545,7 @@ pub mod dns {
 
     impl Response {
         pub fn new(answers: Vec<(String, Record)>) -> Response {
-            Response {
-                answers,
-            }
+            Response { answers }
         }
 
         pub fn wrap(self) -> DNS {
@@ -582,7 +582,7 @@ pub mod dns {
                     }
 
                     Record::TXT(String::from_utf8_lossy(&x).to_string())
-                },
+                }
                 _ => Record::Unknown,
             }
         }
@@ -601,7 +601,7 @@ pub mod ssdp {
 }
 
 pub mod dropbox {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     pub struct DropboxBeacon {

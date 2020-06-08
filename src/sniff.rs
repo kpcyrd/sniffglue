@@ -1,6 +1,6 @@
 use crate::errors::*;
-use std::ffi::CString;
 use std::ffi::CStr;
+use std::ffi::CString;
 
 pub struct Cap {
     handle: *mut pcap_sys::pcap,
@@ -36,9 +36,7 @@ pub fn open(dev: &str, config: &Config) -> Result<Cap> {
         bail!("Failed to activate interface: {}", err.to_str()?);
     }
 
-    Ok(Cap {
-        handle,
-    })
+    Ok(Cap { handle })
 }
 
 pub fn open_file(path: &str) -> Result<Cap> {
@@ -51,9 +49,7 @@ pub fn open_file(path: &str) -> Result<Cap> {
         bail!("Failed to open file: {}", err.to_str()?);
     }
 
-    Ok(Cap {
-        handle,
-    })
+    Ok(Cap { handle })
 }
 
 pub fn default_interface() -> Result<String> {
@@ -80,7 +76,9 @@ impl Cap {
         let mut header = MaybeUninit::<*mut pcap_sys::pcap_pkthdr>::uninit();
         let mut packet = MaybeUninit::<*const libc::c_uchar>::uninit();
 
-        let retcode = unsafe { pcap_sys::pcap_next_ex(self.handle, header.as_mut_ptr(), packet.as_mut_ptr()) };
+        let retcode = unsafe {
+            pcap_sys::pcap_next_ex(self.handle, header.as_mut_ptr(), packet.as_mut_ptr())
+        };
 
         match retcode {
             i if i >= 1 => {
@@ -93,7 +91,7 @@ impl Cap {
                 Ok(Some(Packet {
                     data: packet.to_vec(),
                 }))
-            },
+            }
             0 => bail!("timeout expired"),
             -2 => Ok(None),
             _ => unreachable!(),

@@ -1,4 +1,4 @@
-use syscallz::{self, Context, Syscall, Action};
+use syscallz::{self, Action, Context, Syscall};
 
 pub fn activate_stage1() -> Result<(), syscallz::Error> {
     let mut ctx = Context::init()?;

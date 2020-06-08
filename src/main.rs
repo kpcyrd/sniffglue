@@ -1,5 +1,5 @@
-use std::thread;
 use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
 
 mod cli;
 mod fmt;
@@ -17,16 +17,14 @@ fn run() -> Result<()> {
     // this goes before the sandbox so logging is available
     env_logger::init();
 
-    sandbox::activate_stage1()
-        .context("Failed to init sandbox stage1")?;
+    sandbox::activate_stage1().context("Failed to init sandbox stage1")?;
 
     let args = Args::from_args();
 
     let device = if let Some(dev) = args.device {
         dev
     } else {
-        sniff::default_interface()
-            .context("Failed to find default interface")?
+        sniff::default_interface().context("Failed to find default interface")?
     };
 
     let layout = if args.json {
@@ -43,13 +41,19 @@ fn run() -> Result<()> {
     let config = fmt::Config::new(layout, args.verbose, colors);
 
     let cap = if !args.read {
-        let cap = sniff::open(&device, &sniff::Config {
-            promisc: args.promisc,
-            immediate_mode: true,
-        })?;
+        let cap = sniff::open(
+            &device,
+            &sniff::Config {
+                promisc: args.promisc,
+                immediate_mode: true,
+            },
+        )?;
 
         let verbosity = config.filter().verbosity;
-        eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
+        eprintln!(
+            "Listening on device: {:?}, verbosity {}/4",
+            device, verbosity
+        );
         cap
     } else {
         let cap = sniff::open_file(&device)?;
@@ -63,29 +67,26 @@ fn run() -> Result<()> {
     let (tx, rx) = mpsc::sync_channel(256);
     let cap = Arc::new(Mutex::new(cap));
 
-    sandbox::activate_stage2()
-        .context("Failed to init sandbox stage2")?;
+    sandbox::activate_stage2().context("Failed to init sandbox stage2")?;
 
     for _ in 0..threads {
         let cap = cap.clone();
         let datalink = datalink.clone();
         let filter = filter.clone();
         let tx = tx.clone();
-        thread::spawn(move || {
-            loop {
-                let packet = {
-                    let mut cap = cap.lock().unwrap();
-                    cap.next()
-                };
+        thread::spawn(move || loop {
+            let packet = {
+                let mut cap = cap.lock().unwrap();
+                cap.next()
+            };
 
-                if let Ok(Some(packet)) = packet {
-                    let packet = centrifuge::parse(&datalink, &packet.data);
-                    if filter.matches(&packet) {
-                        tx.send(packet).unwrap()
-                    }
-                } else {
-                    break;
+            if let Ok(Some(packet)) = packet {
+                let packet = centrifuge::parse(&datalink, &packet.data);
+                if filter.matches(&packet) {
+                    tx.send(packet).unwrap()
                 }
+            } else {
+                break;
             }
         });
     }
