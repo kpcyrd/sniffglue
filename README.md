@@ -27,13 +27,40 @@ when processing packets. The output should be as useful as possible by default.
 
 ## Installation
 
-There is an official package available for archlinux:
+### Arch Linux
 
     pacman -S sniffglue
 
-There's also a package available in debian unstable (still trying to get it to testing):
+### Mac OSX
 
+    brew install sniffglue
+
+### Debian/Ubuntu/Kali
+
+There are prebuilt packages signed by a debian maintainer. We can import the
+key for this repository out of the debian keyring.
+
+    apt install debian-keyring
+    gpg -a --export --keyring /usr/share/keyrings/debian-maintainers.gpg git@rxv.cc | apt-key add -
+    apt-key adv --keyserver keyserver.ubuntu.com --refresh-keys git@rxv.cc
+    echo deb http://apt.vulns.sexy stable main > /etc/apt/sources.list.d/apt-vulns-sexy.list
+    apt update
     apt install sniffglue
+
+### Alpine
+
+    apk add sniffglue
+
+### Gentoo
+
+    layman -a pentoo
+    emerge --ask net-analyzer/sniffglue
+
+### NixOS
+
+    nix-env -i sniffglue
+
+### From source
 
 To build from source make sure you have libpcap and libseccomp installed. On
 debian based systems:
