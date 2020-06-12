@@ -1,9 +1,9 @@
 use crate::errors::*;
+use dirs;
 use serde::Deserialize;
 use std::fs;
 use std::path::Path;
 use toml;
-use dirs;
 
 #[derive(Debug, Default, Deserialize, PartialEq)]
 pub struct Config {
@@ -57,7 +57,8 @@ mod tests {
             user = "foo"
             chroot = "/var/empty"
             "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(
             Config {

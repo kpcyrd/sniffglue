@@ -2,14 +2,13 @@ use std::str::from_utf8;
 
 use pktparse::udp::{self, UdpHeader};
 
-use crate::centrifuge::dns;
 use crate::centrifuge::dhcp;
-use crate::centrifuge::ssdp;
+use crate::centrifuge::dns;
 use crate::centrifuge::dropbox;
+use crate::centrifuge::ssdp;
 
-use crate::structs::CentrifugeError;
 use crate::structs::udp::UDP;
-
+use crate::structs::CentrifugeError;
 
 pub fn parse(remaining: &[u8]) -> Result<(udp::UdpHeader, UDP), CentrifugeError> {
     if let Ok((remaining, udp_hdr)) = udp::parse_udp_header(remaining) {
@@ -30,8 +29,8 @@ pub fn extract(udp_hdr: &UdpHeader, remaining: &[u8]) -> Result<UDP, CentrifugeE
     } else if udp_hdr.dest_port == 53 || udp_hdr.source_port == 53 {
         let dns = dns::extract(remaining)?;
         Ok(UDP::DNS(dns))
-    } else if (udp_hdr.dest_port == 67 && udp_hdr.source_port == 68) ||
-               (udp_hdr.dest_port == 68 && udp_hdr.source_port == 67)
+    } else if (udp_hdr.dest_port == 67 && udp_hdr.source_port == 68)
+        || (udp_hdr.dest_port == 68 && udp_hdr.source_port == 67)
     {
         let dhcp = dhcp::extract(remaining)?;
         Ok(UDP::DHCP(dhcp))

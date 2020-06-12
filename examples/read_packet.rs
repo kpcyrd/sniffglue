@@ -1,6 +1,6 @@
 extern crate base64;
-extern crate sniffglue;
 extern crate env_logger;
+extern crate sniffglue;
 
 use std::env;
 

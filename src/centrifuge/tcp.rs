@@ -5,9 +5,8 @@ use pktparse::tcp::{self, TcpHeader};
 use crate::centrifuge::http;
 use crate::centrifuge::tls;
 
-use crate::structs::CentrifugeError;
 use crate::structs::tcp::TCP;
-
+use crate::structs::CentrifugeError;
 
 pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError> {
     if let Ok((remaining, tcp_hdr)) = tcp::parse_tcp_header(remaining) {
