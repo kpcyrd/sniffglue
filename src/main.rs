@@ -75,7 +75,7 @@ fn run() -> Result<()> {
             loop {
                 let packet = {
                     let mut cap = cap.lock().unwrap();
-                    cap.next()
+                    cap.next_pkt()
                 };
 
                 if let Ok(Some(packet)) = packet {

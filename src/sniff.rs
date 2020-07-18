@@ -74,7 +74,7 @@ impl Cap {
         unsafe { pcap_sys::pcap_datalink(self.handle) }
     }
 
-    pub fn next(&mut self) -> Result<Option<Packet>> {
+    pub fn next_pkt(&mut self) -> Result<Option<Packet>> {
         use std::mem::MaybeUninit;
 
         let mut header = MaybeUninit::<*mut pcap_sys::pcap_pkthdr>::uninit();

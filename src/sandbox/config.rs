@@ -2,8 +2,6 @@ use crate::errors::*;
 use serde::Deserialize;
 use std::fs;
 use std::path::Path;
-use toml;
-use dirs;
 
 #[derive(Debug, Default, Deserialize, PartialEq)]
 pub struct Config {

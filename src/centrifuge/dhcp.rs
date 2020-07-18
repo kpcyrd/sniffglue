@@ -1,5 +1,3 @@
-use dhcp4r;
-
 use crate::structs::dhcp::*;
 use crate::structs::{self, CentrifugeError};
 

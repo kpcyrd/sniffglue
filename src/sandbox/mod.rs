@@ -2,8 +2,6 @@ use std::fs;
 use std::env;
 use std::os::unix::fs::MetadataExt;
 
-use users;
-use nix;
 use nix::unistd::{Uid, Gid, setuid, setgid};
 // TODO: drop the condition after nix added getgroups/setgroups support to osx
 #[cfg(target_os="linux")]

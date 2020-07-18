@@ -1,4 +1,3 @@
-use dns_parser;
 use crate::structs::{self, CentrifugeError};
 
 pub fn extract(remaining: &[u8]) -> Result<structs::dns::DNS, CentrifugeError> {

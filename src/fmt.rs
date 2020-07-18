@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use pktparse;
 use reduce::Reduce;
 use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
-use serde_json;
 use std::cmp;
 use std::fmt::Debug;
 
@@ -231,10 +229,8 @@ impl Format {
             TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
                     ("version", client_hello.version),
-                    ("session", client_hello.session_id.as_ref()
-                        .map(|s| s.as_str())),
-                    ("hostname", client_hello.hostname.as_ref()
-                        .map(|s| s.as_str())),
+                    ("session", client_hello.session_id.as_deref()),
+                    ("hostname", client_hello.hostname.as_deref()),
                 ]);
 
                 out.push_str("[tls] ClientHello");
@@ -244,8 +240,7 @@ impl Format {
             TLS(tls::TLS::ServerHello(server_hello)) => {
                 let extra = display_kv_list(&[
                     ("version", server_hello.version),
-                    ("session", server_hello.session_id.as_ref()
-                        .map(|s| s.as_str())),
+                    ("session", server_hello.session_id.as_deref()),
                     ("cipher", server_hello.cipher),
                 ]);
 
@@ -557,14 +552,11 @@ impl<'a> DhcpKvListWriter<'a> {
     }
 
     fn append<T: Debug>(mut self, key: &'a str, value: &Option<T>) -> Self {
-        match value {
-            Some(value) => {
-                self.elements.push((
-                    key,
-                    format!("{:?}", value),
-                ));
-            }
-            _ => {}
+        if let Some(value) = value {
+            self.elements.push((
+                key,
+                format!("{:?}", value),
+            ));
         }
         self
     }
