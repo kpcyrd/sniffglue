@@ -9,11 +9,15 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install libpcap-dev libseccomp-dev
     - name: Build
       run: cargo build --verbose
