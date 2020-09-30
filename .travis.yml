@@ -12,13 +12,6 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
-  ## broken on 1.26.0
-  #- os: linux
-  #  rust: stable
-  #  env: TARGET=aarch64-unknown-linux-gnu BUILD_MODE=cross
-  - os: linux
-    rust: stable
-    env: TARGET=i686-unknown-linux-gnu BUILD_MODE=cross
 
 before_install:
 - sudo ci/setup.sh "$TRAVIS_OS_NAME"
