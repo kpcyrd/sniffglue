@@ -10,7 +10,4 @@ case "$BUILD_MODE" in
     boxxy)
         cargo build --verbose --examples
         ;;
-    reprotest)
-        docker build -t reprotest-sniffglue -f docs/Dockerfile.reprotest .
-        ;;
 esac

@@ -9,9 +9,6 @@ matrix:
   - os: linux
     rust: stable
     env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=boxxy
-  - os: linux
-    rust: stable
-    env: TARGET=x86_64-unknown-linux-gnu BUILD_MODE=reprotest
 
 before_install:
 - sudo ci/setup.sh "$TRAVIS_OS_NAME"
