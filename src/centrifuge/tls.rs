@@ -1,6 +1,5 @@
 use std::str;
 
-use tls_parser;
 use tls_parser::tls::{TlsMessage, TlsMessageHandshake};
 use tls_parser::tls_extensions::{TlsExtension, parse_tls_extension};
 use crate::structs::{tls, CentrifugeError};

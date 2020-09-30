@@ -1,5 +1,3 @@
-use pktparse;
-
 use crate::structs::CentrifugeError;
 use crate::structs::arp::ARP;
 

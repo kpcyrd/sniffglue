@@ -1,7 +1,6 @@
 use std::str;
 
 use crate::structs::{dropbox, CentrifugeError};
-use serde_json;
 
 
 pub fn extract(data: &[u8]) -> Result<dropbox::DropboxBeacon, CentrifugeError> {

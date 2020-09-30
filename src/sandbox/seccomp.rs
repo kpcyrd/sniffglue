@@ -43,6 +43,8 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::send)?;
     ctx.allow_syscall(Syscall::sendto)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::recv)?;
     ctx.allow_syscall(Syscall::recvfrom)?;
     ctx.allow_syscall(Syscall::sendmsg)?;
     ctx.allow_syscall(Syscall::recvmsg)?;
@@ -153,6 +155,8 @@ pub fn activate_stage2() -> Result<(), syscallz::Error> {
     // ctx.allow_syscall(Syscall::socket)?;
     // ctx.allow_syscall(Syscall::connect)?;
     // ctx.allow_syscall(Syscall::sendto)?;
+    #[cfg(target_arch = "arm")]
+    ctx.allow_syscall(Syscall::recv)?;
     // ctx.allow_syscall(Syscall::recvfrom)?;
     // ctx.allow_syscall(Syscall::sendmsg)?;
     // ctx.allow_syscall(Syscall::recvmsg)?;
