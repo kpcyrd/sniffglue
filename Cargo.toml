@@ -31,7 +31,7 @@ travis-ci = { repository = "kpcyrd/sniffglue" }
 
 [dependencies]
 structopt = "0.3"
-failure = "0.1"
+anyhow = "1"
 num_cpus = "1.6"
 pcap-sys = "0.1.3"
 pktparse = { version = "0.5", features = ["serde"] }
@@ -48,15 +48,15 @@ toml = "0.5"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
-users = "0.10"
+users = "0.11"
 nix = "0.18"
 sha2 = "0.9"
 dirs = "3.0"
-base64 = "0.12"
+base64 = "0.13"
 libc = "0.2"
 
 [target.'cfg(target_os="linux")'.dependencies]
-syscallz = "0.14.0"
+syscallz = "0.15"
 #syscallz = { path="../syscallz-rs" }
 
 [dev-dependencies]

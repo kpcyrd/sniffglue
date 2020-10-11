@@ -13,7 +13,7 @@ use sniffglue::structs;
 
 use structopt::StructOpt;
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     // this goes before the sandbox so logging is available
     env_logger::init();
 
@@ -103,14 +103,4 @@ fn run() -> Result<()> {
     }
 
     Ok(())
-}
-
-fn main() {
-    if let Err(err) = run() {
-        eprintln!("Error: {}", err);
-        for cause in err.iter_chain().skip(1) {
-            eprintln!("Because: {}", cause);
-        }
-        std::process::exit(1);
-    }
 }
