@@ -1,6 +1,7 @@
+use crate::errors::*;
 use syscallz::{self, Context, Syscall, Action};
 
-pub fn activate_stage1() -> Result<(), syscallz::Error> {
+pub fn activate_stage1() -> Result<()> {
     let mut ctx = Context::init()?;
 
     ctx.allow_syscall(Syscall::futex)?;
@@ -127,7 +128,7 @@ pub fn activate_stage1() -> Result<(), syscallz::Error> {
     Ok(())
 }
 
-pub fn activate_stage2() -> Result<(), syscallz::Error> {
+pub fn activate_stage2() -> Result<()> {
     let mut ctx = Context::init()?;
 
     ctx.allow_syscall(Syscall::futex)?;

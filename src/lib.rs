@@ -1,12 +1,4 @@
 #[macro_use] extern crate nom;
-extern crate pktparse;
-extern crate dhcp4r;
-#[macro_use] extern crate failure;
-extern crate dns_parser;
-extern crate tls_parser;
-#[macro_use] extern crate log;
-extern crate toml;
-extern crate serde_json;
 
 pub mod centrifuge;
 pub mod errors;

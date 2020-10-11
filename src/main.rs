@@ -20,7 +20,7 @@ fn run() -> Result<()> {
     sandbox::activate_stage1()
         .context("Failed to init sandbox stage1")?;
 
-    let args = Args::from_args();
+    let mut args = Args::from_args();
 
     let device = if let Some(dev) = args.device {
         dev
@@ -37,8 +37,6 @@ fn run() -> Result<()> {
         fmt::Layout::Compact
     };
 
-    let threads = args.threads.unwrap_or_else(num_cpus::get);
-
     let colors = atty::is(atty::Stream::Stdout);
     let config = fmt::Config::new(layout, args.verbose, colors);
 
@@ -52,10 +50,18 @@ fn run() -> Result<()> {
         eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
         cap
     } else {
+        if args.threads.is_none() {
+            debug!("Setting thread default to 1 due to -r");
+            args.threads = Some(1);
+        }
+
         let cap = sniff::open_file(&device)?;
         eprintln!("Reading from file: {:?}", device);
         cap
     };
+
+    let threads = args.threads.unwrap_or_else(num_cpus::get);
+    debug!("Using {} threads", threads);
 
     let datalink = DataLink::from_linktype(cap.datalink())?;
 
