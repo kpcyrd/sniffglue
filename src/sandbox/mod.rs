@@ -1,3 +1,4 @@
+use crate::errors::*;
 use std::fs;
 use std::env;
 use std::os::unix::fs::MetadataExt;
@@ -10,9 +11,6 @@ use nix::unistd::{getgroups, setgroups};
 pub mod config;
 #[cfg(target_os="linux")]
 pub mod seccomp;
-
-pub use crate::errors::*;
-
 
 pub fn activate_stage1() -> Result<()> {
     #[cfg(target_os="linux")]

@@ -13,10 +13,6 @@ case "$BUILD_MODE" in
         ls -lah "target/$TARGET/release/sniffglue"
         file "target/$TARGET/release/sniffglue"
         ;;
-    docker)
-        docker build -t sniffglue .
-        docker images sniffglue
-        ;;
     boxxy)
         cargo build --verbose --examples
         ;;
@@ -27,8 +23,5 @@ case "$BUILD_MODE" in
         docker build --build-arg TARGET="$TARGET" -t "sniffglue-test-$TARGET" -f ci/Dockerfile .
         # restart this script but inside the container and without BUILD_MODE=cross
         docker run -e TARGET="$TARGET" "sniffglue-test-$TARGET" ci/build.sh
-        ;;
-    *)
-        cargo build --verbose --target="$TARGET"
         ;;
 esac
