@@ -4,14 +4,14 @@ extern crate env_logger;
 
 fn stage1(sh: &mut boxxy::Shell, _args: Vec<String>) -> Result<(), boxxy::Error> {
     shprintln!(sh, "[*] starting stage1");
-    sniffglue::sandbox::activate_stage1().unwrap();
+    sniffglue::sandbox::activate_stage1(false).unwrap();
     shprintln!(sh, "[+] activated!");
     Ok(())
 }
 
 fn stage2(sh: &mut boxxy::Shell, _args: Vec<String>) -> Result<(), boxxy::Error> {
     shprintln!(sh, "[*] starting stage2");
-    sniffglue::sandbox::activate_stage2().unwrap();
+    sniffglue::sandbox::activate_stage2(false).unwrap();
     shprintln!(sh, "[+] activated!");
     Ok(())
 }
