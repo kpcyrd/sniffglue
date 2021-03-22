@@ -1,26 +1,26 @@
-use std::thread;
-use std::sync::{mpsc, Arc, Mutex};
-
 mod cli;
 mod fmt;
+
 use crate::cli::Args;
+use env_logger::Env;
 use sniffglue::centrifuge;
 use sniffglue::errors::*;
 use sniffglue::link::DataLink;
 use sniffglue::sandbox;
 use sniffglue::sniff;
 use sniffglue::structs;
-
+use std::thread;
+use std::sync::{mpsc, Arc, Mutex};
 use structopt::StructOpt;
 
 fn main() -> Result<()> {
-    // this goes before the sandbox so logging is available
-    env_logger::init();
-
-    sandbox::activate_stage1()
-        .context("Failed to init sandbox stage1")?;
+    env_logger::init_from_env(Env::default()
+        .default_filter_or("sniffglue=warn"));
 
     let mut args = Args::from_args();
+
+    sandbox::activate_stage1(args.insecure_disable_seccomp)
+        .context("Failed to init sandbox stage1")?;
 
     let device = if let Some(dev) = args.device {
         dev
@@ -69,7 +69,7 @@ fn main() -> Result<()> {
     let (tx, rx) = mpsc::sync_channel(256);
     let cap = Arc::new(Mutex::new(cap));
 
-    sandbox::activate_stage2()
+    sandbox::activate_stage2(args.insecure_disable_seccomp)
         .context("Failed to init sandbox stage2")?;
 
     for _ in 0..threads {

@@ -12,9 +12,13 @@ pub mod config;
 #[cfg(target_os="linux")]
 pub mod seccomp;
 
-pub fn activate_stage1() -> Result<()> {
-    #[cfg(target_os="linux")]
-    seccomp::activate_stage1()?;
+pub fn activate_stage1(disable_seccomp: bool) -> Result<()> {
+    if disable_seccomp {
+        warn!("DANGER: seccomp sandbox is disabled, please report bugs at https://github.com/kpcyrd/sniffglue/issues if seccomp is causing issues");
+    } else {
+        #[cfg(target_os="linux")]
+        seccomp::activate_stage1()?;
+    }
 
     info!("stage 1/2 is active");
 
@@ -124,7 +128,7 @@ fn apply_config(config: config::Config) -> Result<()> {
     Ok(())
 }
 
-pub fn activate_stage2() -> Result<()> {
+pub fn activate_stage2(disable_seccomp: bool) -> Result<()> {
     let config = if let Some(config_path) = config::find() {
         config::load(&config_path)?
     } else {
@@ -134,8 +138,10 @@ pub fn activate_stage2() -> Result<()> {
 
     apply_config(config)?;
 
-    #[cfg(target_os="linux")]
-    seccomp::activate_stage2()?;
+    if !disable_seccomp {
+        #[cfg(target_os="linux")]
+        seccomp::activate_stage2()?;
+    }
 
     info!("stage 2/2 is active");
 

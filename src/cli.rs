@@ -25,6 +25,11 @@ The default only shows few packets, this flag can be specified multiple times. (
     /// Number of packet parsing threads (defaults to number of cpu cores)
     #[structopt(short="n", long="threads", alias="cpus")]
     pub threads: Option<usize>,
+    /// Disable syscall filter sandbox,
+    /// this flag disables security features in sniffglue,
+    /// please file a bug report if you need this option
+    #[structopt(long)]
+    pub insecure_disable_seccomp: bool,
     /// The device or file to read packets from
     pub device: Option<String>,
 }
