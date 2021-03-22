@@ -1002,6 +1002,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "nom-derive"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eb3e6efa4ebc85421d2c878150249440019dd5d79b19bb865675b9334831d0c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1373,11 +1384,11 @@ dependencies = [
 
 [[package]]
 name = "rusticata-macros"
-version = "2.1.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8a9050636e8a1b487ba1fbe99114021cd7594dde3ce6ed95bfc1691e5b5367b"
+checksum = "7390af60e66c44130b4c5ea85f2555b7ace835d73b4b889c704dc3cb4c0468c8"
 dependencies = [
- "nom 5.1.2",
+ "nom 6.1.2",
 ]
 
 [[package]]
@@ -1556,7 +1567,7 @@ dependencies = [
  "libc",
  "log",
  "nix 0.20.0",
- "nom 5.1.2",
+ "nom 6.1.2",
  "num_cpus",
  "pcap-sys",
  "pktparse",
@@ -1716,12 +1727,13 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tls-parser"
-version = "0.9.4"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "579c8a8cdde06a13c7209eb7d5c752d1913489ecdb162264503a39ad9053587f"
+checksum = "16995ab2aa310fbe49baa6d9c47bbc736fc26cfc30fcff5301ebd39ef7f4efea"
 dependencies = [
  "enum_primitive",
- "nom 5.1.2",
+ "nom 6.1.2",
+ "nom-derive",
  "phf",
  "phf_codegen",
  "rusticata-macros",

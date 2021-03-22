@@ -1,7 +1,5 @@
 use serde::Serialize;
-use tls_parser::TlsClientHelloContents;
-use tls_parser::TlsServerHelloContents;
-use tls_parser::tls::TlsVersion;
+use tls_parser::{TlsVersion, TlsClientHelloContents, TlsServerHelloContents};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum TLS {
