@@ -102,7 +102,7 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::newfstatat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
@@ -120,6 +120,7 @@ pub fn activate_stage1() -> Result<()> {
     #[cfg(not(target_arch = "aarch64"))]
     ctx.allow_syscall(Syscall::access)?; // needed for debian /etc/ld.so.nohwcap
     ctx.allow_syscall(Syscall::faccessat)?; // needed for debian /etc/ld.so.nohwcap
+    ctx.allow_syscall(Syscall::eventfd2)?;
 
     ctx.load()?;
 
@@ -162,9 +163,9 @@ pub fn activate_stage2() -> Result<()> {
     // ctx.allow_syscall(Syscall::sendmsg)?;
     // ctx.allow_syscall(Syscall::recvmsg)?;
     // ctx.allow_syscall(Syscall::bind)?;
-    // ctx.allow_syscall(Syscall::getsockname)?;
+    ctx.allow_syscall(Syscall::getsockname)?;
     ctx.allow_syscall(Syscall::setsockopt)?;
-    // ctx.allow_syscall(Syscall::getsockopt)?;
+    ctx.allow_syscall(Syscall::getsockopt)?;
     ctx.allow_syscall(Syscall::clone)?;
     // ctx.allow_syscall(Syscall::uname)?;
     // ctx.allow_syscall(Syscall::fcntl)?;
