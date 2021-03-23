@@ -27,6 +27,8 @@ when processing packets. The output should be as useful as possible by default.
 
 ## Installation
 
+<a href="https://repology.org/project/sniffglue/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/sniffglue.svg" alt="Packaging status"></a>
+
 ### Arch Linux
 
     pacman -S sniffglue
