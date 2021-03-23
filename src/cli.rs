@@ -1,5 +1,5 @@
 use structopt::StructOpt;
-use structopt::clap::AppSettings;
+use structopt::clap::{AppSettings, Shell};
 
 #[derive(Debug, StructOpt)]
 #[structopt(global_settings = &[AppSettings::ColoredHelp])]
@@ -30,6 +30,9 @@ The default only shows few packets, this flag can be specified multiple times. (
     /// please file a bug report if you need this option
     #[structopt(long)]
     pub insecure_disable_seccomp: bool,
+    /// Generate shell completions
+    #[structopt(long, hidden=true)]
+    pub gen_completions: Option<Shell>,
     /// The device or file to read packets from
     pub device: Option<String>,
 }

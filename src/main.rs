@@ -9,8 +9,9 @@ use sniffglue::link::DataLink;
 use sniffglue::sandbox;
 use sniffglue::sniff;
 use sniffglue::structs;
-use std::thread;
+use std::io::stdout;
 use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
 use structopt::StructOpt;
 
 fn main() -> Result<()> {
@@ -18,6 +19,11 @@ fn main() -> Result<()> {
         .default_filter_or("sniffglue=warn"));
 
     let mut args = Args::from_args();
+
+    if let Some(shell) = args.gen_completions {
+        Args::clap().gen_completions_to("sniffglue", shell, &mut stdout());
+        return Ok(());
+    }
 
     sandbox::activate_stage1(args.insecure_disable_seccomp)
         .context("Failed to init sandbox stage1")?;
