@@ -20,7 +20,7 @@ pub fn find() -> Option<String> {
         String::from("/usr/local/etc/sniffglue.conf"),
     ];
 
-    if let Some(home) = dirs::config_dir() {
+    if let Some(home) = dirs_next::config_dir() {
         let path = home.join(Path::new("sniffglue.conf"));
 
         if let Some(path) = path.to_str() {
