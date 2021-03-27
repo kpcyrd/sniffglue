@@ -1,9 +1,6 @@
 #![feature(test)]
 extern crate test;
 
-extern crate sniffglue;
-extern crate pktparse;
-
 pub use sniffglue::*;
 
 #[cfg(test)]
@@ -43,7 +40,8 @@ mod tests {
         use structs::tcp::TCP::Text;
 
         use pktparse::ethernet::{MacAddress, EtherType, EthernetFrame};
-        use pktparse::ipv4::{IPv4Header, IPv4Protocol};
+        use pktparse::ipv4::IPv4Header;
+        use pktparse::ip::IPProtocol;
         use pktparse::tcp::TcpHeader;
 
         let mut pkt = Vec::new();
@@ -72,7 +70,7 @@ mod tests {
                 flags: 2,
                 fragment_offset: 0,
                 ttl: 55,
-                protocol: IPv4Protocol::TCP,
+                protocol: IPProtocol::TCP,
                 chksum: 64371,
                 source_addr: "93.184.216.34".parse().unwrap(),
                 dest_addr: "192.168.44.55".parse().unwrap(),
@@ -98,14 +96,14 @@ mod tests {
             Text(String::from_utf8(HTML.to_vec()).unwrap())
         ))));
 
-        let x = centrifuge::parse(&pkt);
+        let x = centrifuge::parse_eth(&pkt);
         assert_eq!(expected, x);
     }
 
     #[bench]
     fn bench_empty(b: &mut Bencher) {
         b.iter(|| {
-            centrifuge::parse(&[]).ok();
+            centrifuge::parse_eth(&[]).ok();
         });
     }
 
@@ -123,7 +121,7 @@ mod tests {
         pkt.extend(HTML.iter());
 
         b.iter(|| {
-            centrifuge::parse(&pkt).ok();
+            centrifuge::parse_eth(&pkt).ok();
         });
     }
 }

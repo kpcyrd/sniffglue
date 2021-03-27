@@ -323,9 +323,8 @@ impl Format {
                     Request(req) => {
                         out.push_str("[dns] req, ");
 
-                        match req.questions.iter()
-                            .map(|x| format!("{:?}", x))
-                            .reduce(|a, b| a + &align(out.len(), &b))
+                        match Reduce::reduce(req.questions.iter()
+                            .map(|x| format!("{:?}", x)), |a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
@@ -334,9 +333,8 @@ impl Format {
                     Response(resp) => {
                         out.push_str("[dns] resp, ");
 
-                        match resp.answers.iter()
-                            .map(|x| format!("{:?}", x))
-                            .reduce(|a, b| a + &align(out.len(), &b))
+                        match Reduce::reduce(resp.answers.iter()
+                            .map(|x| format!("{:?}", x)), |a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
@@ -529,13 +527,12 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 
 #[inline]
 fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
-    list.iter()
+    Reduce::reduce(list.iter()
         .filter_map(|&(key, ref value)| {
             value.as_ref().map(|value| {
                 format!("{}: {:?}", key, value)
             })
-        })
-        .reduce(|a, b| a + ", " + &b)
+        }), |a, b| a + ", " + &b)
         .map(|extra| format!(" ({})", extra))
         .unwrap_or_else(String::new)
 }
@@ -562,11 +559,10 @@ impl<'a> DhcpKvListWriter<'a> {
     }
 
     fn finalize(self) -> String {
-        self.elements.iter()
+        Reduce::reduce(self.elements.iter()
             .map(|&(key, ref value)| {
                 format!("{}: {}", key, value)
-            })
-            .reduce(|a, b| a + ", " + &b)
+            }), |a, b| a + ", " + &b)
             .map(|extra| format!(" ({})", extra))
             .unwrap_or_else(String::new)
     }
