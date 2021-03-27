@@ -20,6 +20,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install libpcap-dev libseccomp-dev
     - name: Build
-      run: cargo build --verbose
+      run: RUSTC_BOOTSTRAP=1 cargo build --verbose --all-targets
     - name: Run tests
       run: cargo test --verbose
