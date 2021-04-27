@@ -90,6 +90,7 @@ fn main() -> Result<()> {
                         tx.send(packet).unwrap()
                     }
                 } else {
+                    debug!("End of packet stream, shutting down reader thread");
                     break;
                 }
             }
