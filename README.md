@@ -48,7 +48,7 @@ key for this repository out of the debian keyring.
     echo deb http://apt.vulns.sexy stable main > /etc/apt/sources.list.d/apt-vulns-sexy.list
     apt update
     apt install sniffglue
-
+    
 ### Alpine
 
     apk add sniffglue
