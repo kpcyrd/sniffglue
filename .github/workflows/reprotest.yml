@@ -1,0 +1,27 @@
+name: Test reproducible builds
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Update apt index
+      run: sudo apt update
+
+    - name: Install reprotest
+      run: sudo apt install reprotest libpcap-dev libseccomp-dev
+
+    - name: Install diffoscope
+      run: sudo apt install --no-install-recommends diffoscope
+
+    - name: Run reprotest
+      run: ci/reprotest.sh
