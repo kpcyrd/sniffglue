@@ -17,7 +17,7 @@ pub struct Request {
 
 fn mkheader(x: Vec<&[u8]>) -> Option<String> {
     String::from_utf8(x.into_iter()
-        .flat_map(|x| x.to_owned())
+        .flat_map(ToOwned::to_owned)
         .collect(),
     ).ok()
 }

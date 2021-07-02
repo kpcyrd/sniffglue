@@ -22,11 +22,11 @@ pub fn extract(remaining: &[u8]) -> Result<tls::TLS, CentrifugeError> {
                             }
                         }
 
-                        return Ok(TLS::ClientHello(ClientHello::new(ch, hostname)));
+                        return Ok(TLS::ClientHello(ClientHello::new(&ch, hostname)));
                     }
                 },
                 TlsMessage::Handshake(TlsMessageHandshake::ServerHello(sh)) => {
-                    return Ok(TLS::ServerHello(ServerHello::new(sh)));
+                    return Ok(TLS::ServerHello(ServerHello::new(&sh)));
                 },
                 _ => (),
             }

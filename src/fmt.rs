@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use reduce::Reduce;
 use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
+use reduce::Reduce;
+use sha2::{Sha512, Digest};
 use std::cmp;
 use std::fmt::Debug;
 
@@ -88,8 +89,8 @@ impl Format {
         let color = match packet {
             Ether(eth_frame, eth) => {
                 out += &format!("{} -> {}, ",
-                                display_macaddr(&eth_frame.source_mac),
-                                display_macaddr(&eth_frame.dest_mac));
+                                display_macaddr(eth_frame.source_mac),
+                                display_macaddr(eth_frame.dest_mac));
 
                 self.format_compact_eth(&mut out, eth)
             },
@@ -112,44 +113,43 @@ impl Format {
     #[inline]
     fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Color> {
         match eth {
-            Arp(arp_pkt) => self.format_compact_arp(out, arp_pkt),
+            Arp(arp_pkt) => Some(self.format_compact_arp(out, &arp_pkt)),
             IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
             IPv6(ip_hdr, ipv6) => self.format_compact_ipv6(out, &ip_hdr, ipv6),
-            Cjdns(cjdns_pkt) => self.format_compact_cjdns(out, &cjdns_pkt),
+            Cjdns(cjdns_pkt) => Some(self.format_compact_cjdns(out, &cjdns_pkt)),
             ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
     }
 
     #[inline]
-    fn format_compact_arp(&self, out: &mut String, arp_pkt: arp::ARP) -> Option<Color> {
+    fn format_compact_arp(&self, out: &mut String, arp_pkt: &arp::ARP) -> Color {
         use crate::structs::arp::ARP;
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
                 format!("[arp/request] {:15}   ?                         (tell {}, {})",
                     format!("{}", arp_pkt.dest_addr),
                     format!("{}", arp_pkt.src_addr),
-                    display_macaddr(&arp_pkt.src_mac))
+                    display_macaddr(arp_pkt.src_mac))
             },
             ARP::Reply(arp_pkt) => {
                 format!("[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
                     format!("{}", arp_pkt.src_addr),
-                    display_macaddr(&arp_pkt.src_mac),
+                    display_macaddr(arp_pkt.src_mac),
                     format!("{}", arp_pkt.dest_addr),
-                    display_macaddr(&arp_pkt.dest_mac))
+                    display_macaddr(arp_pkt.dest_mac))
             },
         });
-        Some(Blue)
+        Blue
     }
 
     #[inline]
-    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Option<Color> {
+    fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Color {
         let password = cjdns.password.iter()
-                                .map(|b| {
-                                    format!("\\x{:02x}", b)
-                                })
-                                .fold(String::new(), |a, b| a + &b);
+            .map(|b| {
+                format!("\\x{:02x}", b)
+            })
+            .fold(String::new(), |a, b| a + &b);
 
-        use sha2::{Sha512, Digest};
         let ipv6 = {
             let bytes1 = Sha512::digest(&cjdns.pubkey);
             let bytes2 = Sha512::digest(&bytes1);
@@ -177,14 +177,14 @@ impl Format {
                               ipv6,
                               cjdns.pubkey));
 
-        Some(Purple)
+        Purple
     }
 
     #[inline]
     fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Color> {
         match next {
-            ipv4::IPv4::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
-            ipv4::IPv4::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv4::IPv4::TCP(tcp_hdr, tcp) => Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp)),
+            ipv4::IPv4::UDP(udp_hdr, udp) => Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp)),
             ipv4::IPv4::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
         }
     }
@@ -192,8 +192,8 @@ impl Format {
     #[inline]
     fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Color> {
         match next {
-            ipv6::IPv6::TCP(tcp_hdr, tcp) => self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp),
-            ipv6::IPv6::UDP(udp_hdr, udp) => self.format_compact_ip_udp(out, ip_hdr, &udp_hdr, udp),
+            ipv6::IPv6::TCP(tcp_hdr, tcp) => Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp)),
+            ipv6::IPv6::UDP(udp_hdr, udp) => Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp)),
             ipv6::IPv6::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
         }
     }
@@ -208,7 +208,7 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Option<Color> {
+    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Color {
         let mut flags = String::new();
         if tcp_hdr.flag_syn { flags.push('S') }
         if tcp_hdr.flag_ack { flags.push('A') }
@@ -224,7 +224,7 @@ impl Format {
             HTTP(http) => {
                 // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
                 out.push_str(&format!("[http] {:?}", http)); // TODO
-                Some(Green)
+                Green
             },
             TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
@@ -235,7 +235,7 @@ impl Format {
 
                 out.push_str("[tls] ClientHello");
                 out.push_str(&extra);
-                Some(Green)
+                Green
             },
             TLS(tls::TLS::ServerHello(server_hello)) => {
                 let extra = display_kv_list(&[
@@ -246,24 +246,24 @@ impl Format {
 
                 out.push_str("[tls] ServerHello");
                 out.push_str(&extra);
-                Some(Green)
+                Green
             },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
-                Some(Red)
+                Red
             },
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x));
-                Some(Red)
+                Red
             },
             Empty => {
-                Some(Fixed(GREY))
+                Fixed(GREY)
             },
         }
     }
 
     #[inline]
-    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: &pktparse::udp::UdpHeader, udp: udp::UDP) -> Option<Color> {
+    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> Color {
         out.push_str(&format!("[udp   ] {:22} -> {:22} ",
                         format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
                         format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
@@ -315,7 +315,7 @@ impl Format {
                     },
                 };
 
-                Some(Blue)
+                Blue
             },
             DNS(dns) => {
                 use crate::structs::dns::DNS::*;
@@ -342,7 +342,7 @@ impl Format {
                     },
                 };
 
-                Some(Yellow)
+                Yellow
             },
             SSDP(ssdp) => {
                 use crate::structs::ssdp::SSDP::*;
@@ -352,7 +352,7 @@ impl Format {
                     Notify(extra) => format!("[ssdp] notify: {:?}", extra),
                     BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
                 });
-                Some(Purple)
+                Purple
             },
             Dropbox(dropbox) => {
                 out.push_str(&format!("[dropbox] beacon: version={:?}, \
@@ -365,15 +365,15 @@ impl Format {
                                         dropbox.namespaces,
                                         dropbox.displayname,
                                         dropbox.port));
-                Some(Purple)
+                Purple
             },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
-                Some(Red)
+                Red
             },
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x));
-                Some(Red)
+                Red
             },
         }
     }
@@ -511,7 +511,7 @@ fn align(len: usize, a: &str) -> String {
 
 // TODO: upstream
 #[inline]
-fn display_macaddr(mac: &pktparse::ethernet::MacAddress) -> String {
+fn display_macaddr(mac: pktparse::ethernet::MacAddress) -> String {
     display_macadr_buf(mac.0)
 }
 
@@ -533,8 +533,7 @@ fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
                 format!("{}: {:?}", key, value)
             })
         }), |a, b| a + ", " + &b)
-        .map(|extra| format!(" ({})", extra))
-        .unwrap_or_else(String::new)
+        .map_or_else(String::new, |extra| format!(" ({})", extra))
 }
 
 struct DhcpKvListWriter<'a> {
@@ -563,7 +562,6 @@ impl<'a> DhcpKvListWriter<'a> {
             .map(|&(key, ref value)| {
                 format!("{}: {}", key, value)
             }), |a, b| a + ", " + &b)
-            .map(|extra| format!(" ({})", extra))
-            .unwrap_or_else(String::new)
+            .map_or_else(String::new, |extra| format!(" ({})", extra))
     }
 }

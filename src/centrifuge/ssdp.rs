@@ -3,8 +3,7 @@ use crate::structs::CentrifugeError;
 
 
 pub fn parse_ssdp(data: &str) -> Result<SSDP, CentrifugeError> {
-    if data.starts_with("M-SEARCH * HTTP/1.1\r\n") {
-        let extra = &data[21..];
+    if let Some(extra) = data.strip_prefix("M-SEARCH * HTTP/1.1\r\n") {
         let extra = if extra.is_empty() {
             None
         } else {
@@ -13,10 +12,10 @@ pub fn parse_ssdp(data: &str) -> Result<SSDP, CentrifugeError> {
         Ok(SSDP::Discover(extra))
     } else if data == "M-SEARCH * HTTP/1.0" {
         Ok(SSDP::Discover(None))
-    } else if data.starts_with("NOTIFY * HTTP/1.1\r\n") {
-        Ok(SSDP::Notify(data[19..].to_string()))
-    } else if data.starts_with("BT-SEARCH * HTTP/1.1\r\n") {
-        Ok(SSDP::BTSearch(data[22..].to_string()))
+    } else if let Some(data) = data.strip_prefix("NOTIFY * HTTP/1.1\r\n") {
+        Ok(SSDP::Notify(data.to_string()))
+    } else if let Some(data) = data.strip_prefix("BT-SEARCH * HTTP/1.1\r\n") {
+        Ok(SSDP::BTSearch(data.to_string()))
     } else {
         Err(CentrifugeError::UnknownProtocol)
     }

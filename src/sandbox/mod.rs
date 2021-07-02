@@ -83,15 +83,14 @@ pub fn id() -> String {
 fn apply_config(config: config::Config) -> Result<()> {
     debug!("got config: {:?}", config);
 
-    let user = match config.sandbox.user {
-        Some(user) => {
-            let user = match users::get_user_by_name(&user) {
-                Some(user) => user,
-                None => bail!("Invalid sandbox user"),
-            };
-            Some((user.uid(), user.primary_group_id()))
-        },
-        _ => None,
+    let user = if let Some(user) = config.sandbox.user {
+        let user = match users::get_user_by_name(&user) {
+            Some(user) => user,
+            None => bail!("Invalid sandbox user"),
+        };
+        Some((user.uid(), user.primary_group_id()))
+    } else {
+        None
     };
 
     let is_root = Uid::current().is_root();

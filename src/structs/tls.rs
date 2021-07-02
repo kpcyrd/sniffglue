@@ -7,8 +7,8 @@ pub enum TLS {
     ServerHello(ServerHello),
 }
 
-fn tls_version(ver: &TlsVersion) -> Option<&'static str> {
-    match *ver {
+fn tls_version(ver: TlsVersion) -> Option<&'static str> {
+    match ver {
         TlsVersion::Ssl30 => Some("ssl3.0"),
         TlsVersion::Tls10 => Some("tls1.0"),
         TlsVersion::Tls11 => Some("tls1.1"),
@@ -26,11 +26,11 @@ pub struct ClientHello {
 }
 
 impl ClientHello {
-    pub fn new(ch: TlsClientHelloContents, hostname: Option<String>) -> ClientHello {
+    pub fn new(ch: &TlsClientHelloContents, hostname: Option<String>) -> ClientHello {
         let session_id = ch.session_id.map(base64::encode);
 
         ClientHello {
-            version: tls_version(&ch.version),
+            version: tls_version(ch.version),
             session_id,
             hostname,
         }
@@ -45,13 +45,13 @@ pub struct ServerHello {
 }
 
 impl ServerHello {
-    pub fn new(sh: TlsServerHelloContents) -> ServerHello {
+    pub fn new(sh: &TlsServerHelloContents) -> ServerHello {
         let cipher = sh.cipher.get_ciphersuite()
             .map(|cs| cs.name);
         let session_id = sh.session_id.map(base64::encode);
 
         ServerHello {
-            version: tls_version(&sh.version),
+            version: tls_version(sh.version),
             session_id,
             cipher,
         }
