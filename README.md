@@ -88,7 +88,7 @@ Or you can build a Debian package via [cargo-deb](https://github.com/mmstick/car
 - [X] arp
 - [X] tcp
 - [X] udp
-- [ ] icmp
+- [X] icmp
 - [X] http
 - [X] tls
 - [X] dns

@@ -36,6 +36,7 @@ pub mod raw;
 pub mod ether;
 pub mod arp;
 pub mod cjdns;
+pub mod icmp;
 pub mod ipv4;
 pub mod ipv6;
 pub mod ip;
