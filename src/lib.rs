@@ -1,7 +1,5 @@
 #![allow(clippy::upper_case_acronyms)]
 
-#[macro_use] extern crate nom;
-
 pub mod centrifuge;
 pub mod errors;
 pub mod link;
