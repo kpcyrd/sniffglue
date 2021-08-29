@@ -46,16 +46,7 @@ fn main() -> Result<()> {
     let colors = atty::is(atty::Stream::Stdout);
     let config = fmt::Config::new(layout, args.verbose, colors);
 
-    let cap = if !args.read {
-        let cap = sniff::open(&device, &sniff::Config {
-            promisc: args.promisc,
-            immediate_mode: true,
-        })?;
-
-        let verbosity = config.filter().verbosity;
-        eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
-        cap
-    } else {
+    let cap = if args.read {
         if args.threads.is_none() {
             debug!("Setting thread default to 1 due to -r");
             args.threads = Some(1);
@@ -63,6 +54,15 @@ fn main() -> Result<()> {
 
         let cap = sniff::open_file(&device)?;
         eprintln!("Reading from file: {:?}", device);
+        cap
+    } else {
+        let cap = sniff::open(&device, &sniff::Config {
+            promisc: args.promisc,
+            immediate_mode: true,
+        })?;
+
+        let verbosity = config.filter().verbosity;
+        eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
         cap
     };
 

@@ -12,11 +12,11 @@ pub mod prelude {
     pub use crate::structs::ether::Ether::*;
 }
 
-/// Zero            - This packet is very interesting
-/// One             - This packet is somewhat interesting
-/// Two             - Stuff you want to see if you're looking really hard
-/// AlmostMaximum   - Some binary data
-/// Maximum         - We couldn't parse this
+/// `Zero`            - This packet is very interesting
+/// `One`             - This packet is somewhat interesting
+/// `Two`             - Stuff you want to see if you're looking really hard
+/// `AlmostMaximum`   - Some binary data
+/// `Maximum`         - We couldn't parse this
 #[derive(Debug)]
 pub enum NoiseLevel {
     Zero          = 0,

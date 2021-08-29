@@ -3,6 +3,7 @@ use structopt::clap::{AppSettings, Shell};
 
 #[derive(Debug, StructOpt)]
 #[structopt(global_settings = &[AppSettings::ColoredHelp])]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Args {
     /// Set device to promiscuous mode
     #[structopt(short="p", long="promisc")]

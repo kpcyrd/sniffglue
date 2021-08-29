@@ -36,8 +36,8 @@ pub fn extract(remaining: &[u8]) -> Result<structs::dhcp::DHCP, CentrifugeError>
         match option {
             DhcpOption::RequestedIpAddress(addr) => packet.requested_ip_address = Some(*addr),
             DhcpOption::HostName(hostname) => packet.hostname = Some(hostname.to_string()),
-            DhcpOption::Router(router) => packet.router = Some(router.to_vec()),
-            DhcpOption::DomainNameServer(server) => packet.domain_name_server = Some(server.to_vec()),
+            DhcpOption::Router(router) => packet.router = Some(router.clone()),
+            DhcpOption::DomainNameServer(server) => packet.domain_name_server = Some(server.clone()),
             _ => (),
         }
     }

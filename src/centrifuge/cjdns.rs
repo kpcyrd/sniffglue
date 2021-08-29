@@ -21,7 +21,7 @@ fn cjdns_eth_header(input: &[u8]) -> nom::IResult<&[u8], cjdns::CjdnsEthPkt> {
         tag(b"\x00"),
         be_u16,
         tag(b"\xfc\x00"),
-        take(2usize),
+        take(2_usize),
 
         be_u16,
         take(BEACON_PASSWORD_LEN),

@@ -12,7 +12,7 @@ pub struct Config {
 }
 
 pub fn open(dev: &str, config: &Config) -> Result<Cap> {
-    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0; pcap_sys::PCAP_ERRBUF_SIZE as usize];
     let dev = CString::new(dev).unwrap();
     let handle = unsafe { pcap_sys::pcap_create(dev.as_ptr(), errbuf.as_mut_ptr()) };
 
@@ -42,7 +42,7 @@ pub fn open(dev: &str, config: &Config) -> Result<Cap> {
 }
 
 pub fn open_file(path: &str) -> Result<Cap> {
-    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0; pcap_sys::PCAP_ERRBUF_SIZE as usize];
     let path = CString::new(path).unwrap();
     let handle = unsafe { pcap_sys::pcap_open_offline(path.as_ptr(), errbuf.as_mut_ptr()) };
 
@@ -57,7 +57,7 @@ pub fn open_file(path: &str) -> Result<Cap> {
 }
 
 pub fn default_interface() -> Result<String> {
-    let mut errbuf = [0 as libc::c_char; pcap_sys::PCAP_ERRBUF_SIZE as usize];
+    let mut errbuf = [0; pcap_sys::PCAP_ERRBUF_SIZE as usize];
 
     let dev = unsafe { pcap_sys::pcap_lookupdev(errbuf.as_mut_ptr()) };
     if dev.is_null() {

@@ -1,4 +1,4 @@
-#[macro_use] extern crate nom;
+#![allow(clippy::upper_case_acronyms)]
 
 pub mod centrifuge;
 pub mod errors;
