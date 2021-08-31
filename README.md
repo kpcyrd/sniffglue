@@ -62,6 +62,10 @@ key for this repository out of the debian keyring.
 
     nix-env -i sniffglue
 
+### GNU Guix
+
+    guix install sniffglue
+
 ### From source
 
 To build from source make sure you have libpcap and libseccomp installed. On
