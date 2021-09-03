@@ -34,7 +34,7 @@ structopt = "0.3"
 anyhow = "1"
 num_cpus = "1.6"
 pcap-sys = "0.1.3"
-pktparse = { version = "0.6.1", features = ["serde"] }
+pktparse = { version = "0.7", features = ["serde"] }
 nom = "7"
 dns-parser = "0.8"
 tls-parser = "0.10"
@@ -54,6 +54,7 @@ sha2 = "0.9"
 dirs-next = "2.0"
 base64 = "0.13"
 libc = "0.2"
+bstr = "0.2.16"
 
 [target.'cfg(target_os="linux")'.dependencies]
 syscallz = "0.16"

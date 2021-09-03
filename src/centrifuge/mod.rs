@@ -11,6 +11,7 @@ use crate::link::DataLink;
 pub mod arp;
 pub mod tcp;
 pub mod udp;
+pub mod icmp;
 pub mod cjdns;
 
 pub mod dhcp;
@@ -89,6 +90,10 @@ pub fn parse_ipv4(data: &[u8]) -> Result<ether::Ether, CentrifugeError> {
             },
             IPProtocol::UDP => match udp::parse(remaining) {
                 Ok((udp_hdr, udp)) => UDP(udp_hdr, udp),
+                Err(_) => Unknown(remaining.to_vec()),
+            },
+            IPProtocol::ICMP => match icmp::parse(remaining) {
+                Ok((icmp_hdr, icmp)) => ICMP(icmp_hdr, icmp),
                 Err(_) => Unknown(remaining.to_vec()),
             },
             _ => {

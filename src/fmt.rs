@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
 use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
+use bstr::ByteSlice;
 use reduce::Reduce;
 use sha2::{Sha512, Digest};
 use std::cmp;
 use std::fmt::Debug;
+use pktparse::icmp::{IcmpHeader, IcmpCode, IcmpData};
 
 use crate::structs::ether;
 use crate::structs::arp;
@@ -14,6 +16,7 @@ use crate::structs::ipv4;
 use crate::structs::ipv6;
 use crate::structs::tcp;
 use crate::structs::udp;
+use crate::structs::icmp;
 use crate::structs::tls;
 use crate::structs::raw::Raw;
 use crate::structs::prelude::*;
@@ -185,6 +188,7 @@ impl Format {
         match next {
             ipv4::IPv4::TCP(tcp_hdr, tcp) => Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp)),
             ipv4::IPv4::UDP(udp_hdr, udp) => Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp)),
+            ipv4::IPv4::ICMP(icmp_hdr, icmp) => Some(self.format_compact_ip_icmp(out, ip_hdr, icmp_hdr, icmp)),
             ipv4::IPv4::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
         }
     }
@@ -378,6 +382,49 @@ impl Format {
         }
     }
 
+    fn format_compact_ip_icmp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, icmp_hdr: IcmpHeader, icmp: icmp::ICMP) -> Color {
+        let code = match icmp_hdr.code {
+            IcmpCode::EchoReply => Some("icmp/pong"),
+            /*
+            IcmpCode::Reserved,
+            */
+            IcmpCode::DestinationUnreachable(_) => Some("icmp/unrch"),
+            /*
+            IcmpCode::DestinationUnreachable(Unreachable),
+            IcmpCode::SourceQuench,
+            IcmpCode::Redirect(Redirect),
+            */
+            IcmpCode::EchoRequest => Some("icmp/ping"),
+            /*
+            IcmpCode::RouterAdvertisment,
+            IcmpCode::RouterSolicication,
+            */
+            IcmpCode::TimeExceeded(_) => Some("icmp/ttl"),
+            /*
+            IcmpCode::ParameterProblem(ParameterProblem),
+            IcmpCode::Timestamp,
+            IcmpCode::TimestampReply,
+            IcmpCode::ExtendedEchoRequest,
+            IcmpCode::ExtendedEchoReply(ExtendedEchoReply),
+            IcmpCode::Other(u16)
+            */
+            _ => None,
+        };
+        out.push_str(&format!("[{:10}] {:18} -> {:22} [code={:?}",
+                        code.unwrap_or("icmp"),
+                        ip_hdr.source_addr(),
+                        ip_hdr.dest_addr(),
+                        icmp_hdr.code));
+
+        if icmp_hdr.data != IcmpData::None {
+            out.push_str(&format!(", data={:?}", icmp_hdr.data));
+        }
+
+        out.push_str(&format!("] {:?}", icmp.data.as_bstr()));
+
+        Blue
+    }
+
     #[inline]
     fn print_debugging(&self, packet: Raw) {
         use crate::structs::raw::Raw::Unknown;
@@ -406,6 +453,11 @@ impl Format {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
+            },
+            IPv4(ip_hdr, ipv4::IPv4::ICMP(icmp_hdr, icmp)) => {
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}icmp: {:?}",  "\t".repeat(indent+1), icmp_hdr);
+                println!("{}{:?}",         "\t".repeat(indent+2), icmp.data);
             },
             IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
