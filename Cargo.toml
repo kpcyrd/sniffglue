@@ -61,4 +61,4 @@ syscallz = "0.16"
 #syscallz = { path="../syscallz-rs" }
 
 [dev-dependencies]
-boxxy = "0.11"
+boxxy = "0.12"
