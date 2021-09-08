@@ -1,6 +1,6 @@
 [package]
 name = "sniffglue"
-version = "0.12.1"
+version = "0.13.0"
 description = "Secure multithreaded packet sniffer"
 authors = ["kpcyrd <git@rxv.cc>"]
 license = "GPL-3.0"
