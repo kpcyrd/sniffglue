@@ -7,24 +7,24 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::futex)?;
     ctx.allow_syscall(Syscall::read)?;
     ctx.allow_syscall(Syscall::write)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::open)?;
     ctx.allow_syscall(Syscall::close)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::stat)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::stat64)?;
     ctx.allow_syscall(Syscall::fstat)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::fstat64)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::lstat)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::lstat64)?;
     ctx.allow_syscall(Syscall::statx)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::poll)?;
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
     ctx.allow_syscall(Syscall::ppoll)?;
     ctx.allow_syscall(Syscall::lseek)?; // needed for stage2
     #[cfg(target_arch = "arm")]
@@ -58,7 +58,7 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::fcntl)?;
     #[cfg(target_arch = "arm")]
     ctx.allow_syscall(Syscall::fcntl64)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::getdents)?;
     ctx.allow_syscall(Syscall::chdir)?; // needed for stage2
     ctx.allow_syscall(Syscall::getuid)?; // needed for stage2
@@ -102,11 +102,11 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::exit_group)?;
     ctx.allow_syscall(Syscall::set_robust_list)?;
     ctx.allow_syscall(Syscall::openat)?;
-    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "riscv64"))]
     ctx.allow_syscall(Syscall::newfstatat)?;
     ctx.allow_syscall(Syscall::seccomp)?; // needed for stage2
     ctx.allow_syscall(Syscall::getrandom)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::pipe)?; // used in libpcap
     ctx.allow_syscall(Syscall::wait4)?;
     ctx.allow_syscall(Syscall::clock_gettime)?;
@@ -117,7 +117,7 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::brk)?;
     ctx.allow_syscall(Syscall::madvise)?;
     ctx.allow_syscall(Syscall::membarrier)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::access)?; // needed for debian /etc/ld.so.nohwcap
     ctx.allow_syscall(Syscall::faccessat)?; // needed for debian /etc/ld.so.nohwcap
     ctx.allow_syscall(Syscall::eventfd2)?;
@@ -141,9 +141,9 @@ pub fn activate_stage2() -> Result<()> {
     // ctx.allow_syscall(Syscall::stat)?;
     // ctx.allow_syscall(Syscall::fstat)?;
     // ctx.allow_syscall(Syscall::lstat)?;
-    #[cfg(not(target_arch = "aarch64"))]
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.allow_syscall(Syscall::poll)?;
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
     ctx.allow_syscall(Syscall::ppoll)?;
     #[cfg(not(target_arch = "arm"))]
     ctx.allow_syscall(Syscall::mmap)?;
@@ -193,7 +193,7 @@ pub fn activate_stage2() -> Result<()> {
 
     // /proc/sys/vm/overcommit_memory
     ctx.set_action_for_syscall(Action::Errno(1), Syscall::openat)?;
-    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "riscv64")))]
     ctx.set_action_for_syscall(Action::Errno(1), Syscall::open)?;
 
     ctx.load()?;
