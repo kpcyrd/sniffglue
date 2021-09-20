@@ -4,6 +4,7 @@ use crate::errors::*;
 pub enum DataLink {
     Ethernet,
     Tun,
+    Sll,
     RadioTap,
 }
 
@@ -18,6 +19,10 @@ impl DataLink {
                 // RAW IP (linux tun)
                 Ok(DataLink::Tun)
             },
+            113 => {
+                // LINKTYPE_LINUX_SLL (eg. ppp)
+                Ok(DataLink::Sll)
+            }
             127 => {
                 // LINKTYPE_IEEE802_11_RADIOTAP
                 Ok(DataLink::RadioTap)

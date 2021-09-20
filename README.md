@@ -96,6 +96,7 @@ Or you can build a Debian package via [cargo-deb](https://github.com/mmstick/car
 - [X] cjdns eth beacons
 - [X] ssdp
 - [X] dropbox beacons
+- [X] ppp
 - [ ] 802.11
 
 ## Docker

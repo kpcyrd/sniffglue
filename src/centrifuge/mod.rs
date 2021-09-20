@@ -13,6 +13,7 @@ pub mod tcp;
 pub mod udp;
 pub mod icmp;
 pub mod cjdns;
+pub mod sll;
 
 pub mod dhcp;
 pub mod dns;
@@ -30,6 +31,7 @@ pub fn parse(link: &DataLink, data: &[u8]) -> raw::Raw {
             Err(_)  => Unknown(data.to_vec()),
         },
         DataLink::Tun => parse_tun(data),
+        DataLink::Sll => parse_sll(data),
         DataLink::RadioTap => {
             Unknown(data.to_vec())
         },
@@ -72,6 +74,16 @@ pub fn parse_tun(data: &[u8]) -> raw::Raw {
     raw::Raw::Tun(
         if let Ok(ipv4) = parse_ipv4(data) {
             ipv4
+        } else {
+            Ether::Unknown(data.to_vec())
+        }
+    )
+}
+
+pub fn parse_sll(data: &[u8]) -> raw::Raw {
+    raw::Raw::Sll(
+        if let Ok(frame) = sll::parse(data) {
+            frame
         } else {
             Ether::Unknown(data.to_vec())
         }

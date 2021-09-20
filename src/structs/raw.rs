@@ -6,6 +6,7 @@ use serde::Serialize;
 pub enum Raw {
     Ether(pktparse::ethernet::EthernetFrame, ether::Ether),
     Tun(ether::Ether),
+    Sll(ether::Ether),
     Unknown(Vec<u8>),
 }
 
@@ -15,6 +16,7 @@ impl Raw {
         match *self {
             Ether(_, ref ether) => ether.noise_level(),
             Tun(ref ether) => ether.noise_level(),
+            Sll(ref ether) => ether.noise_level(),
             Unknown(_) => NoiseLevel::Maximum,
         }
     }
