@@ -98,6 +98,7 @@ impl Format {
                 self.format_compact_eth(&mut out, eth)
             },
             Tun(eth) => self.format_compact_eth(&mut out, eth),
+            Sll(eth) => self.format_compact_eth(&mut out, eth),
             Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
         };
 
@@ -434,6 +435,7 @@ impl Format {
                 self.print_debugging_eth(1, eth);
             },
             Tun(eth) => self.print_debugging_eth(0, eth),
+            Sll(eth) => self.print_debugging_eth(0, eth),
             Unknown(data) => println!("unknown: {:?}", data),
         }
     }
