@@ -122,6 +122,7 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::faccessat)?; // needed for debian /etc/ld.so.nohwcap
     ctx.allow_syscall(Syscall::eventfd2)?;
     ctx.allow_syscall(Syscall::restart_syscall)?;
+    ctx.allow_syscall(Syscall::getpid)?;
 
     ctx.load()?;
 

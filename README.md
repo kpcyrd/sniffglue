@@ -39,16 +39,10 @@ when processing packets. The output should be as useful as possible by default.
 
 ### Debian/Ubuntu/Kali
 
-There are prebuilt packages signed by a debian maintainer. We can import the
-key for this repository out of the debian keyring.
+First included in debian bullseye, ubuntu 21.04.
 
-    apt install debian-keyring
-    gpg -a --export --keyring /usr/share/keyrings/debian-maintainers.gpg git@rxv.cc | apt-key add -
-    apt-key adv --keyserver keyserver.ubuntu.com --refresh-keys git@rxv.cc
-    echo deb http://apt.vulns.sexy stable main > /etc/apt/sources.list.d/apt-vulns-sexy.list
-    apt update
     apt install sniffglue
-    
+
 ### Alpine
 
     apk add sniffglue
