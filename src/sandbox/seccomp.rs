@@ -123,6 +123,8 @@ pub fn activate_stage1() -> Result<()> {
     ctx.allow_syscall(Syscall::eventfd2)?;
     ctx.allow_syscall(Syscall::restart_syscall)?;
     ctx.allow_syscall(Syscall::getpid)?;
+    ctx.allow_syscall(Syscall::rt_sigaction)?;
+    ctx.allow_syscall(Syscall::clone3)?;
 
     ctx.load()?;
 
@@ -191,6 +193,8 @@ pub fn activate_stage2() -> Result<()> {
     ctx.allow_syscall(Syscall::madvise)?;
     ctx.allow_syscall(Syscall::membarrier)?;
     ctx.allow_syscall(Syscall::restart_syscall)?;
+    ctx.allow_syscall(Syscall::rt_sigaction)?;
+    ctx.allow_syscall(Syscall::clone3)?;
 
     // /proc/sys/vm/overcommit_memory
     ctx.set_action_for_syscall(Action::Errno(1), Syscall::openat)?;
