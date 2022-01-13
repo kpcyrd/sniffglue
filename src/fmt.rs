@@ -131,15 +131,15 @@ impl Format {
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
                 format!("[arp/request] {:15}   ?                         (tell {}, {})",
-                    format!("{}", arp_pkt.dest_addr),
-                    format!("{}", arp_pkt.src_addr),
+                    arp_pkt.dest_addr.to_string(),
+                    arp_pkt.src_addr,
                     display_macaddr(arp_pkt.src_mac))
             },
             ARP::Reply(arp_pkt) => {
                 format!("[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
-                    format!("{}", arp_pkt.src_addr),
+                    arp_pkt.src_addr.to_string(),
                     display_macaddr(arp_pkt.src_mac),
-                    format!("{}", arp_pkt.dest_addr),
+                    arp_pkt.dest_addr,
                     display_macaddr(arp_pkt.dest_mac))
             },
         });
