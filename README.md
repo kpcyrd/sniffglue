@@ -60,6 +60,11 @@ First included in debian bullseye, ubuntu 21.04.
 
     guix install sniffglue
 
+### Fedora/RHEL/CentOS/CentOS Stream
+
+    dnf copr enable atim/sniffglue -y
+    dnf install sniffglue
+
 ### From source
 
 To build from source make sure you have libpcap and libseccomp installed. On
