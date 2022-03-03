@@ -67,7 +67,7 @@ mod tests {
             },
             IPv4(IPv4Header {
                 version: 4,
-                ihl: 20,
+                ihl: 5,
                 tos: 0,
                 length: 442,
                 id: 20073,
