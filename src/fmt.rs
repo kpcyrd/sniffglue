@@ -258,7 +258,7 @@ impl Format {
                 Red
             },
             Binary(x) => {
-                out.push_str(&format!("[binary] {:?}", x));
+                out.push_str(&format!("[binary] {:?}", x.as_bstr()));
                 Red
             },
             Empty => {
@@ -377,7 +377,7 @@ impl Format {
                 Red
             },
             Binary(x) => {
-                out.push_str(&format!("[binary] {:?}", x));
+                out.push_str(&format!("[binary] {:?}", x.as_bstr()));
                 Red
             },
         }
