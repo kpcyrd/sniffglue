@@ -32,8 +32,8 @@ mod tests {
         121, 62, 10, 60, 47, 104, 116, 109, 108, 62, 10
     ];
 
-    #[test]
-    fn tcp() {
+    #[bench]
+    fn tcp(b: &mut Bencher) {
         use structs::raw::Raw::Ether;
         use structs::ether::Ether::IPv4;
         use structs::ipv4::IPv4::TCP;
@@ -63,7 +63,7 @@ mod tests {
             },
             IPv4(IPv4Header {
                 version: 4,
-                ihl: 20,
+                ihl: 5,
                 tos: 0,
                 length: 442,
                 id: 20073,
@@ -96,8 +96,10 @@ mod tests {
             Text(String::from_utf8(HTML.to_vec()).unwrap())
         ))));
 
-        let x = centrifuge::parse_eth(&pkt);
-        assert_eq!(expected, x);
+        b.iter(|| {
+            let x = centrifuge::parse_eth(&pkt);
+            assert_eq!(expected, x);
+        });
     }
 
     #[bench]
