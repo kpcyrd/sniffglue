@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::fmt::Write;
 
 use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
 use bstr::ByteSlice;
@@ -91,9 +92,10 @@ impl Format {
         use crate::structs::raw::Raw::Unknown;
         let color = match packet {
             Ether(eth_frame, eth) => {
-                out += &format!("{} -> {}, ",
-                                display_macaddr(eth_frame.source_mac),
-                                display_macaddr(eth_frame.dest_mac));
+                write!(out, "{} -> {}, ",
+                    display_macaddr(eth_frame.source_mac),
+                    display_macaddr(eth_frame.dest_mac)
+                ).expect("out of memory");
 
                 self.format_compact_eth(&mut out, eth)
             },
@@ -110,7 +112,7 @@ impl Format {
 
     #[inline]
     fn format_compact_unknown_data(&self, out: &mut String, data: &[u8]) -> Option<Color> {
-        out.push_str(&format!("[unknown] {:?}", data));
+        write!(out, "[unknown] {:?}", data).expect("out of memory");
         None
     }
 
@@ -165,7 +167,7 @@ impl Format {
                 let b1 = iter.next().unwrap();
                 let b2 = iter.next().unwrap();
 
-                ipv6.push_str(&format!("{:02x}{:02x}", b1, b2));
+                write!(ipv6, "{:02x}{:02x}", b1, b2).expect("out of memory");
 
                 if x != 7 {
                     ipv6.push(':');
@@ -175,11 +177,11 @@ impl Format {
             ipv6
         };
 
-        out.push_str(&format!("[cjdns beacon] version={:?}, password=\"{}\", ipv6={:?}, pubkey={:?}",
-                              cjdns.version,
-                              password,
-                              ipv6,
-                              cjdns.pubkey));
+        write!(out, "[cjdns beacon] version={:?}, password=\"{}\", ipv6={:?}, pubkey={:?}",
+                    cjdns.version,
+                    password,
+                    ipv6,
+                    cjdns.pubkey).expect("out of memory");
 
         Purple
     }
@@ -205,10 +207,10 @@ impl Format {
 
     #[inline]
     fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Color> {
-        out.push_str(&format!("[unknown] {} -> {} {:?}",
+        write!(out, "[unknown] {} -> {} {:?}",
                         ip_hdr.source_addr(),
                         ip_hdr.dest_addr(),
-                        data));
+                        data).expect("out of memory");
         None
     }
 
@@ -220,15 +222,15 @@ impl Format {
         if tcp_hdr.flag_rst { flags.push('R') }
         if tcp_hdr.flag_fin { flags.push('F') }
 
-        out.push_str(&format!("[tcp/{:2}] {:22} -> {:22} ", flags,
-                        format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
+        let src_addr = format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port);
+        let dst_addr = format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port);
+        write!(out, "[tcp/{:2}] {:22} -> {:22} ", flags, src_addr, dst_addr).expect("out of memory");
 
         use crate::structs::tcp::TCP::*;
         match tcp {
             HTTP(http) => {
                 // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
-                out.push_str(&format!("[http] {:?}", http)); // TODO
+                write!(out, "[http] {:?}", http).expect("out of memory"); // TODO
                 Green
             },
             TLS(tls::TLS::ClientHello(client_hello)) => {
@@ -254,11 +256,11 @@ impl Format {
                 Green
             },
             Text(text) => {
-                out.push_str(&format!("[text] {:?}", text));
+                write!(out, "[text] {:?}", text).expect("out of memory");
                 Red
             },
             Binary(x) => {
-                out.push_str(&format!("[binary] {:?}", x.as_bstr()));
+                write!(out, "[binary] {:?}", x.as_bstr()).expect("out of memory");
                 Red
             },
             Empty => {
@@ -269,9 +271,9 @@ impl Format {
 
     #[inline]
     fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> Color {
-        out.push_str(&format!("[udp   ] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
+        let src_addr = format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port);
+        let dst_addr = format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port);
+        write!(out, "[udp   ] {:22} -> {:22} ", src_addr, dst_addr).expect("out of memory");
 
         use crate::structs::udp::UDP::*;
         match udp {
@@ -280,25 +282,25 @@ impl Format {
 
                 match dhcp {
                     DISCOVER(disc) => {
-                        out.push_str(&format!("[dhcp] DISCOVER: {}",
-                                display_macadr_buf(disc.chaddr)));
+                        write!(out, "[dhcp] DISCOVER: {}",
+                                display_macadr_buf(disc.chaddr)).expect("out of memory");
                         out.push_str(&DhcpKvListWriter::new()
                                      .append("hostname", &disc.hostname)
                                      .append("requested_ip_address", &disc.requested_ip_address)
                                      .finalize());
                     },
                     REQUEST(req) => {
-                        out.push_str(&format!("[dhcp] REQ: {}",
-                                display_macadr_buf(req.chaddr)));
+                        write!(out, "[dhcp] REQ: {}",
+                                display_macadr_buf(req.chaddr)).expect("out of memory");
                         out.push_str(&DhcpKvListWriter::new()
                                      .append("hostname", &req.hostname)
                                      .append("requested_ip_address", &req.requested_ip_address)
                                      .finalize());
                     },
                     ACK(ack) => {
-                        out.push_str(&format!("[dhcp] ACK: {} => {}",
+                        write!(out, "[dhcp] ACK: {} => {}",
                                 display_macadr_buf(ack.chaddr),
-                                ack.yiaddr));
+                                ack.yiaddr).expect("out of memory");
                         out.push_str(&DhcpKvListWriter::new()
                                      .append("hostname", &ack.hostname)
                                      .append("router", &ack.router)
@@ -306,9 +308,9 @@ impl Format {
                                      .finalize());
                     },
                     OFFER(offer) => {
-                        out.push_str(&format!("[dhcp] OFFER: {} => {}",
+                        write!(out, "[dhcp] OFFER: {} => {}",
                                 display_macadr_buf(offer.chaddr),
-                                offer.yiaddr));
+                                offer.yiaddr).expect("out of memory");
                         out.push_str(&DhcpKvListWriter::new()
                                      .append("hostname", &offer.hostname)
                                      .append("router", &offer.router)
@@ -316,7 +318,7 @@ impl Format {
                                      .finalize());
                     },
                     _ => {
-                        out.push_str(&format!("[dhcp] {:?}", dhcp)); // TODO
+                        write!(out, "[dhcp] {:?}", dhcp).expect("out of memory"); // TODO
                     },
                 };
 
@@ -360,7 +362,7 @@ impl Format {
                 Purple
             },
             Dropbox(dropbox) => {
-                out.push_str(&format!("[dropbox] beacon: version={:?}, \
+                write!(out, "[dropbox] beacon: version={:?}, \
                                                          host_int={:?}, \
                                                          namespaces={:?}, \
                                                          displayname={:?}, \
@@ -369,15 +371,15 @@ impl Format {
                                         dropbox.host_int,
                                         dropbox.namespaces,
                                         dropbox.displayname,
-                                        dropbox.port));
+                                        dropbox.port).expect("out of memory");
                 Purple
             },
             Text(text) => {
-                out.push_str(&format!("[text] {:?}", text));
+                write!(out, "[text] {:?}", text).expect("out of memory");
                 Red
             },
             Binary(x) => {
-                out.push_str(&format!("[binary] {:?}", x.as_bstr()));
+                write!(out, "[binary] {:?}", x.as_bstr()).expect("out of memory");
                 Red
             },
         }
@@ -411,17 +413,17 @@ impl Format {
             */
             _ => None,
         };
-        out.push_str(&format!("[{:10}] {:18} -> {:22} [code={:?}",
+        write!(out, "[{:10}] {:18} -> {:22} [code={:?}",
                         code.unwrap_or("icmp"),
                         ip_hdr.source_addr(),
                         ip_hdr.dest_addr(),
-                        icmp_hdr.code));
+                        icmp_hdr.code).expect("out of memory");
 
         if icmp_hdr.data != IcmpData::None {
-            out.push_str(&format!(", data={:?}", icmp_hdr.data));
+            write!(out, ", data={:?}", icmp_hdr.data).expect("out of memory");
         }
 
-        out.push_str(&format!("] {:?}", icmp.data.as_bstr()));
+        write!(out, "] {:?}", icmp.data.as_bstr()).expect("out of memory");
 
         Blue
     }
