@@ -47,10 +47,10 @@ pub fn chroot(path: &str) -> Result<()> {
 
 #[cfg(target_os="linux")]
 pub fn id() -> String {
-    let uid = users::get_current_uid();
-    let euid = users::get_effective_uid();
-    let gid = users::get_current_gid();
-    let egid = users::get_effective_gid();
+    let uid = uzers::get_current_uid();
+    let euid = uzers::get_effective_uid();
+    let gid = uzers::get_current_gid();
+    let egid = uzers::get_effective_gid();
     let groups = getgroups().unwrap();
 
     format!(
@@ -66,10 +66,10 @@ pub fn id() -> String {
 // TODO: use the other id function everywhere after nix added getgroups/setgroups support to osx
 #[cfg(not(target_os="linux"))]
 pub fn id() -> String {
-    let uid = users::get_current_uid();
-    let euid = users::get_effective_uid();
-    let gid = users::get_current_gid();
-    let egid = users::get_effective_gid();
+    let uid = uzers::get_current_uid();
+    let euid = uzers::get_effective_uid();
+    let gid = uzers::get_current_gid();
+    let egid = uzers::get_effective_gid();
 
     format!(
         "uid={:?} euid={:?} gid={:?} egid={:?}",
@@ -84,7 +84,7 @@ fn apply_config(config: config::Config) -> Result<()> {
     debug!("got config: {:?}", config);
 
     let user = if let Some(user) = config.sandbox.user {
-        let user = match users::get_user_by_name(&user) {
+        let user = match uzers::get_user_by_name(&user) {
             Some(user) => user,
             None => bail!("Invalid sandbox user"),
         };
