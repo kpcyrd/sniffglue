@@ -8,7 +8,7 @@ use std::cmp;
 use std::fmt::Debug;
 use pktparse::icmp::{IcmpHeader, IcmpCode, IcmpData};
 
-use crate::structs::ether;
+use crate::structs::ether::Ether;
 use crate::structs::arp;
 use crate::structs::cjdns;
 use crate::structs::ip::IPHeader;
@@ -19,7 +19,6 @@ use crate::structs::udp;
 use crate::structs::icmp;
 use crate::structs::tls;
 use crate::structs::raw::Raw;
-use crate::structs::prelude::*;
 use crate::structs::NoiseLevel;
 
 const GREY: u8 = 245;
@@ -88,18 +87,17 @@ impl Format {
     fn print_compact(&self, packet: Raw) {
         let mut out = String::new();
 
-        use crate::structs::raw::Raw::Unknown;
         let color = match packet {
-            Ether(eth_frame, eth) => {
+            Raw::Ether(eth_frame, eth) => {
                 out += &format!("{} -> {}, ",
                                 display_macaddr(eth_frame.source_mac),
                                 display_macaddr(eth_frame.dest_mac));
 
                 self.format_compact_eth(&mut out, eth)
             },
-            Tun(eth) => self.format_compact_eth(&mut out, eth),
-            Sll(eth) => self.format_compact_eth(&mut out, eth),
-            Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
+            Raw::Tun(eth) => self.format_compact_eth(&mut out, eth),
+            Raw::Sll(eth) => self.format_compact_eth(&mut out, eth),
+            Raw::Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
         };
 
         println!("{}", match color {
@@ -115,13 +113,13 @@ impl Format {
     }
 
     #[inline]
-    fn format_compact_eth(&self, out: &mut String, eth: ether::Ether) -> Option<Color> {
+    fn format_compact_eth(&self, out: &mut String, eth: Ether) -> Option<Color> {
         match eth {
-            Arp(arp_pkt) => Some(self.format_compact_arp(out, &arp_pkt)),
-            IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
-            IPv6(ip_hdr, ipv6) => self.format_compact_ipv6(out, &ip_hdr, ipv6),
-            Cjdns(cjdns_pkt) => Some(self.format_compact_cjdns(out, &cjdns_pkt)),
-            ether::Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
+            Ether::Arp(arp_pkt) => Some(self.format_compact_arp(out, &arp_pkt)),
+            Ether::IPv4(ip_hdr, ipv4) => self.format_compact_ipv4(out, &ip_hdr, ipv4),
+            Ether::IPv6(ip_hdr, ipv6) => self.format_compact_ipv6(out, &ip_hdr, ipv6),
+            Ether::Cjdns(cjdns_pkt) => Some(self.format_compact_cjdns(out, &cjdns_pkt)),
+            Ether::Unknown(data) => self.format_compact_unknown_data(out, &data),
         }
     }
 
@@ -428,61 +426,60 @@ impl Format {
 
     #[inline]
     fn print_debugging(&self, packet: Raw) {
-        use crate::structs::raw::Raw::Unknown;
         match packet {
-            Ether(eth_frame, eth) => {
+            Raw::Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
                 self.print_debugging_eth(1, eth);
             },
-            Tun(eth) => self.print_debugging_eth(0, eth),
-            Sll(eth) => self.print_debugging_eth(0, eth),
-            Unknown(data) => println!("unknown: {:?}", data),
+            Raw::Tun(eth) => self.print_debugging_eth(0, eth),
+            Raw::Sll(eth) => self.print_debugging_eth(0, eth),
+            Raw::Unknown(data) => println!("unknown: {:?}", data),
         }
     }
 
     #[inline]
-    fn print_debugging_eth(&self, indent: usize, eth: ether::Ether) {
+    fn print_debugging_eth(&self, indent: usize, eth: Ether) {
         match eth {
-            Arp(arp_pkt) => {
+            Ether::Arp(arp_pkt) => {
                 println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
             },
-            IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
+            Ether::IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
             },
-            IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
+            Ether::IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
             },
-            IPv4(ip_hdr, ipv4::IPv4::ICMP(icmp_hdr, icmp)) => {
+            Ether::IPv4(ip_hdr, ipv4::IPv4::ICMP(icmp_hdr, icmp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}icmp: {:?}",  "\t".repeat(indent+1), icmp_hdr);
                 println!("{}{:?}",         "\t".repeat(indent+2), icmp.data);
             },
-            IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
+            Ether::IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
                 println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
                 println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
             },
-            IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
+            Ether::IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
             },
-            IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
+            Ether::IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
                 println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
                 println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
             },
-            IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
+            Ether::IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
                 println!("{}ipv6: {:?}",     "\t".repeat(indent), ip_hdr);
                 println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
             },
-            Cjdns(cjdns_pkt) => {
+            Ether::Cjdns(cjdns_pkt) => {
                 println!("{}cjdns: {:?}",     "\t".repeat(indent), cjdns_pkt);
             },
-            ether::Ether::Unknown(data) => {
+            Ether::Unknown(data) => {
                 println!("{}unknown: {:?}", "\t".repeat(indent), data);
             }
         }
