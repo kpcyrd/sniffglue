@@ -1,3 +1,4 @@
+use data_encoding::BASE64;
 use serde::Serialize;
 use tls_parser::{TlsVersion, TlsClientHelloContents, TlsServerHelloContents};
 
@@ -27,7 +28,7 @@ pub struct ClientHello {
 
 impl ClientHello {
     pub fn new(ch: &TlsClientHelloContents, hostname: Option<String>) -> ClientHello {
-        let session_id = ch.session_id.map(base64::encode);
+        let session_id = ch.session_id.map(|id| BASE64.encode(id));
 
         ClientHello {
             version: tls_version(ch.version),
@@ -48,7 +49,7 @@ impl ServerHello {
     pub fn new(sh: &TlsServerHelloContents) -> ServerHello {
         let cipher = sh.cipher.get_ciphersuite()
             .map(|cs| cs.name);
-        let session_id = sh.session_id.map(base64::encode);
+        let session_id = sh.session_id.map(|id| BASE64.encode(id));
 
         ServerHello {
             version: tls_version(sh.version),
