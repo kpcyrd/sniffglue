@@ -17,8 +17,9 @@ use crate::structs::ipv6;
 use crate::structs::tcp;
 use crate::structs::udp;
 use crate::structs::icmp;
-use crate::structs::tls;
+use crate::structs::http;
 use crate::structs::raw::Raw;
+use crate::structs::tls;
 use crate::structs::NoiseLevel;
 
 const GREY: Color = Color::Fixed(245);
@@ -224,19 +225,14 @@ impl Format {
 
         use crate::structs::tcp::TCP::*;
         match tcp {
-            HTTP(http) => {
-                // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
-                // TODO
-
-
-                // out.push_str("[http] req, {:?} {:?} {:?}", req.method, req.uri, req.version);
+            HTTP(http::Http::Request(http)) => {
                 out.push_str("[http] req, ");
 
                 let offset = out.len();
-                out.push_str(&format!("{:?} {:?} {:?}", http.method, http.uri, http.version)); // TODO
+                out.push_str(&format!("{:?} {:?} HTTP/1.{}", http.method, http.path, http.version));
 
                 if let Some(host) = &http.host {
-                    out.push_str(&format!(" - http://{host}{}", http.uri));
+                    out.push_str(&format!(" - http://{host}{}", http.path));
                 }
 
                 for (key, value) in &http.headers {
@@ -248,8 +244,25 @@ impl Format {
                     out.push_str(&align(offset, &format!("{body:?}")));
                 }
 
-                Color::Green
+                Color::Red
             },
+            HTTP(http::Http::Response(http)) => {
+                out.push_str("[http] resp, ");
+
+                let offset = out.len();
+                out.push_str(&format!("HTTP/1.{} {} {:?} ", http.version, http.code, http.reason));
+
+                for (key, value) in &http.headers {
+                    out.push_str(&align(offset, &format!("{key:?}: {value:?}")));
+                }
+
+                if let Some(body) = http.body {
+                    out.push('\n');
+                    out.push_str(&align(offset, &format!("{body:?}")));
+                }
+
+                Color::Red
+            }
             TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
                     ("version", client_hello.version),
@@ -514,8 +527,11 @@ impl Format {
     fn print_debugging_tcp(&self, tcp: tcp::TCP) -> String {
         use crate::structs::tcp::TCP::*;
         match tcp {
-            HTTP(http) => {
-                self.colorify(Color::Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
+            HTTP(http::Http::Request(http)) => {
+                self.colorify(Color::Red, format!("http: {http:?}"))
+            },
+            HTTP(http::Http::Response(http)) => {
+                self.colorify(Color::Red, format!("http: {http:?}"))
             },
             TLS(client_hello) => {
                 self.colorify(Color::Green, format!("tls: {:?}", client_hello))

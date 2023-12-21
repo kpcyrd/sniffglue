@@ -6,16 +6,31 @@ use std::convert::TryFrom;
 use std::str;
 
 #[derive(Debug, PartialEq, Serialize)]
+pub enum Http {
+    Request(Request),
+    Response(Response),
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Request {
     pub method: String,
-    pub uri: String,
-    pub version: String,
+    pub path: String,
+    pub version: u8,
     pub headers: Vec<(String, BString)>,
     pub host: Option<String>,
     pub agent: Option<String>,
     pub referer: Option<String>,
     pub auth: Option<String>,
     pub cookies: Option<String>,
+    pub body: Option<BString>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct Response {
+    pub code: u16,
+    pub reason: String,
+    pub version: u8,
+    pub headers: Vec<(String, BString)>,
     pub body: Option<BString>,
 }
 
@@ -36,13 +51,13 @@ impl TryFrom<httparse::Request<'_, '_>> for Request {
 
     fn try_from(req: httparse::Request) -> Result<Request, CentrifugeError> {
         let Some(method) = req.method else { return Err(CentrifugeError::InvalidPacket) };
-        let Some(uri) = req.path else { return Err(CentrifugeError::InvalidPacket) };
+        let Some(path) = req.path else { return Err(CentrifugeError::InvalidPacket) };
         let Some(version) = req.version else { return Err(CentrifugeError::InvalidPacket) };
 
         let mut out = Request {
             method: method.to_string(),
-            uri: uri.to_string(),
-            version: format!("HTTP/1.{version}"),
+            path: path.to_string(),
+            version,
             headers: Vec::new(),
             host: None,
             agent: None,
@@ -63,6 +78,33 @@ impl TryFrom<httparse::Request<'_, '_>> for Request {
             append_if_header(&mut out.referer, "referer", header);
             append_if_header(&mut out.auth, "authorization", header);
             append_if_header(&mut out.cookies, "cookie", header);
+        }
+
+        Ok(out)
+    }
+}
+
+impl TryFrom<httparse::Response<'_, '_>> for Response {
+    type Error = CentrifugeError;
+
+    fn try_from(req: httparse::Response) -> Result<Response, CentrifugeError> {
+        let Some(version) = req.version else { return Err(CentrifugeError::InvalidPacket) };
+        let Some(code) = req.code else { return Err(CentrifugeError::InvalidPacket) };
+        let Some(reason) = req.reason else { return Err(CentrifugeError::InvalidPacket) };
+
+        let mut out = Response {
+            version,
+            code,
+            reason: reason.to_string(),
+            headers: Vec::new(),
+            body: None,
+        };
+
+        for header in req.headers {
+            out.headers.push((
+                header.name.into(),
+                header.value.into(),
+            ));
         }
 
         Ok(out)
