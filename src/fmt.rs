@@ -154,7 +154,7 @@ impl Format {
 
         let ipv6 = {
             let bytes1 = Sha512::digest(&cjdns.pubkey);
-            let bytes2 = Sha512::digest(&bytes1);
+            let bytes2 = Sha512::digest(bytes1);
 
             let mut iter = bytes2.as_slice().iter();
 
@@ -226,7 +226,28 @@ impl Format {
         match tcp {
             HTTP(http) => {
                 // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
-                out.push_str(&format!("[http] {:?}", http)); // TODO
+                // TODO
+
+
+                // out.push_str("[http] req, {:?} {:?} {:?}", req.method, req.uri, req.version);
+                out.push_str("[http] req, ");
+
+                let offset = out.len();
+                out.push_str(&format!("{:?} {:?} {:?}", http.method, http.uri, http.version)); // TODO
+
+                if let Some(host) = &http.host {
+                    out.push_str(&format!(" - http://{host}{}", http.uri));
+                }
+
+                for (key, value) in &http.headers {
+                    out.push_str(&align(offset, &format!("{key:?}: {value:?}")));
+                }
+
+                if let Some(body) = http.body {
+                    out.push('\n');
+                    out.push_str(&align(offset, &format!("{body:?}")));
+                }
+
                 Color::Green
             },
             TLS(tls::TLS::ClientHello(client_hello)) => {

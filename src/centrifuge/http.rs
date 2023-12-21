@@ -1,15 +1,25 @@
-use crate::nom_http;
-
+use bstr::BString;
 use crate::structs::CentrifugeError;
 use crate::structs::http::Request;
+use httparse::Status;
+use std::convert::TryFrom;
 
 pub fn extract(remaining: &[u8]) -> Result<Request, CentrifugeError> {
-    if let Ok((_remaining, (request, headers))) = nom_http::request(remaining) {
-        match Request::from_nom(&request, headers) {
-            Ok(http) => Ok(http),
-            Err(_) => Err(CentrifugeError::ParsingError),
-        }
-    } else {
-        Err(CentrifugeError::WrongProtocol)
+    let mut headers = [httparse::EMPTY_HEADER; 256];
+    let mut req = httparse::Request::new(&mut headers);
+    let remaining = match req.parse(remaining) {
+        Ok(Status::Complete(n)) => {
+            &remaining[n..]
+        },
+        Ok(Status::Partial) => {
+            &[]
+        },
+        Err(_) => return Err(CentrifugeError::WrongProtocol),
+    };
+
+    let mut req = Request::try_from(req)?;
+    if !remaining.is_empty() {
+        req.body = Some(BString::from(remaining))
     }
+    Ok(req)
 }
