@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ansi_term::Color::{self, Yellow, Blue, Green, Red, Purple, Fixed};
+use ansi_term::Color;
 use bstr::ByteSlice;
 use reduce::Reduce;
 use sha2::{Sha512, Digest};
@@ -17,11 +17,12 @@ use crate::structs::ipv6;
 use crate::structs::tcp;
 use crate::structs::udp;
 use crate::structs::icmp;
-use crate::structs::tls;
+use crate::structs::http;
 use crate::structs::raw::Raw;
+use crate::structs::tls;
 use crate::structs::NoiseLevel;
 
-const GREY: u8 = 245;
+const GREY: Color = Color::Fixed(245);
 
 
 pub struct Config {
@@ -141,7 +142,7 @@ impl Format {
                     display_macaddr(arp_pkt.dest_mac))
             },
         });
-        Blue
+        Color::Blue
     }
 
     #[inline]
@@ -154,7 +155,7 @@ impl Format {
 
         let ipv6 = {
             let bytes1 = Sha512::digest(&cjdns.pubkey);
-            let bytes2 = Sha512::digest(&bytes1);
+            let bytes2 = Sha512::digest(bytes1);
 
             let mut iter = bytes2.as_slice().iter();
 
@@ -179,7 +180,7 @@ impl Format {
                               ipv6,
                               cjdns.pubkey));
 
-        Purple
+        Color::Purple
     }
 
     #[inline]
@@ -224,11 +225,44 @@ impl Format {
 
         use crate::structs::tcp::TCP::*;
         match tcp {
-            HTTP(http) => {
-                // println!("{}", Green.normal().paint(format!("\t\t\thttp: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or("???".to_owned()), http.uri, http.version), http)));
-                out.push_str(&format!("[http] {:?}", http)); // TODO
-                Green
+            HTTP(http::Http::Request(http)) => {
+                out.push_str("[http] req, ");
+
+                let offset = out.len();
+                out.push_str(&format!("{:?} {:?} HTTP/1.{}", http.method, http.path, http.version));
+
+                if let Some(host) = &http.host {
+                    out.push_str(&format!(" - http://{host}{}", http.path));
+                }
+
+                for (key, value) in &http.headers {
+                    out.push_str(&align(offset, &format!("{key:?}: {value:?}")));
+                }
+
+                if let Some(body) = http.body {
+                    out.push('\n');
+                    out.push_str(&align(offset, &format!("{body:?}")));
+                }
+
+                Color::Red
             },
+            HTTP(http::Http::Response(http)) => {
+                out.push_str("[http] resp, ");
+
+                let offset = out.len();
+                out.push_str(&format!("HTTP/1.{} {} {:?} ", http.version, http.code, http.reason));
+
+                for (key, value) in &http.headers {
+                    out.push_str(&align(offset, &format!("{key:?}: {value:?}")));
+                }
+
+                if let Some(body) = http.body {
+                    out.push('\n');
+                    out.push_str(&align(offset, &format!("{body:?}")));
+                }
+
+                Color::Red
+            }
             TLS(tls::TLS::ClientHello(client_hello)) => {
                 let extra = display_kv_list(&[
                     ("version", client_hello.version),
@@ -238,7 +272,7 @@ impl Format {
 
                 out.push_str("[tls] ClientHello");
                 out.push_str(&extra);
-                Green
+                Color::Green
             },
             TLS(tls::TLS::ServerHello(server_hello)) => {
                 let extra = display_kv_list(&[
@@ -249,18 +283,22 @@ impl Format {
 
                 out.push_str("[tls] ServerHello");
                 out.push_str(&extra);
-                Green
+                Color::Green
             },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
-                Red
+                Color::Red
             },
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x.as_bstr()));
-                Red
+                if tcp_hdr.flag_rst {
+                    GREY
+                } else {
+                    Color::Red
+                }
             },
             Empty => {
-                Fixed(GREY)
+                GREY
             },
         }
     }
@@ -318,7 +356,7 @@ impl Format {
                     },
                 };
 
-                Blue
+                Color::Blue
             },
             DNS(dns) => {
                 use crate::structs::dns::DNS::*;
@@ -345,7 +383,7 @@ impl Format {
                     },
                 };
 
-                Yellow
+                Color::Yellow
             },
             SSDP(ssdp) => {
                 use crate::structs::ssdp::SSDP::*;
@@ -355,7 +393,7 @@ impl Format {
                     Notify(extra) => format!("[ssdp] notify: {:?}", extra),
                     BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
                 });
-                Purple
+                Color::Purple
             },
             Dropbox(dropbox) => {
                 out.push_str(&format!("[dropbox] beacon: version={:?}, \
@@ -368,15 +406,15 @@ impl Format {
                                         dropbox.namespaces,
                                         dropbox.displayname,
                                         dropbox.port));
-                Purple
+                Color::Purple
             },
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
-                Red
+                Color::Red
             },
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x.as_bstr()));
-                Red
+                Color::Red
             },
         }
     }
@@ -421,7 +459,7 @@ impl Format {
 
         out.push_str(&format!("] {:?}", icmp.data.as_bstr()));
 
-        Blue
+        Color::Blue
     }
 
     #[inline]
@@ -441,7 +479,7 @@ impl Format {
     fn print_debugging_eth(&self, indent: usize, eth: Ether) {
         match eth {
             Ether::Arp(arp_pkt) => {
-                println!("{}{}", "\t".repeat(indent), self.colorify(Blue, format!("arp: {:?}", arp_pkt)));
+                println!("{}{}", "\t".repeat(indent), self.colorify(Color::Blue, format!("arp: {:?}", arp_pkt)));
             },
             Ether::IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
@@ -489,19 +527,22 @@ impl Format {
     fn print_debugging_tcp(&self, tcp: tcp::TCP) -> String {
         use crate::structs::tcp::TCP::*;
         match tcp {
-            HTTP(http) => {
-                self.colorify(Green, format!("http: {:?} {:?}", format!("{} http://{}{} HTTP/{}", http.method, http.host.clone().unwrap_or_else(|| "???".to_string()), http.uri, http.version), http))
+            HTTP(http::Http::Request(http)) => {
+                self.colorify(Color::Red, format!("http: {http:?}"))
+            },
+            HTTP(http::Http::Response(http)) => {
+                self.colorify(Color::Red, format!("http: {http:?}"))
             },
             TLS(client_hello) => {
-                self.colorify(Green, format!("tls: {:?}", client_hello))
+                self.colorify(Color::Green, format!("tls: {:?}", client_hello))
             },
             Text(text) => {
-                self.colorify(Blue, format!("remaining: {:?}", text))
+                self.colorify(Color::Blue, format!("remaining: {:?}", text))
             },
             Binary(x) => {
-                self.colorify(Yellow, format!("remaining: {:?}", x))
+                self.colorify(Color::Yellow, format!("remaining: {:?}", x))
             },
-            Empty => self.colorify(Fixed(GREY), String::new()),
+            Empty => self.colorify(GREY, String::new()),
         }
     }
 
@@ -510,22 +551,22 @@ impl Format {
         use crate::structs::udp::UDP::*;
         match udp {
             DHCP(dhcp) => {
-                self.colorify(Green, format!("dhcp: {:?}", dhcp))
+                self.colorify(Color::Green, format!("dhcp: {:?}", dhcp))
             },
             DNS(dns) => {
-                self.colorify(Green, format!("dns: {:?}", dns))
+                self.colorify(Color::Green, format!("dns: {:?}", dns))
             },
             SSDP(ssdp) => {
-                self.colorify(Purple, format!("ssdp: {:?}", ssdp))
+                self.colorify(Color::Purple, format!("ssdp: {:?}", ssdp))
             },
             Dropbox(dropbox) => {
-                self.colorify(Purple, format!("dropbox: {:?}", dropbox))
+                self.colorify(Color::Purple, format!("dropbox: {:?}", dropbox))
             },
             Text(text) => {
-                self.colorify(Blue, format!("remaining: {:?}", text))
+                self.colorify(Color::Blue, format!("remaining: {:?}", text))
             },
             Binary(x) => {
-                self.colorify(Yellow, format!("remaining: {:?}", x))
+                self.colorify(Color::Yellow, format!("remaining: {:?}", x))
             },
         }
     }

@@ -3,7 +3,6 @@
 pub mod centrifuge;
 pub mod errors;
 pub mod link;
-mod nom_http;
 pub mod sandbox;
 pub mod structs;
 pub mod sniff;

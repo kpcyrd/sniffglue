@@ -6,7 +6,7 @@ use serde::Serialize;
 #[derive(Debug, PartialEq, Serialize)]
 pub enum TCP {
     TLS(tls::TLS),
-    HTTP(http::Request),
+    HTTP(http::Http),
 
     Text(String),
     Binary(Vec<u8>),
