@@ -28,13 +28,7 @@ pub fn find() -> Option<String> {
         }
     };
 
-    for config_path in paths {
-        if Path::new(&config_path).exists() {
-            return Some(config_path);
-        }
-    }
-
-    None
+    paths.into_iter().find(|p| Path::new(&p).exists())
 }
 
 pub fn load(path: &str) -> Result<Config> {
