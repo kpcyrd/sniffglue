@@ -7,11 +7,6 @@ pub enum CentrifugeError {
     InvalidPacket,
 }
 
-pub mod prelude {
-    pub use crate::structs::raw::Raw::*;
-    pub use crate::structs::ether::Ether::*;
-}
-
 /// `Zero`            - This packet is very interesting
 /// `One`             - This packet is somewhat interesting
 /// `Two`             - Stuff you want to see if you're looking really hard

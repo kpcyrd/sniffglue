@@ -1,6 +1,7 @@
 mod cli;
 mod fmt;
 
+use clap::{CommandFactory, Parser};
 use crate::cli::Args;
 use env_logger::Env;
 use sniffglue::centrifuge;
@@ -9,19 +10,18 @@ use sniffglue::link::DataLink;
 use sniffglue::sandbox;
 use sniffglue::sniff;
 use sniffglue::structs;
-use std::io::stdout;
+use std::io::{self, IsTerminal, stdout};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
-use structopt::StructOpt;
 
 fn main() -> Result<()> {
     env_logger::init_from_env(Env::default()
         .default_filter_or("sniffglue=warn"));
 
-    let mut args = Args::from_args();
+    let mut args = Args::parse();
 
     if let Some(shell) = args.gen_completions {
-        Args::clap().gen_completions_to("sniffglue", shell, &mut stdout());
+        clap_complete::generate(shell, &mut Args::command(), "sniffglue", &mut stdout());
         return Ok(());
     }
 
@@ -43,7 +43,7 @@ fn main() -> Result<()> {
         fmt::Layout::Compact
     };
 
-    let colors = atty::is(atty::Stream::Stdout);
+    let colors = io::stdout().is_terminal();
     let config = fmt::Config::new(layout, args.verbose, colors);
 
     let cap = if args.read {
