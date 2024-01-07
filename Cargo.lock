@@ -1083,7 +1083,7 @@ checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
 
 [[package]]
 name = "sniffglue"
-version = "0.15.0"
+version = "0.16.0"
 dependencies = [
  "ansi_term",
  "anyhow",
