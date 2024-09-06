@@ -95,7 +95,7 @@ impl Cap {
                 }))
             },
             0 => bail!("timeout expired"),
-            -2 => Ok(None),
+            pcap_sys::PCAP_ERROR_BREAK => Ok(None),
             _ => unreachable!(),
         }
     }
