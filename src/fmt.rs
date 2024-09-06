@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use ansi_term::Color;
 use bstr::ByteSlice;
-use reduce::Reduce;
 use sha2::{Sha512, Digest};
 use std::cmp;
 use std::fmt::Debug;
@@ -364,8 +363,9 @@ impl Format {
                     Request(req) => {
                         out.push_str("[dns] req, ");
 
-                        match Reduce::reduce(req.questions.iter()
-                            .map(|x| format!("{:?}", x)), |a, b| a + &align(out.len(), &b))
+                        match req.questions.iter()
+                            .map(|x| format!("{:?}", x))
+                            .reduce(|a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
@@ -374,8 +374,9 @@ impl Format {
                     Response(resp) => {
                         out.push_str("[dns] resp, ");
 
-                        match Reduce::reduce(resp.answers.iter()
-                            .map(|x| format!("{:?}", x)), |a, b| a + &align(out.len(), &b))
+                        match resp.answers.iter()
+                            .map(|x| format!("{:?}", x))
+                            .reduce(|a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
@@ -619,12 +620,13 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 
 #[inline]
 fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
-    Reduce::reduce(list.iter()
+    list.iter()
         .filter_map(|&(key, ref value)| {
             value.as_ref().map(|value| {
                 format!("{}: {:?}", key, value)
             })
-        }), |a, b| a + ", " + &b)
+        })
+        .reduce(|a, b| a + ", " + &b)
         .map_or_else(String::new, |extra| format!(" ({})", extra))
 }
 
@@ -650,10 +652,11 @@ impl<'a> DhcpKvListWriter<'a> {
     }
 
     fn finalize(self) -> String {
-        Reduce::reduce(self.elements.iter()
+        self.elements.iter()
             .map(|&(key, ref value)| {
                 format!("{}: {}", key, value)
-            }), |a, b| a + ", " + &b)
+            })
+            .reduce(|a, b| a + ", " + &b)
             .map_or_else(String::new, |extra| format!(" ({})", extra))
     }
 }
