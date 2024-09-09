@@ -16,6 +16,8 @@ when processing packets. The output should be as useful as possible by default.
 
     # sniff with default filters (dhcp, dns, tls, http)
     sniffglue enp0s25
+    # sniff across all interfaces
+    sniffglue any
     # increase the filter sensitivity (arp)
     sniffglue -v enp0s25
     # increase the filter sensitivity (cjdns, ssdp, dropbox, packets with valid utf8)
