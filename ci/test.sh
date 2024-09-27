@@ -21,10 +21,4 @@ case "$BUILD_MODE" in
             exit 1
         fi
         ;;
-    reprotest)
-        docker run --privileged reprotest-sniffglue ci/reprotest.sh || true
-        ;;
-    cross)
-        # do not execute tests when cross compiling
-        ;;
 esac
