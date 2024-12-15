@@ -108,7 +108,7 @@ pub enum Record {
     Unknown,
 }
 
-impl<'a> From<dns_parser::RData<'a>> for Record {
+impl From<dns_parser::RData<'_>> for Record {
     fn from(rdata: dns_parser::RData) -> Record {
         use dns_parser::RData::*;
 
