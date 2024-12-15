@@ -23,11 +23,11 @@ depends = "$auto"
 section = "net"
 priority = "optional"
 
+[workspace]
+members = ["fuzz"]
+
 [lib]
 doc = false
-
-[badges]
-travis-ci = { repository = "kpcyrd/sniffglue" }
 
 [dependencies]
 anyhow = "1"

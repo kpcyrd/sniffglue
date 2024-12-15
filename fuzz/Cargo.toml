@@ -1,22 +1,20 @@
-
 [package]
 name = "sniffglue-fuzz"
-version = "0.0.1"
-authors = ["Automatically generated"]
+version = "0.0.0"
 publish = false
+edition = "2021"
 
 [package.metadata]
 cargo-fuzz = true
 
+[dependencies]
+libfuzzer-sys = "0.4"
+
 [dependencies.sniffglue]
 path = ".."
-[dependencies.libfuzzer-sys]
-git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
-
-# Prevent this from interfering with workspaces
-[workspace]
-members = ["."]
 
 [[bin]]
 name = "read_packet"
 path = "fuzz_targets/read_packet.rs"
+test = false
+doc = false
