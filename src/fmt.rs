@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use ansi_term::Color;
 use bstr::ByteSlice;
+use nu_ansi_term::Color;
 use sha2::{Sha512, Digest};
 use std::cmp;
 use std::fmt::Debug;
