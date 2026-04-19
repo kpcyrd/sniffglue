@@ -35,14 +35,13 @@ pub struct Response {
 }
 
 fn append_if_header(mem: &mut Option<String>, expected: &str, header: &Header) {
-    if header.name.eq_ignore_ascii_case(expected) {
-        if let Ok(value) = str::from_utf8(header.value) {
+    if header.name.eq_ignore_ascii_case(expected) &&
+        let Ok(value) = str::from_utf8(header.value) {
             let mem = mem.get_or_insert_with(String::new);
             if !mem.is_empty() {
                 mem.push_str("; ");
             }
             mem.push_str(value);
-        }
     }
 }
 
