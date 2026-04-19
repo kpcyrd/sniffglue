@@ -8,7 +8,6 @@ use crate::centrifuge::tls;
 use crate::structs::CentrifugeError;
 use crate::structs::tcp::TCP;
 
-
 pub fn parse(remaining: &[u8]) -> Result<(tcp::TcpHeader, TCP), CentrifugeError> {
     if let Ok((remaining, tcp_hdr)) = tcp::parse_tcp_header(remaining) {
         let inner = match extract(&tcp_hdr, remaining) {

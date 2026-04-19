@@ -1,6 +1,6 @@
-use bstr::BString;
 use crate::structs::CentrifugeError;
 use crate::structs::http::{Http, Request, Response};
+use bstr::BString;
 use httparse::Status;
 use std::convert::TryFrom;
 

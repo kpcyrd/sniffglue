@@ -14,11 +14,11 @@ pub enum CentrifugeError {
 /// `Maximum`         - We couldn't parse this
 #[derive(Debug)]
 pub enum NoiseLevel {
-    Zero          = 0,
-    One           = 1,
-    Two           = 2,
+    Zero = 0,
+    One = 1,
+    Two = 2,
     AlmostMaximum = 3,
-    Maximum       = 4,
+    Maximum = 4,
 }
 
 impl NoiseLevel {
@@ -27,19 +27,19 @@ impl NoiseLevel {
     }
 }
 
-pub mod raw;
-pub mod ether;
 pub mod arp;
 pub mod cjdns;
-pub mod icmp;
-pub mod ipv4;
-pub mod ipv6;
-pub mod ip;
-pub mod tcp;
-pub mod udp;
-pub mod tls;
-pub mod http;
 pub mod dhcp;
 pub mod dns;
-pub mod ssdp;
 pub mod dropbox;
+pub mod ether;
+pub mod http;
+pub mod icmp;
+pub mod ip;
+pub mod ipv4;
+pub mod ipv6;
+pub mod raw;
+pub mod ssdp;
+pub mod tcp;
+pub mod tls;
+pub mod udp;

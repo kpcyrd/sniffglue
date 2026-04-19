@@ -1,7 +1,7 @@
-use crate::structs::{tls, CentrifugeError};
-use crate::structs::tls::{TLS, ClientHello, ServerHello};
+use crate::structs::tls::{ClientHello, ServerHello, TLS};
+use crate::structs::{CentrifugeError, tls};
 use std::str;
-use tls_parser::{TlsMessage, TlsMessageHandshake, TlsExtension, parse_tls_extension};
+use tls_parser::{TlsExtension, TlsMessage, TlsMessageHandshake, parse_tls_extension};
 
 pub fn extract(remaining: &[u8]) -> Result<tls::TLS, CentrifugeError> {
     if let Ok((_remaining, tls)) = tls_parser::parse_tls_plaintext(remaining) {
@@ -24,10 +24,10 @@ pub fn extract(remaining: &[u8]) -> Result<tls::TLS, CentrifugeError> {
 
                         return Ok(TLS::ClientHello(ClientHello::new(&ch, hostname)));
                     }
-                },
+                }
                 TlsMessage::Handshake(TlsMessageHandshake::ServerHello(sh)) => {
                     return Ok(TLS::ServerHello(ServerHello::new(&sh)));
-                },
+                }
                 _ => (),
             }
         }

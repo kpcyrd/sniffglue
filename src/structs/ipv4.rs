@@ -1,5 +1,5 @@
-use crate::structs::{tcp, udp, icmp};
 use crate::structs::NoiseLevel;
+use crate::structs::{icmp, tcp, udp};
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

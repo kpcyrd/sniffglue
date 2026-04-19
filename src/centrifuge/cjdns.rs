@@ -1,7 +1,7 @@
-use crate::structs::{cjdns, CentrifugeError};
+use crate::structs::{CentrifugeError, cjdns};
+use nom::Parser;
 use nom::bytes::complete::{tag, take};
 use nom::number::complete::be_u16;
-use nom::Parser;
 
 const BEACON_PASSWORD_LEN: usize = 20;
 const BEACON_PUBKEY_LEN: usize = 32;

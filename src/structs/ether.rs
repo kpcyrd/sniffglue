@@ -1,8 +1,8 @@
+use crate::structs::NoiseLevel;
 use crate::structs::arp;
+use crate::structs::cjdns;
 use crate::structs::ipv4;
 use crate::structs::ipv6;
-use crate::structs::cjdns;
-use crate::structs::NoiseLevel;
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

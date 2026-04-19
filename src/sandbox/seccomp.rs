@@ -1,5 +1,5 @@
 use crate::errors::*;
-use syscallz::{self, Context, Syscall, Action};
+use syscallz::{self, Action, Context, Syscall};
 
 pub fn activate_stage1() -> Result<()> {
     let mut ctx = Context::init()?;

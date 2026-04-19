@@ -1,6 +1,6 @@
 use data_encoding::BASE64;
 use serde::Serialize;
-use tls_parser::{TlsVersion, TlsClientHelloContents, TlsServerHelloContents};
+use tls_parser::{TlsClientHelloContents, TlsServerHelloContents, TlsVersion};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum TLS {
@@ -15,7 +15,7 @@ fn tls_version(ver: TlsVersion) -> Option<&'static str> {
         TlsVersion::Tls11 => Some("tls1.1"),
         TlsVersion::Tls12 => Some("tls1.2"),
         TlsVersion::Tls13 => Some("tls1.3"),
-        _                 => None,
+        _ => None,
     }
 }
 
@@ -47,8 +47,7 @@ pub struct ServerHello {
 
 impl ServerHello {
     pub fn new(sh: &TlsServerHelloContents) -> ServerHello {
-        let cipher = sh.cipher.get_ciphersuite()
-            .map(|cs| cs.name);
+        let cipher = sh.cipher.get_ciphersuite().map(|cs| cs.name);
         let session_id = sh.session_id.map(|id| BASE64.encode(id));
 
         ServerHello {
