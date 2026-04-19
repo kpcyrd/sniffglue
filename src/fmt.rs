@@ -2,27 +2,26 @@ use std::sync::Arc;
 
 use ansi_term::Color;
 use bstr::ByteSlice;
-use sha2::{Sha512, Digest};
+use pktparse::icmp::{IcmpCode, IcmpData, IcmpHeader};
+use sha2::{Digest, Sha512};
 use std::cmp;
 use std::fmt::Debug;
-use pktparse::icmp::{IcmpHeader, IcmpCode, IcmpData};
 
-use crate::structs::ether::Ether;
+use crate::structs::NoiseLevel;
 use crate::structs::arp;
 use crate::structs::cjdns;
+use crate::structs::ether::Ether;
+use crate::structs::http;
+use crate::structs::icmp;
 use crate::structs::ip::IPHeader;
 use crate::structs::ipv4;
 use crate::structs::ipv6;
-use crate::structs::tcp;
-use crate::structs::udp;
-use crate::structs::icmp;
-use crate::structs::http;
 use crate::structs::raw::Raw;
+use crate::structs::tcp;
 use crate::structs::tls;
-use crate::structs::NoiseLevel;
+use crate::structs::udp;
 
 const GREY: Color = Color::Fixed(245);
-
 
 pub struct Config {
     fmt: Format,
@@ -59,10 +58,7 @@ pub struct Format {
 
 impl Format {
     pub fn new(layout: Layout, colors: bool) -> Format {
-        Format {
-            layout,
-            colors,
-        }
+        Format { layout, colors }
     }
 
     #[inline]
@@ -89,21 +85,26 @@ impl Format {
 
         let color = match packet {
             Raw::Ether(eth_frame, eth) => {
-                out += &format!("{} -> {}, ",
-                                display_macaddr(eth_frame.source_mac),
-                                display_macaddr(eth_frame.dest_mac));
+                out += &format!(
+                    "{} -> {}, ",
+                    display_macaddr(eth_frame.source_mac),
+                    display_macaddr(eth_frame.dest_mac)
+                );
 
                 self.format_compact_eth(&mut out, eth)
-            },
+            }
             Raw::Tun(eth) => self.format_compact_eth(&mut out, eth),
             Raw::Sll(eth) => self.format_compact_eth(&mut out, eth),
             Raw::Unknown(data) => self.format_compact_unknown_data(&mut out, &data),
         };
 
-        println!("{}", match color {
-            Some(color) => self.colorify(color, out),
-            None => out,
-        });
+        println!(
+            "{}",
+            match color {
+                Some(color) => self.colorify(color, out),
+                None => out,
+            }
+        );
     }
 
     #[inline]
@@ -128,28 +129,32 @@ impl Format {
         use crate::structs::arp::ARP;
         out.push_str(&match arp_pkt {
             ARP::Request(arp_pkt) => {
-                format!("[arp/request] {:15}   ?                         (tell {}, {})",
+                format!(
+                    "[arp/request] {:15}   ?                         (tell {}, {})",
                     arp_pkt.dest_addr.to_string(),
                     arp_pkt.src_addr,
-                    display_macaddr(arp_pkt.src_mac))
-            },
+                    display_macaddr(arp_pkt.src_mac)
+                )
+            }
             ARP::Reply(arp_pkt) => {
-                format!("[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
+                format!(
+                    "[arp/reply  ] {:15}   ! => {}    (fyi  {}, {})",
                     arp_pkt.src_addr.to_string(),
                     display_macaddr(arp_pkt.src_mac),
                     arp_pkt.dest_addr,
-                    display_macaddr(arp_pkt.dest_mac))
-            },
+                    display_macaddr(arp_pkt.dest_mac)
+                )
+            }
         });
         Color::Blue
     }
 
     #[inline]
     fn format_compact_cjdns(&self, out: &mut String, cjdns: &cjdns::CjdnsEthPkt) -> Color {
-        let password = cjdns.password.iter()
-            .map(|b| {
-                format!("\\x{:02x}", b)
-            })
+        let password = cjdns
+            .password
+            .iter()
+            .map(|b| format!("\\x{:02x}", b))
             .fold(String::new(), |a, b| a + &b);
 
         let ipv6 = {
@@ -173,54 +178,97 @@ impl Format {
             ipv6
         };
 
-        out.push_str(&format!("[cjdns beacon] version={:?}, password=\"{}\", ipv6={:?}, pubkey={:?}",
-                              cjdns.version,
-                              password,
-                              ipv6,
-                              cjdns.pubkey));
+        out.push_str(&format!(
+            "[cjdns beacon] version={:?}, password=\"{}\", ipv6={:?}, pubkey={:?}",
+            cjdns.version, password, ipv6, cjdns.pubkey
+        ));
 
         Color::Purple
     }
 
     #[inline]
-    fn format_compact_ipv4<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv4::IPv4) -> Option<Color> {
+    fn format_compact_ipv4<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        next: ipv4::IPv4,
+    ) -> Option<Color> {
         match next {
-            ipv4::IPv4::TCP(tcp_hdr, tcp) => Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp)),
-            ipv4::IPv4::UDP(udp_hdr, udp) => Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp)),
-            ipv4::IPv4::ICMP(icmp_hdr, icmp) => Some(self.format_compact_ip_icmp(out, ip_hdr, icmp_hdr, icmp)),
+            ipv4::IPv4::TCP(tcp_hdr, tcp) => {
+                Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp))
+            }
+            ipv4::IPv4::UDP(udp_hdr, udp) => {
+                Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp))
+            }
+            ipv4::IPv4::ICMP(icmp_hdr, icmp) => {
+                Some(self.format_compact_ip_icmp(out, ip_hdr, icmp_hdr, icmp))
+            }
             ipv4::IPv4::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
         }
     }
 
     #[inline]
-    fn format_compact_ipv6<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, next: ipv6::IPv6) -> Option<Color> {
+    fn format_compact_ipv6<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        next: ipv6::IPv6,
+    ) -> Option<Color> {
         match next {
-            ipv6::IPv6::TCP(tcp_hdr, tcp) => Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp)),
-            ipv6::IPv6::UDP(udp_hdr, udp) => Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp)),
+            ipv6::IPv6::TCP(tcp_hdr, tcp) => {
+                Some(self.format_compact_ip_tcp(out, ip_hdr, &tcp_hdr, tcp))
+            }
+            ipv6::IPv6::UDP(udp_hdr, udp) => {
+                Some(self.format_compact_ip_udp(out, ip_hdr, udp_hdr, udp))
+            }
             ipv6::IPv6::Unknown(data) => self.format_compact_ip_unknown(out, ip_hdr, &data),
         }
     }
 
     #[inline]
-    fn format_compact_ip_unknown<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, data: &[u8]) -> Option<Color> {
-        out.push_str(&format!("[unknown] {} -> {} {:?}",
-                        ip_hdr.source_addr(),
-                        ip_hdr.dest_addr(),
-                        data));
+    fn format_compact_ip_unknown<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        data: &[u8],
+    ) -> Option<Color> {
+        out.push_str(&format!(
+            "[unknown] {} -> {} {:?}",
+            ip_hdr.source_addr(),
+            ip_hdr.dest_addr(),
+            data
+        ));
         None
     }
 
     #[inline]
-    fn format_compact_ip_tcp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, tcp_hdr: &pktparse::tcp::TcpHeader, tcp: tcp::TCP) -> Color {
+    fn format_compact_ip_tcp<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        tcp_hdr: &pktparse::tcp::TcpHeader,
+        tcp: tcp::TCP,
+    ) -> Color {
         let mut flags = String::new();
-        if tcp_hdr.flag_syn { flags.push('S') }
-        if tcp_hdr.flag_ack { flags.push('A') }
-        if tcp_hdr.flag_rst { flags.push('R') }
-        if tcp_hdr.flag_fin { flags.push('F') }
+        if tcp_hdr.flag_syn {
+            flags.push('S')
+        }
+        if tcp_hdr.flag_ack {
+            flags.push('A')
+        }
+        if tcp_hdr.flag_rst {
+            flags.push('R')
+        }
+        if tcp_hdr.flag_fin {
+            flags.push('F')
+        }
 
-        out.push_str(&format!("[tcp/{:2}] {:22} -> {:22} ", flags,
-                        format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)));
+        out.push_str(&format!(
+            "[tcp/{:2}] {:22} -> {:22} ",
+            flags,
+            format!("{}:{}", ip_hdr.source_addr(), tcp_hdr.source_port),
+            format!("{}:{}", ip_hdr.dest_addr(), tcp_hdr.dest_port)
+        ));
 
         use crate::structs::tcp::TCP::*;
         match tcp {
@@ -228,7 +276,10 @@ impl Format {
                 out.push_str("[http] req, ");
 
                 let offset = out.len();
-                out.push_str(&format!("{:?} {:?} HTTP/1.{}", http.method, http.path, http.version));
+                out.push_str(&format!(
+                    "{:?} {:?} HTTP/1.{}",
+                    http.method, http.path, http.version
+                ));
 
                 if let Some(host) = &http.host {
                     out.push_str(&format!(" - http://{host}{}", http.path));
@@ -244,12 +295,15 @@ impl Format {
                 }
 
                 Color::Red
-            },
+            }
             HTTP(http::Http::Response(http)) => {
                 out.push_str("[http] resp, ");
 
                 let offset = out.len();
-                out.push_str(&format!("HTTP/1.{} {} {:?} ", http.version, http.code, http.reason));
+                out.push_str(&format!(
+                    "HTTP/1.{} {} {:?} ",
+                    http.version, http.code, http.reason
+                ));
 
                 for (key, value) in &http.headers {
                     out.push_str(&align(offset, &format!("{key:?}: {value:?}")));
@@ -272,7 +326,7 @@ impl Format {
                 out.push_str("[tls] ClientHello");
                 out.push_str(&extra);
                 Color::Green
-            },
+            }
             TLS(tls::TLS::ServerHello(server_hello)) => {
                 let extra = display_kv_list(&[
                     ("version", server_hello.version),
@@ -283,30 +337,32 @@ impl Format {
                 out.push_str("[tls] ServerHello");
                 out.push_str(&extra);
                 Color::Green
-            },
+            }
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
                 Color::Red
-            },
+            }
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x.as_bstr()));
-                if tcp_hdr.flag_rst {
-                    GREY
-                } else {
-                    Color::Red
-                }
-            },
-            Empty => {
-                GREY
-            },
+                if tcp_hdr.flag_rst { GREY } else { Color::Red }
+            }
+            Empty => GREY,
         }
     }
 
     #[inline]
-    fn format_compact_ip_udp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, udp_hdr: pktparse::udp::UdpHeader, udp: udp::UDP) -> Color {
-        out.push_str(&format!("[udp   ] {:22} -> {:22} ",
-                        format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
-                        format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)));
+    fn format_compact_ip_udp<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        udp_hdr: pktparse::udp::UdpHeader,
+        udp: udp::UDP,
+    ) -> Color {
+        out.push_str(&format!(
+            "[udp   ] {:22} -> {:22} ",
+            format!("{}:{}", ip_hdr.source_addr(), udp_hdr.source_port),
+            format!("{}:{}", ip_hdr.dest_addr(), udp_hdr.dest_port)
+        ));
 
         use crate::structs::udp::UDP::*;
         match udp {
@@ -315,77 +371,94 @@ impl Format {
 
                 match dhcp {
                     DISCOVER(disc) => {
-                        out.push_str(&format!("[dhcp] DISCOVER: {}",
-                                display_macadr_buf(disc.chaddr)));
-                        out.push_str(&DhcpKvListWriter::new()
-                                     .append("hostname", &disc.hostname)
-                                     .append("requested_ip_address", &disc.requested_ip_address)
-                                     .finalize());
-                    },
+                        out.push_str(&format!(
+                            "[dhcp] DISCOVER: {}",
+                            display_macadr_buf(disc.chaddr)
+                        ));
+                        out.push_str(
+                            &DhcpKvListWriter::new()
+                                .append("hostname", &disc.hostname)
+                                .append("requested_ip_address", &disc.requested_ip_address)
+                                .finalize(),
+                        );
+                    }
                     REQUEST(req) => {
-                        out.push_str(&format!("[dhcp] REQ: {}",
-                                display_macadr_buf(req.chaddr)));
-                        out.push_str(&DhcpKvListWriter::new()
-                                     .append("hostname", &req.hostname)
-                                     .append("requested_ip_address", &req.requested_ip_address)
-                                     .finalize());
-                    },
+                        out.push_str(&format!("[dhcp] REQ: {}", display_macadr_buf(req.chaddr)));
+                        out.push_str(
+                            &DhcpKvListWriter::new()
+                                .append("hostname", &req.hostname)
+                                .append("requested_ip_address", &req.requested_ip_address)
+                                .finalize(),
+                        );
+                    }
                     ACK(ack) => {
-                        out.push_str(&format!("[dhcp] ACK: {} => {}",
-                                display_macadr_buf(ack.chaddr),
-                                ack.yiaddr));
-                        out.push_str(&DhcpKvListWriter::new()
-                                     .append("hostname", &ack.hostname)
-                                     .append("router", &ack.router)
-                                     .append("dns", &ack.domain_name_server)
-                                     .finalize());
-                    },
+                        out.push_str(&format!(
+                            "[dhcp] ACK: {} => {}",
+                            display_macadr_buf(ack.chaddr),
+                            ack.yiaddr
+                        ));
+                        out.push_str(
+                            &DhcpKvListWriter::new()
+                                .append("hostname", &ack.hostname)
+                                .append("router", &ack.router)
+                                .append("dns", &ack.domain_name_server)
+                                .finalize(),
+                        );
+                    }
                     OFFER(offer) => {
-                        out.push_str(&format!("[dhcp] OFFER: {} => {}",
-                                display_macadr_buf(offer.chaddr),
-                                offer.yiaddr));
-                        out.push_str(&DhcpKvListWriter::new()
-                                     .append("hostname", &offer.hostname)
-                                     .append("router", &offer.router)
-                                     .append("dns", &offer.domain_name_server)
-                                     .finalize());
-                    },
+                        out.push_str(&format!(
+                            "[dhcp] OFFER: {} => {}",
+                            display_macadr_buf(offer.chaddr),
+                            offer.yiaddr
+                        ));
+                        out.push_str(
+                            &DhcpKvListWriter::new()
+                                .append("hostname", &offer.hostname)
+                                .append("router", &offer.router)
+                                .append("dns", &offer.domain_name_server)
+                                .finalize(),
+                        );
+                    }
                     _ => {
                         out.push_str(&format!("[dhcp] {:?}", dhcp)); // TODO
-                    },
+                    }
                 };
 
                 Color::Blue
-            },
+            }
             DNS(dns) => {
                 use crate::structs::dns::DNS::*;
                 match dns {
                     Request(req) => {
                         out.push_str("[dns] req, ");
 
-                        match req.questions.iter()
+                        match req
+                            .questions
+                            .iter()
                             .map(|x| format!("{:?}", x))
                             .reduce(|a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
                         };
-                    },
+                    }
                     Response(resp) => {
                         out.push_str("[dns] resp, ");
 
-                        match resp.answers.iter()
+                        match resp
+                            .answers
+                            .iter()
                             .map(|x| format!("{:?}", x))
                             .reduce(|a, b| a + &align(out.len(), &b))
                         {
                             Some(dns) => out.push_str(&dns),
                             None => out.push_str("[]"),
                         };
-                    },
+                    }
                 };
 
                 Color::Yellow
-            },
+            }
             SSDP(ssdp) => {
                 use crate::structs::ssdp::SSDP::*;
                 out.push_str(&match ssdp {
@@ -395,32 +468,40 @@ impl Format {
                     BTSearch(extra) => format!("[ssdp] torrent search: {:?}", extra),
                 });
                 Color::Purple
-            },
+            }
             Dropbox(dropbox) => {
-                out.push_str(&format!("[dropbox] beacon: version={:?}, \
+                out.push_str(&format!(
+                    "[dropbox] beacon: version={:?}, \
                                                          host_int={:?}, \
                                                          namespaces={:?}, \
                                                          displayname={:?}, \
                                                          port={:?}",
-                                        dropbox.version,
-                                        dropbox.host_int,
-                                        dropbox.namespaces,
-                                        dropbox.displayname,
-                                        dropbox.port));
+                    dropbox.version,
+                    dropbox.host_int,
+                    dropbox.namespaces,
+                    dropbox.displayname,
+                    dropbox.port
+                ));
                 Color::Purple
-            },
+            }
             Text(text) => {
                 out.push_str(&format!("[text] {:?}", text));
                 Color::Red
-            },
+            }
             Binary(x) => {
                 out.push_str(&format!("[binary] {:?}", x.as_bstr()));
                 Color::Red
-            },
+            }
         }
     }
 
-    fn format_compact_ip_icmp<IP: IPHeader>(&self, out: &mut String, ip_hdr: &IP, icmp_hdr: IcmpHeader, icmp: icmp::ICMP) -> Color {
+    fn format_compact_ip_icmp<IP: IPHeader>(
+        &self,
+        out: &mut String,
+        ip_hdr: &IP,
+        icmp_hdr: IcmpHeader,
+        icmp: icmp::ICMP,
+    ) -> Color {
         let code = match icmp_hdr.code {
             IcmpCode::EchoReply => Some("icmp/pong"),
             /*
@@ -448,11 +529,13 @@ impl Format {
             */
             _ => None,
         };
-        out.push_str(&format!("[{:10}] {:18} -> {:22} [code={:?}",
-                        code.unwrap_or("icmp"),
-                        ip_hdr.source_addr(),
-                        ip_hdr.dest_addr(),
-                        icmp_hdr.code));
+        out.push_str(&format!(
+            "[{:10}] {:18} -> {:22} [code={:?}",
+            code.unwrap_or("icmp"),
+            ip_hdr.source_addr(),
+            ip_hdr.dest_addr(),
+            icmp_hdr.code
+        ));
 
         if icmp_hdr.data != IcmpData::None {
             out.push_str(&format!(", data={:?}", icmp_hdr.data));
@@ -469,7 +552,7 @@ impl Format {
             Raw::Ether(eth_frame, eth) => {
                 println!("eth: {:?}", eth_frame);
                 self.print_debugging_eth(1, eth);
-            },
+            }
             Raw::Tun(eth) => self.print_debugging_eth(0, eth),
             Raw::Sll(eth) => self.print_debugging_eth(0, eth),
             Raw::Unknown(data) => println!("unknown: {:?}", data),
@@ -480,44 +563,64 @@ impl Format {
     fn print_debugging_eth(&self, indent: usize, eth: Ether) {
         match eth {
             Ether::Arp(arp_pkt) => {
-                println!("{}{}", "\t".repeat(indent), self.colorify(Color::Blue, format!("arp: {:?}", arp_pkt)));
-            },
+                println!(
+                    "{}{}",
+                    "\t".repeat(indent),
+                    self.colorify(Color::Blue, format!("arp: {:?}", arp_pkt))
+                );
+            }
             Ether::IPv4(ip_hdr, ipv4::IPv4::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
-                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
-            },
+                println!("{}tcp: {:?}", "\t".repeat(indent + 1), tcp_hdr);
+                println!(
+                    "{}{}",
+                    "\t".repeat(indent + 2),
+                    self.print_debugging_tcp(tcp)
+                );
+            }
             Ether::IPv4(ip_hdr, ipv4::IPv4::UDP(udp_hdr, udp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
-                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
-            },
+                println!("{}udp: {:?}", "\t".repeat(indent + 1), udp_hdr);
+                println!(
+                    "{}{}",
+                    "\t".repeat(indent + 2),
+                    self.print_debugging_udp(udp)
+                );
+            }
             Ether::IPv4(ip_hdr, ipv4::IPv4::ICMP(icmp_hdr, icmp)) => {
                 println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
-                println!("{}icmp: {:?}",  "\t".repeat(indent+1), icmp_hdr);
-                println!("{}{:?}",         "\t".repeat(indent+2), icmp.data);
-            },
+                println!("{}icmp: {:?}", "\t".repeat(indent + 1), icmp_hdr);
+                println!("{}{:?}", "\t".repeat(indent + 2), icmp.data);
+            }
             Ether::IPv4(ip_hdr, ipv4::IPv4::Unknown(data)) => {
-                println!("{}ipv4: {:?}",     "\t".repeat(indent), ip_hdr);
-                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
-            },
+                println!("{}ipv4: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}", "\t".repeat(indent + 1), data);
+            }
             Ether::IPv6(ip_hdr, ipv6::IPv6::TCP(tcp_hdr, tcp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
-                println!("{}tcp: {:?}",  "\t".repeat(indent+1), tcp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_tcp(tcp));
-            },
+                println!("{}tcp: {:?}", "\t".repeat(indent + 1), tcp_hdr);
+                println!(
+                    "{}{}",
+                    "\t".repeat(indent + 2),
+                    self.print_debugging_tcp(tcp)
+                );
+            }
             Ether::IPv6(ip_hdr, ipv6::IPv6::UDP(udp_hdr, udp)) => {
                 println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
-                println!("{}udp: {:?}",  "\t".repeat(indent+1), udp_hdr);
-                println!("{}{}",         "\t".repeat(indent+2), self.print_debugging_udp(udp));
-            },
+                println!("{}udp: {:?}", "\t".repeat(indent + 1), udp_hdr);
+                println!(
+                    "{}{}",
+                    "\t".repeat(indent + 2),
+                    self.print_debugging_udp(udp)
+                );
+            }
             Ether::IPv6(ip_hdr, ipv6::IPv6::Unknown(data)) => {
-                println!("{}ipv6: {:?}",     "\t".repeat(indent), ip_hdr);
-                println!("{}unknown: {:?}",  "\t".repeat(indent+1), data);
-            },
+                println!("{}ipv6: {:?}", "\t".repeat(indent), ip_hdr);
+                println!("{}unknown: {:?}", "\t".repeat(indent + 1), data);
+            }
             Ether::Cjdns(cjdns_pkt) => {
-                println!("{}cjdns: {:?}",     "\t".repeat(indent), cjdns_pkt);
-            },
+                println!("{}cjdns: {:?}", "\t".repeat(indent), cjdns_pkt);
+            }
             Ether::Unknown(data) => {
                 println!("{}unknown: {:?}", "\t".repeat(indent), data);
             }
@@ -528,21 +631,13 @@ impl Format {
     fn print_debugging_tcp(&self, tcp: tcp::TCP) -> String {
         use crate::structs::tcp::TCP::*;
         match tcp {
-            HTTP(http::Http::Request(http)) => {
-                self.colorify(Color::Red, format!("http: {http:?}"))
-            },
+            HTTP(http::Http::Request(http)) => self.colorify(Color::Red, format!("http: {http:?}")),
             HTTP(http::Http::Response(http)) => {
                 self.colorify(Color::Red, format!("http: {http:?}"))
-            },
-            TLS(client_hello) => {
-                self.colorify(Color::Green, format!("tls: {:?}", client_hello))
-            },
-            Text(text) => {
-                self.colorify(Color::Blue, format!("remaining: {:?}", text))
-            },
-            Binary(x) => {
-                self.colorify(Color::Yellow, format!("remaining: {:?}", x))
-            },
+            }
+            TLS(client_hello) => self.colorify(Color::Green, format!("tls: {:?}", client_hello)),
+            Text(text) => self.colorify(Color::Blue, format!("remaining: {:?}", text)),
+            Binary(x) => self.colorify(Color::Yellow, format!("remaining: {:?}", x)),
             Empty => self.colorify(GREY, String::new()),
         }
     }
@@ -551,24 +646,12 @@ impl Format {
     fn print_debugging_udp(&self, udp: udp::UDP) -> String {
         use crate::structs::udp::UDP::*;
         match udp {
-            DHCP(dhcp) => {
-                self.colorify(Color::Green, format!("dhcp: {:?}", dhcp))
-            },
-            DNS(dns) => {
-                self.colorify(Color::Green, format!("dns: {:?}", dns))
-            },
-            SSDP(ssdp) => {
-                self.colorify(Color::Purple, format!("ssdp: {:?}", ssdp))
-            },
-            Dropbox(dropbox) => {
-                self.colorify(Color::Purple, format!("dropbox: {:?}", dropbox))
-            },
-            Text(text) => {
-                self.colorify(Color::Blue, format!("remaining: {:?}", text))
-            },
-            Binary(x) => {
-                self.colorify(Color::Yellow, format!("remaining: {:?}", x))
-            },
+            DHCP(dhcp) => self.colorify(Color::Green, format!("dhcp: {:?}", dhcp)),
+            DNS(dns) => self.colorify(Color::Green, format!("dns: {:?}", dns)),
+            SSDP(ssdp) => self.colorify(Color::Purple, format!("ssdp: {:?}", ssdp)),
+            Dropbox(dropbox) => self.colorify(Color::Purple, format!("dropbox: {:?}", dropbox)),
+            Text(text) => self.colorify(Color::Blue, format!("remaining: {:?}", text)),
+            Binary(x) => self.colorify(Color::Yellow, format!("remaining: {:?}", x)),
         }
     }
 
@@ -586,9 +669,7 @@ impl Filter {
     #[inline]
     pub fn new(verbosity: u8) -> Filter {
         let verbosity = cmp::min(verbosity, NoiseLevel::Maximum.into_u8());
-        Filter {
-            verbosity,
-        }
+        Filter { verbosity }
     }
 
     #[inline]
@@ -610,10 +691,9 @@ fn display_macaddr(mac: pktparse::ethernet::MacAddress) -> String {
 
 #[inline]
 fn display_macadr_buf(mac: [u8; 6]) -> String {
-    let mut string = mac.iter()
-                        .fold(String::new(), |acc, &x| {
-                            format!("{}{:02x}:", acc, x)
-                        });
+    let mut string = mac
+        .iter()
+        .fold(String::new(), |acc, &x| format!("{}{:02x}:", acc, x));
     string.pop();
     string
 }
@@ -621,11 +701,7 @@ fn display_macadr_buf(mac: [u8; 6]) -> String {
 #[inline]
 fn display_kv_list(list: &[(&str, Option<&str>)]) -> String {
     list.iter()
-        .filter_map(|&(key, ref value)| {
-            value.as_ref().map(|value| {
-                format!("{}: {:?}", key, value)
-            })
-        })
+        .filter_map(|&(key, ref value)| value.as_ref().map(|value| format!("{}: {:?}", key, value)))
         .reduce(|a, b| a + ", " + &b)
         .map_or_else(String::new, |extra| format!(" ({})", extra))
 }
@@ -636,26 +712,20 @@ struct DhcpKvListWriter<'a> {
 
 impl<'a> DhcpKvListWriter<'a> {
     fn new() -> DhcpKvListWriter<'a> {
-        DhcpKvListWriter{
-            elements: vec!()
-        }
+        DhcpKvListWriter { elements: vec![] }
     }
 
     fn append<T: Debug>(mut self, key: &'a str, value: &Option<T>) -> Self {
         if let Some(value) = value {
-            self.elements.push((
-                key,
-                format!("{:?}", value),
-            ));
+            self.elements.push((key, format!("{:?}", value)));
         }
         self
     }
 
     fn finalize(self) -> String {
-        self.elements.iter()
-            .map(|&(key, ref value)| {
-                format!("{}: {}", key, value)
-            })
+        self.elements
+            .iter()
+            .map(|&(key, ref value)| format!("{}: {}", key, value))
             .reduce(|a, b| a + ", " + &b)
             .map_or_else(String::new, |extra| format!(" ({})", extra))
     }

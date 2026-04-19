@@ -1,6 +1,5 @@
-use crate::structs::ssdp::SSDP;
 use crate::structs::CentrifugeError;
-
+use crate::structs::ssdp::SSDP;
 
 pub fn parse_ssdp(data: &str) -> Result<SSDP, CentrifugeError> {
     if let Some(extra) = data.strip_prefix("M-SEARCH * HTTP/1.1\r\n") {

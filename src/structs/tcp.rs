@@ -1,6 +1,6 @@
-use crate::structs::tls;
-use crate::structs::http;
 use crate::structs::NoiseLevel;
+use crate::structs::http;
+use crate::structs::tls;
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

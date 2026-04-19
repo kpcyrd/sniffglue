@@ -1,8 +1,8 @@
-use crate::structs::dns;
-use crate::structs::dhcp;
-use crate::structs::ssdp;
-use crate::structs::dropbox;
 use crate::structs::NoiseLevel;
+use crate::structs::dhcp;
+use crate::structs::dns;
+use crate::structs::dropbox;
+use crate::structs::ssdp;
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

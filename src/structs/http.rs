@@ -1,6 +1,6 @@
+use crate::structs::CentrifugeError;
 use bstr::BString;
 use httparse::Header;
-use crate::structs::CentrifugeError;
 use serde::Serialize;
 use std::convert::TryFrom;
 use std::str;
@@ -35,14 +35,14 @@ pub struct Response {
 }
 
 fn append_if_header(mem: &mut Option<String>, expected: &str, header: &Header) {
-    if header.name.eq_ignore_ascii_case(expected) {
-        if let Ok(value) = str::from_utf8(header.value) {
-            let mem = mem.get_or_insert_with(String::new);
-            if !mem.is_empty() {
-                mem.push_str("; ");
-            }
-            mem.push_str(value);
+    if header.name.eq_ignore_ascii_case(expected)
+        && let Ok(value) = str::from_utf8(header.value)
+    {
+        let mem = mem.get_or_insert_with(String::new);
+        if !mem.is_empty() {
+            mem.push_str("; ");
         }
+        mem.push_str(value);
     }
 }
 
@@ -50,9 +50,15 @@ impl TryFrom<httparse::Request<'_, '_>> for Request {
     type Error = CentrifugeError;
 
     fn try_from(req: httparse::Request) -> Result<Request, CentrifugeError> {
-        let Some(method) = req.method else { return Err(CentrifugeError::InvalidPacket) };
-        let Some(path) = req.path else { return Err(CentrifugeError::InvalidPacket) };
-        let Some(version) = req.version else { return Err(CentrifugeError::InvalidPacket) };
+        let Some(method) = req.method else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
+        let Some(path) = req.path else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
+        let Some(version) = req.version else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
 
         let mut out = Request {
             method: method.to_string(),
@@ -68,10 +74,7 @@ impl TryFrom<httparse::Request<'_, '_>> for Request {
         };
 
         for header in req.headers {
-            out.headers.push((
-                header.name.into(),
-                header.value.into(),
-            ));
+            out.headers.push((header.name.into(), header.value.into()));
 
             append_if_header(&mut out.host, "host", header);
             append_if_header(&mut out.agent, "user-agent", header);
@@ -88,9 +91,15 @@ impl TryFrom<httparse::Response<'_, '_>> for Response {
     type Error = CentrifugeError;
 
     fn try_from(req: httparse::Response) -> Result<Response, CentrifugeError> {
-        let Some(version) = req.version else { return Err(CentrifugeError::InvalidPacket) };
-        let Some(code) = req.code else { return Err(CentrifugeError::InvalidPacket) };
-        let Some(reason) = req.reason else { return Err(CentrifugeError::InvalidPacket) };
+        let Some(version) = req.version else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
+        let Some(code) = req.code else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
+        let Some(reason) = req.reason else {
+            return Err(CentrifugeError::InvalidPacket);
+        };
 
         let mut out = Response {
             version,
@@ -101,10 +110,7 @@ impl TryFrom<httparse::Response<'_, '_>> for Response {
         };
 
         for header in req.headers {
-            out.headers.push((
-                header.name.into(),
-                header.value.into(),
-            ));
+            out.headers.push((header.name.into(), header.value.into()));
         }
 
         Ok(out)

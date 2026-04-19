@@ -1,8 +1,8 @@
 mod cli;
 mod fmt;
 
-use clap::{CommandFactory, Parser};
 use crate::cli::Args;
+use clap::{CommandFactory, Parser};
 use env_logger::Env;
 use sniffglue::centrifuge;
 use sniffglue::errors::*;
@@ -11,12 +11,11 @@ use sniffglue::sandbox;
 use sniffglue::sniff;
 use sniffglue::structs;
 use std::io::{self, IsTerminal, stdout};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 
 fn main() -> Result<()> {
-    env_logger::init_from_env(Env::default()
-        .default_filter_or("sniffglue=warn"));
+    env_logger::init_from_env(Env::default().default_filter_or("sniffglue=warn"));
 
     let mut args = Args::parse();
 
@@ -31,8 +30,7 @@ fn main() -> Result<()> {
     let device = if let Some(dev) = args.device {
         dev
     } else {
-        sniff::default_interface()
-            .context("Failed to find default interface")?
+        sniff::default_interface().context("Failed to find default interface")?
     };
 
     let layout = if args.json {
@@ -56,13 +54,19 @@ fn main() -> Result<()> {
         eprintln!("Reading from file: {:?}", device);
         cap
     } else {
-        let cap = sniff::open(&device, &sniff::Config {
-            promisc: args.promisc,
-            immediate_mode: true,
-        })?;
+        let cap = sniff::open(
+            &device,
+            &sniff::Config {
+                promisc: args.promisc,
+                immediate_mode: true,
+            },
+        )?;
 
         let verbosity = config.filter().verbosity;
-        eprintln!("Listening on device: {:?}, verbosity {}/4", device, verbosity);
+        eprintln!(
+            "Listening on device: {:?}, verbosity {}/4",
+            device, verbosity
+        );
         cap
     };
 

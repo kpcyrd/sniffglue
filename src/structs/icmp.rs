@@ -1,5 +1,5 @@
 use crate::structs::NoiseLevel;
-use pktparse::icmp::{IcmpHeader, IcmpCode};
+use pktparse::icmp::{IcmpCode, IcmpHeader};
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

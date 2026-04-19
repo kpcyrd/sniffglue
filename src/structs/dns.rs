@@ -70,9 +70,7 @@ pub struct Request {
 
 impl Request {
     pub fn new(questions: Vec<(QueryType, String)>) -> Request {
-        Request {
-            questions,
-        }
+        Request { questions }
     }
 
     pub fn wrap(self) -> DNS {
@@ -87,9 +85,7 @@ pub struct Response {
 
 impl Response {
     pub fn new(answers: Vec<(String, Record)>) -> Response {
-        Response {
-            answers,
-        }
+        Response { answers }
     }
 
     pub fn wrap(self) -> DNS {
@@ -126,7 +122,7 @@ impl From<dns_parser::RData<'_>> for Record {
                 }
 
                 Record::TXT(String::from_utf8_lossy(&x).to_string())
-            },
+            }
             _ => Record::Unknown,
         }
     }

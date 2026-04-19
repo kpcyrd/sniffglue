@@ -1,5 +1,5 @@
-use crate::structs::ether;
 use crate::structs::NoiseLevel;
+use crate::structs::ether;
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]

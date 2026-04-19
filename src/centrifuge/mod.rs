@@ -1,39 +1,36 @@
-use pktparse::{ethernet, ipv4, ipv6};
-use pktparse::ip::IPProtocol;
 use pktparse::ethernet::EtherType;
+use pktparse::ip::IPProtocol;
+use pktparse::{ethernet, ipv4, ipv6};
 
-use crate::structs::CentrifugeError;
-use crate::structs::raw::Raw;
-use crate::structs::ether::Ether;
 use crate::link::DataLink;
+use crate::structs::CentrifugeError;
+use crate::structs::ether::Ether;
+use crate::structs::raw::Raw;
 
 pub mod arp;
+pub mod cjdns;
+pub mod icmp;
+pub mod sll;
 pub mod tcp;
 pub mod udp;
-pub mod icmp;
-pub mod cjdns;
-pub mod sll;
 
 pub mod dhcp;
 pub mod dns;
-pub mod ssdp;
 pub mod dropbox;
 pub mod http;
+pub mod ssdp;
 pub mod tls;
-
 
 #[inline]
 pub fn parse(link: &DataLink, data: &[u8]) -> Raw {
     match *link {
         DataLink::Ethernet => match parse_eth(data) {
             Ok(eth) => eth,
-            Err(_)  => Raw::Unknown(data.to_vec()),
+            Err(_) => Raw::Unknown(data.to_vec()),
         },
         DataLink::Tun => parse_tun(data),
         DataLink::Sll => parse_sll(data),
-        DataLink::RadioTap => {
-            Raw::Unknown(data.to_vec())
-        },
+        DataLink::RadioTap => Raw::Unknown(data.to_vec()),
     }
 }
 
@@ -43,23 +40,21 @@ pub fn parse_eth(data: &[u8]) -> Result<Raw, CentrifugeError> {
         let inner = match eth_frame.ethertype {
             EtherType::IPv4 => match parse_ipv4(remaining) {
                 Ok(ipv4) => ipv4,
-                Err(_)   => Ether::Unknown(remaining.to_vec()),
+                Err(_) => Ether::Unknown(remaining.to_vec()),
             },
             EtherType::IPv6 => match parse_ipv6(remaining) {
                 Ok(ipv6) => ipv6,
-                Err(_)   => Ether::Unknown(remaining.to_vec()),
+                Err(_) => Ether::Unknown(remaining.to_vec()),
             },
             EtherType::ARP => match arp::extract(remaining) {
                 Ok(arp_pkt) => Ether::Arp(arp_pkt),
-                Err(_)      => Ether::Unknown(remaining.to_vec()),
+                Err(_) => Ether::Unknown(remaining.to_vec()),
             },
             EtherType::Other(0xfc00) => match cjdns::parse(remaining) {
                 Ok(cjdns_pkt) => Ether::Cjdns(cjdns_pkt),
-                Err(_)        => Ether::Unknown(remaining.to_vec()),
+                Err(_) => Ether::Unknown(remaining.to_vec()),
             },
-            _ => {
-                Ether::Unknown(remaining.to_vec())
-            },
+            _ => Ether::Unknown(remaining.to_vec()),
         };
         Ok(Raw::Ether(eth_frame, inner))
     } else {
@@ -69,23 +64,19 @@ pub fn parse_eth(data: &[u8]) -> Result<Raw, CentrifugeError> {
 
 #[inline]
 pub fn parse_tun(data: &[u8]) -> Raw {
-    Raw::Tun(
-        if let Ok(ipv4) = parse_ipv4(data) {
-            ipv4
-        } else {
-            Ether::Unknown(data.to_vec())
-        }
-    )
+    Raw::Tun(if let Ok(ipv4) = parse_ipv4(data) {
+        ipv4
+    } else {
+        Ether::Unknown(data.to_vec())
+    })
 }
 
 pub fn parse_sll(data: &[u8]) -> Raw {
-    Raw::Sll(
-        if let Ok(frame) = sll::parse(data) {
-            frame
-        } else {
-            Ether::Unknown(data.to_vec())
-        }
-    )
+    Raw::Sll(if let Ok(frame) = sll::parse(data) {
+        frame
+    } else {
+        Ether::Unknown(data.to_vec())
+    })
 }
 
 #[inline]
@@ -106,9 +97,7 @@ pub fn parse_ipv4(data: &[u8]) -> Result<Ether, CentrifugeError> {
                 Ok((icmp_hdr, icmp)) => ICMP(icmp_hdr, icmp),
                 Err(_) => Unknown(remaining.to_vec()),
             },
-            _ => {
-                Unknown(remaining.to_vec())
-            }
+            _ => Unknown(remaining.to_vec()),
         };
         Ok(Ether::IPv4(ip_hdr, inner))
     } else {
@@ -130,9 +119,7 @@ pub fn parse_ipv6(data: &[u8]) -> Result<Ether, CentrifugeError> {
                 Ok((udp_hdr, udp)) => UDP(udp_hdr, udp),
                 Err(_) => Unknown(remaining.to_vec()),
             },
-            _ => {
-                Unknown(remaining.to_vec())
-            }
+            _ => Unknown(remaining.to_vec()),
         };
         Ok(Ether::IPv6(ip_hdr, inner))
     } else {

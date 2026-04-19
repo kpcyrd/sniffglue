@@ -49,7 +49,8 @@ mod tests {
             user = "foo"
             chroot = "/var/empty"
             "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(
             Config {

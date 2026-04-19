@@ -1,6 +1,6 @@
 use crate::centrifuge::{parse_ipv4, parse_ipv6};
-use crate::structs::ether::Ether;
 use crate::structs::CentrifugeError;
+use crate::structs::ether::Ether;
 use nom::bytes::complete::take;
 use nom::number::complete::be_u16;
 
